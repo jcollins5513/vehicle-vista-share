@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { Facebook, Share2, Image, Upload } from 'lucide-react';
+import { Facebook, Share2, Image } from 'lucide-react';
+import MediaUploader from './MediaUploader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import VehicleSelector from './VehicleSelector';
@@ -47,10 +48,9 @@ const ShowroomTools = ({ selectedVehicle, onVehicleSelect, onGenerateLink }: Sho
     alert('Facebook integration will be connected to post vehicle content');
   };
 
-  const handleMediaUpload = () => {
-    // In real implementation, this would handle file uploads
-    setMediaUploadCount(prev => prev + 1);
-    alert('Media upload feature will integrate with file system and database');
+  const handleUploaded = (result: { url: string; key: string }) => {
+    setMediaUploadCount((prev) => prev + 1);
+    // TODO: Optionally associate result.url with selectedVehicle via API mutation
   };
 
   return (
@@ -89,15 +89,8 @@ const ShowroomTools = ({ selectedVehicle, onVehicleSelect, onGenerateLink }: Sho
           <Image className="w-4 h-4 mr-2" />
           Media Selection
         </h4>
-        <Button 
-          onClick={handleMediaUpload}
-          variant="outline" 
-          className="w-full mb-2 border-white/30 text-white hover:bg-white/10"
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Upload Media
-        </Button>
-        <p className="text-white/60 text-xs">{mediaUploadCount} items loaded</p>
+        <MediaUploader onUploaded={handleUploaded} />
+        <p className="text-white/60 text-xs mt-2">{mediaUploadCount} item{mediaUploadCount!==1 && 's'} uploaded</p>
       </Card>
 
       {/* Generate Customer Link */}

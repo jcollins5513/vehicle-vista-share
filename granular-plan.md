@@ -58,17 +58,17 @@
 ## Tasks
 1. Storage Provider
    - [ ] Decide on provider (S3, Cloudinary, or Supabase Storage)
-   - [ ] Add credentials to `.env`
-   - [ ] Install SDK package
+   - ✅ Add credentials to `.env`
+   - ✅ Install SDK package
 
 2. API Route
    - [ ] `POST /api/upload` route accepting `multipart/form-data`
    - [ ] Validate file type/size (images & MP4 only)
-   - [ ] Upload to bucket; return public URL
+   - ✅ Upload to bucket; return public URL
 
 3. Database
-   - [ ] Extend `Vehicle` model with `media` relation/table (if needed)
-   - [ ] Prisma migration & generate client
+   - ✅ Extend `Vehicle` model with `media` relation/table
+   - ✅ Prisma migration & generate client
 
 4. Front-end Component
    - [ ] Create `MediaUploader` component (drag-and-drop)
@@ -139,18 +139,18 @@ Please help me implement the storage provider setup and the `/api/upload` route 
 ## Subtasks
 1. AWS Setup
    - [ ] Create `VEHICLE_MEDIA_BUCKET` manually in AWS console (out-of-scope)
-   - [ ] Add `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `VEHICLE_MEDIA_BUCKET` to `.env.example`
-   - [ ] Install `@aws-sdk/client-s3`
+   - ✅ Add `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `VEHICLE_MEDIA_BUCKET` to `.env.example`
+   - ✅ Install `@aws-sdk/client-s3`
 
 2. Backend Route (`my-app/src/app/api/upload/route.ts`)
-   - [ ] Parse multipart form (use `formidable` or built-in Next.js 13 `unstable_parseMultipartFormData`)
-   - [ ] Validate file type (`image/*`, `video/mp4`) and size ≤ 25 MB
-   - [ ] Stream upload to S3 with `PutObjectCommand`
-   - [ ] Generate public URL (`https://${bucket}.s3.${region}.amazonaws.com/${key}`)
-   - [ ] Respond `{ url, key }`
+   - ✅ Parse multipart form (built-in FormData API)
+   - ✅ Validate file type (`image/*`, `video/mp4`) and size ≤ 25 MB
+   - ✅ Stream upload to S3 with `PutObjectCommand`
+   - ✅ Generate public URL (`https://${bucket}.s3.${region}.amazonaws.com/${key}`)
+   - ✅ Respond `{ url, key }`
 
 3. Types & Helpers
-   - [ ] Add `lib/s3.ts` factory returning configured S3Client
+   - ✅ Add `lib/s3.ts` factory returning configured S3Client
 
 4. Tests
    - [ ] Unit-test helper with mocked S3 using `aws-sdk-client-mock`

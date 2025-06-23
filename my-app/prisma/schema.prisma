@@ -33,9 +33,24 @@ model Vehicle {
   status                  VehicleStatus @default(available)
   bodyStyle               String?
   lastMarketplacePostDate DateTime?
+  media                 Media[]
 }
 
 enum VehicleStatus {
   available
   sold
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  url       String
+  type      MediaType
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+  vehicleId String?
+  createdAt DateTime @default(now())
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
 }
