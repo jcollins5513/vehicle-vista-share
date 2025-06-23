@@ -86,45 +86,47 @@ const ShowroomView = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-4">
-      {/* Top Header */}
-      <div className="flex justify-between items-start mb-6">
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-          <h1 className="text-white text-2xl font-bold mb-2">Bentley Supercenter</h1>
-          <p className="text-white/80">Showroom Display</p>
-        </div>
-        
-        {/* Date and Time */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 text-right">
-          <div className="flex items-center justify-end text-white mb-2">
-            <Clock className="w-5 h-5 mr-2" />
-            <span className="text-lg font-mono">{formatTime(currentTime)}</span>
+    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 overflow-auto">
+      <div className="min-h-full p-4">
+        {/* Top Header */}
+        <div className="flex justify-between items-start mb-6">
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+            <h1 className="text-white text-2xl font-bold mb-2">Bentley Supercenter</h1>
+            <p className="text-white/80">Showroom Display</p>
           </div>
-          <p className="text-white/80 text-sm">{formatDate(currentTime)}</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-120px)]">
-        {/* Main Display Area - 75% width */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Vehicle Showcase */}
-          <MediaSlideshow vehicle={selectedVehicle} />
           
-          {/* Vehicle Details */}
-          <VehicleDetails vehicle={selectedVehicle} />
+          {/* Date and Time */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 text-right">
+            <div className="flex items-center justify-end text-white mb-2">
+              <Clock className="w-5 h-5 mr-2" />
+              <span className="text-lg font-mono">{formatTime(currentTime)}</span>
+            </div>
+            <p className="text-white/80 text-sm">{formatDate(currentTime)}</p>
+          </div>
         </div>
 
-        {/* Right Sidebar - 25% width */}
-        <div className="space-y-6">
-          {/* Appointment Calendar */}
-          <AppointmentCalendar />
-          
-          {/* Showroom Tools */}
-          <ShowroomTools 
-            selectedVehicle={selectedVehicle}
-            onVehicleSelect={setSelectedVehicle}
-            onGenerateLink={generateCustomerLink}
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-[calc(100vh-140px)]">
+          {/* Main Display Area - 75% width */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Vehicle Showcase */}
+            <MediaSlideshow vehicle={selectedVehicle} />
+            
+            {/* Vehicle Details */}
+            <VehicleDetails vehicle={selectedVehicle} />
+          </div>
+
+          {/* Right Sidebar - 25% width */}
+          <div className="space-y-6">
+            {/* Appointment Calendar */}
+            <AppointmentCalendar />
+            
+            {/* Showroom Tools */}
+            <ShowroomTools 
+              selectedVehicle={selectedVehicle}
+              onVehicleSelect={setSelectedVehicle}
+              onGenerateLink={generateCustomerLink}
+            />
+          </div>
         </div>
       </div>
     </div>
