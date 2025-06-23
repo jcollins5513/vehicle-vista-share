@@ -165,22 +165,41 @@ Assumptions:
 - No role-based auth yet.
 
 ---
+# Session 2025-06-23 – Progress on Section 2: File Upload & Media Management
+
+## Completed Tasks
+1. Slideshow Update
+   - ✅ Created GET `/api/vehicles/:id/media` & `/api/media/general` endpoints
+   - ✅ Updated `MediaSlideshow` to fetch vehicle + general media with SWR
+   - ✅ Merged lists and added support for images/videos
+
+2. Quality Polish
+   - ✅ Fixed TypeScript enum import lint errors by creating proper types
+   - ✅ Added `@/types` path alias for shared types
+   - ✅ Fixed accessibility issues in MediaSlideshow
+
+## Added to Schema
+- ✅ Added `order` field to `Media` model for playlist ordering
+
+---
+
 # Next Session – Continue Section 2: File Upload & Media Management
 
 ## Remaining Focus
-1. Slideshow Update
-   - [ ] Create GET `/api/vehicles/:id/media` & `/api/media/general` (handlers drafted – verify & test)
-   - [ ] Update `MediaSlideshow` to fetch vehicle + general media with SWR
-   - [ ] Merge lists and autoplay images/videos
+1. Playlist Management UI
+   - [ ] Implement backend routes:
+     - [ ] `DELETE /api/media/:id` for deleting media items
+     - [ ] `PATCH /api/media/reorder` for updating media order
+   - [ ] Build admin page to list, reorder, and delete general media items
+   - [ ] Install `@hello-pangea/dnd` for drag-and-drop functionality
 
-2. Playlist Management UI
-   - [ ] Build simple page to list, reorder, or delete general media items
-   - [ ] Hook into existing API routes (DELETE /media/:id, PATCH reorder)
-
-3. Quality Polish
-   - [ ] Fix TypeScript enum import lint errors
+2. Quality Polish
+   - [ ] Address `next/image` lint warning in MediaSlideshow
    - [ ] Address `useCallback` dependency warning in `MediaUploader`
-   - [ ] Unit tests for S3 helper & media routes
+   - [ ] Write unit tests for:
+     - [ ] S3 helper functions
+     - [ ] Media API routes
+     - [ ] MediaSlideshow component
    - [ ] README updates (usage & env vars)
 
 ---
@@ -188,10 +207,16 @@ Assumptions:
 ```
 We are continuing Section 2 of the master plan (File Upload & Media Management System).
 Focus on:
-1. Finalizing GET media endpoints and wiring `MediaSlideshow` to display vehicle-specific plus general playlist items.
-2. Building a simple UI to manage general media (list/reorder/delete).
-3. Cleaning up lint errors and adding unit tests.
-Please help me implement these remaining tasks.
+1. Building the General Media Management UI:
+   - Implementing backend routes for deleting and reordering media
+   - Creating an admin page for listing, reordering, and deleting general media
+   - Installing and configuring drag-and-drop functionality
+2. Quality improvements:
+   - Addressing remaining lint warnings
+   - Writing unit tests for API routes and components
+   - Updating documentation
+
+Please help me implement these remaining tasks to complete Section 2.
 ```
 
 
