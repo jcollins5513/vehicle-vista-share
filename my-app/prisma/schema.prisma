@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Vehicle {
+  id                      String        @id @default(cuid())
+  stockNumber             String        @unique
+  vin                     String        @unique
+  year                    Int
+  make                    String
+  model                   String
+  price                   Int
+  mileage                 Int
+  features                String[]
+  images                  String[]
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  color                   String
+  trim                    String?
+  engine                  String?
+  transmission            String?
+  description             String
+  sourceUrl               String?
+  facebookPostId          String?
+  lastFacebookPostDate    DateTime?
+  carfaxHighlights        Json?
+  vehicleClass            String?       @default("SUV")
+  status                  VehicleStatus @default(available)
+  bodyStyle               String?
+  lastMarketplacePostDate DateTime?
+}
+
+enum VehicleStatus {
+  available
+  sold
+}
