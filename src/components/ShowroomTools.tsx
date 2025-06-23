@@ -1,19 +1,36 @@
 
 import React, { useState } from 'react';
-import { Facebook, Share2, Car, Image, Upload } from 'lucide-react';
+import { Facebook, Share2, Image, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import VehicleSelector from './VehicleSelector';
 
 interface Vehicle {
-  id: number;
+  id: string;
+  stockNumber: string;
+  vin: string;
   year: number;
   make: string;
   model: string;
   price: number;
+  mileage: number;
+  features: string[];
+  images: string[];
   color: string;
-  miles: number;
-  stock: string;
+  trim?: string;
+  engine?: string;
+  transmission?: string;
+  description: string;
+  sourceUrl?: string;
+  facebookPostId?: string;
+  lastFacebookPostDate?: Date;
+  lastMarketplacePostDate?: Date;
+  carfaxHighlights?: any;
+  bodyStyle?: string;
+  vehicleClass?: string;
+  status: 'available' | 'sold';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface ShowroomToolsProps {

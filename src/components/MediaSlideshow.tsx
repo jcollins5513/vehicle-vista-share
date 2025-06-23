@@ -5,11 +5,31 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 interface Vehicle {
-  id: number;
+  id: string;
+  stockNumber: string;
+  vin: string;
   year: number;
   make: string;
   model: string;
+  price: number;
+  mileage: number;
+  features: string[];
+  images: string[];
   color: string;
+  trim?: string;
+  engine?: string;
+  transmission?: string;
+  description: string;
+  sourceUrl?: string;
+  facebookPostId?: string;
+  lastFacebookPostDate?: Date;
+  lastMarketplacePostDate?: Date;
+  carfaxHighlights?: any;
+  bodyStyle?: string;
+  vehicleClass?: string;
+  status: 'available' | 'sold';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface MediaSlideshowProps {
@@ -20,24 +40,30 @@ const MediaSlideshow = ({ vehicle }: MediaSlideshowProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
 
-  // Sample media items - in real app, these would come from database
-  const mediaItems = [
-    {
-      type: 'image',
-      url: '/lovable-uploads/62f13105-748e-495f-8d8e-507a1df71f4e.png',
-      caption: 'Exterior View'
-    },
-    {
-      type: 'image',
-      url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
-      caption: 'Interior Dashboard'
-    },
-    {
-      type: 'image', 
-      url: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800',
-      caption: 'Side Profile'
-    }
-  ];
+  // Use vehicle images from database if available, otherwise fallback to sample images
+  const mediaItems = vehicle.images.length > 0 
+    ? vehicle.images.map((url, index) => ({
+        type: 'image',
+        url,
+        caption: `View ${index + 1}`
+      }))
+    : [
+        {
+          type: 'image',
+          url: '/lovable-uploads/62f13105-748e-495f-8d8e-507a1df71f4e.png',
+          caption: 'Exterior View'
+        },
+        {
+          type: 'image',
+          url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
+          caption: 'Interior Dashboard'
+        },
+        {
+          type: 'image', 
+          url: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800',
+          caption: 'Side Profile'
+        }
+      ];
 
   const totalSlides = mediaItems.length;
 

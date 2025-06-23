@@ -1,28 +1,59 @@
 
 import React, { useState, useEffect } from 'react';
-import { Play, Facebook, Share2, Calendar, Car, Image, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Clock } from 'lucide-react';
 import MediaSlideshow from './MediaSlideshow';
 import VehicleDetails from './VehicleDetails';
 import ShowroomTools from './ShowroomTools';
 import AppointmentCalendar from './AppointmentCalendar';
 
+interface Vehicle {
+  id: string;
+  stockNumber: string;
+  vin: string;
+  year: number;
+  make: string;
+  model: string;
+  price: number;
+  mileage: number;
+  features: string[];
+  images: string[];
+  color: string;
+  trim?: string;
+  engine?: string;
+  transmission?: string;
+  description: string;
+  sourceUrl?: string;
+  facebookPostId?: string;
+  lastFacebookPostDate?: Date;
+  lastMarketplacePostDate?: Date;
+  carfaxHighlights?: any;
+  bodyStyle?: string;
+  vehicleClass?: string;
+  status: 'available' | 'sold';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const ShowroomView = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedVehicle, setSelectedVehicle] = useState({
-    id: 1,
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle>({
+    id: "1",
+    stockNumber: "BT2024001",
+    vin: "SCBCP7ZA1KC123456",
     year: 2024,
     make: "Bentley",
     model: "Continental GT",
     price: 185500,
     color: "Beluga Black",
-    miles: 450,
-    stock: "BT2024001",
+    mileage: 450,
+    features: ["Premium Leather Interior", "Adaptive Cruise Control", "360° Camera System"],
+    images: [],
     engine: "3.0L Twin-Turbo V6",
     transmission: "8-Speed Automatic",
-    drivetrain: "xDrive AWD",
-    mpg: "21/26 City/Hwy"
+    description: "Luxury grand tourer with exceptional performance",
+    status: "available" as const,
+    createdAt: new Date(),
+    updatedAt: new Date()
   });
 
   useEffect(() => {

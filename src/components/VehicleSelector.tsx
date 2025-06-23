@@ -5,14 +5,31 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 interface Vehicle {
-  id: number;
+  id: string;
+  stockNumber: string;
+  vin: string;
   year: number;
   make: string;
   model: string;
   price: number;
+  mileage: number;
+  features: string[];
+  images: string[];
   color: string;
-  miles: number;
-  stock: string;
+  trim?: string;
+  engine?: string;
+  transmission?: string;
+  description: string;
+  sourceUrl?: string;
+  facebookPostId?: string;
+  lastFacebookPostDate?: Date;
+  lastMarketplacePostDate?: Date;
+  carfaxHighlights?: any;
+  bodyStyle?: string;
+  vehicleClass?: string;
+  status: 'available' | 'sold';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface VehicleSelectorProps {
@@ -23,36 +40,57 @@ interface VehicleSelectorProps {
 
 const VehicleSelector = ({ currentVehicle, onVehicleSelect, isCustomerView }: VehicleSelectorProps) => {
   // Sample vehicles - in real app, these would come from database
-  const vehicles = [
+  const vehicles: Vehicle[] = [
     {
-      id: 1,
+      id: "1",
+      stockNumber: "BT2024001",
+      vin: "SCBCP7ZA1KC123456",
       year: 2024,
       make: "Bentley",
       model: "Continental GT",
       price: 185500,
       color: "Beluga Black",
-      miles: 450,
-      stock: "BT2024001"
+      mileage: 450,
+      features: ["Premium Leather", "Adaptive Cruise Control"],
+      images: [],
+      description: "Luxury grand tourer",
+      status: "available" as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
-      id: 2,
+      id: "2",
+      stockNumber: "BT2023015",
+      vin: "SCBCP7ZA2KC123457",
       year: 2023,
       make: "Bentley",
       model: "Flying Spur",
       price: 195000,
       color: "Glacier White",
-      miles: 1200,
-      stock: "BT2023015"
+      mileage: 1200,
+      features: ["Premium Leather", "Bang & Olufsen Sound"],
+      images: [],
+      description: "Luxury sedan",
+      status: "available" as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
-      id: 3,
+      id: "3",
+      stockNumber: "BT2024008",
+      vin: "SCBCP7ZA3KC123458",
       year: 2024,
       make: "Bentley",
       model: "Bentayga",
       price: 165000,
       color: "Storm Grey",
-      miles: 300,
-      stock: "BT2024008"
+      mileage: 300,
+      features: ["Premium Leather", "360° Camera System"],
+      images: [],
+      description: "Luxury SUV",
+      status: "available" as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
   ];
 
@@ -84,7 +122,7 @@ const VehicleSelector = ({ currentVehicle, onVehicleSelect, isCustomerView }: Ve
                 {vehicle.year} {vehicle.make} {vehicle.model}
               </div>
               <div className="text-xs opacity-80">
-                {vehicle.color} • {vehicle.miles} mi
+                {vehicle.color} • {vehicle.mileage} mi
               </div>
               <div className="text-xs font-bold">
                 ${vehicle.price.toLocaleString()}

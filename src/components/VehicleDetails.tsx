@@ -4,14 +4,31 @@ import { Card } from '@/components/ui/card';
 import { DollarSign, Gauge, MapPin } from 'lucide-react';
 
 interface Vehicle {
-  id: number;
+  id: string;
+  stockNumber: string;
+  vin: string;
   year: number;
   make: string;
   model: string;
   price: number;
+  mileage: number;
+  features: string[];
+  images: string[];
   color: string;
-  miles: number;
-  stock: string;
+  trim?: string;
+  engine?: string;
+  transmission?: string;
+  description: string;
+  sourceUrl?: string;
+  facebookPostId?: string;
+  lastFacebookPostDate?: Date;
+  lastMarketplacePostDate?: Date;
+  carfaxHighlights?: any;
+  bodyStyle?: string;
+  vehicleClass?: string;
+  status: 'available' | 'sold';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface VehicleDetailsProps {
@@ -29,7 +46,7 @@ const VehicleDetails = ({ vehicle }: VehicleDetailsProps) => {
         <div className="flex justify-center items-center space-x-8 mb-4">
           <div className="flex items-center text-green-400">
             <DollarSign className="w-6 h-6 mr-1" />
-            <span className="text-2xl font-bold">{vehicle.price.toLocaleString()}</span>
+            <span className="text-2xl font-bold">${vehicle.price.toLocaleString()}</span>
           </div>
           
           <div className="text-white/60">•</div>
@@ -40,15 +57,15 @@ const VehicleDetails = ({ vehicle }: VehicleDetailsProps) => {
         <div className="flex justify-center items-center space-x-6 text-sm text-white/80">
           <div className="flex items-center">
             <Gauge className="w-4 h-4 mr-1" />
-            <span>{vehicle.miles} miles</span>
+            <span>{vehicle.mileage} miles</span>
           </div>
           
           <div className="flex items-center">
             <MapPin className="w-4 h-4 mr-1" />
-            <span>In Stock</span>
+            <span>{vehicle.status === 'available' ? 'In Stock' : 'Sold'}</span>
           </div>
           
-          <div>Stock: {vehicle.stock}</div>
+          <div>Stock: {vehicle.stockNumber}</div>
         </div>
       </div>
     </Card>

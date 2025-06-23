@@ -1,35 +1,67 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Calendar, Car, Clock, Fuel } from 'lucide-react';
+import { Calendar, Car, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import MediaSlideshow from './MediaSlideshow';
 import VehicleSelector from './VehicleSelector';
 
+interface Vehicle {
+  id: string;
+  stockNumber: string;
+  vin: string;
+  year: number;
+  make: string;
+  model: string;
+  price: number;
+  mileage: number;
+  features: string[];
+  images: string[];
+  color: string;
+  trim?: string;
+  engine?: string;
+  transmission?: string;
+  description: string;
+  sourceUrl?: string;
+  facebookPostId?: string;
+  lastFacebookPostDate?: Date;
+  lastMarketplacePostDate?: Date;
+  carfaxHighlights?: any;
+  bodyStyle?: string;
+  vehicleClass?: string;
+  status: 'available' | 'sold';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const CustomerView = () => {
   const { vehicleId } = useParams();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedVehicle, setSelectedVehicle] = useState({
-    id: parseInt(vehicleId || '1'),
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle>({
+    id: vehicleId || "1",
+    stockNumber: "BT2024001",
+    vin: "SCBCP7ZA1KC123456",
     year: 2024,
     make: "Bentley",
     model: "Continental GT",
     price: 185500,
     color: "Beluga Black",
-    miles: 450,
-    stock: "BT2024001",
-    engine: "3.0L Twin-Turbo V6",
-    transmission: "8-Speed Automatic",
-    drivetrain: "xDrive AWD",
-    mpg: "21/26 City/Hwy",
+    mileage: 450,
     features: [
       "Premium Leather Interior",
       "Adaptive Cruise Control",
       "360° Camera System",
       "Heated & Ventilated Seats",
       "Bang & Olufsen Sound System"
-    ]
+    ],
+    images: [],
+    engine: "3.0L Twin-Turbo V6",
+    transmission: "8-Speed Automatic",
+    description: "Luxury grand tourer with exceptional performance and comfort",
+    status: "available" as const,
+    createdAt: new Date(),
+    updatedAt: new Date()
   });
 
   useEffect(() => {
@@ -92,11 +124,11 @@ const CustomerView = () => {
               </div>
               <div>
                 <span className="text-white/60">Mileage:</span>
-                <span className="ml-2">{selectedVehicle.miles} mi</span>
+                <span className="ml-2">{selectedVehicle.mileage} mi</span>
               </div>
               <div>
                 <span className="text-white/60">Stock:</span>
-                <span className="ml-2">{selectedVehicle.stock}</span>
+                <span className="ml-2">{selectedVehicle.stockNumber}</span>
               </div>
             </div>
           </div>
@@ -116,22 +148,21 @@ const CustomerView = () => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
+                {selectedVehicle.engine && (
+                  <div className="text-white">
+                    <span className="text-white/60">Engine:</span>
+                    <span className="ml-2">{selectedVehicle.engine}</span>
+                  </div>
+                )}
+                {selectedVehicle.transmission && (
+                  <div className="text-white">
+                    <span className="text-white/60">Transmission:</span>
+                    <span className="ml-2">{selectedVehicle.transmission}</span>
+                  </div>
+                )}
                 <div className="text-white">
-                  <span className="text-white/60">Engine:</span>
-                  <span className="ml-2">{selectedVehicle.engine}</span>
-                </div>
-                <div className="text-white">
-                  <span className="text-white/60">Transmission:</span>
-                  <span className="ml-2">{selectedVehicle.transmission}</span>
-                </div>
-                <div className="text-white">
-                  <span className="text-white/60">Drivetrain:</span>
-                  <span className="ml-2">{selectedVehicle.drivetrain}</span>
-                </div>
-                <div className="text-white flex items-center">
-                  <Fuel className="w-4 h-4 mr-1 text-white/60" />
-                  <span className="text-white/60">MPG:</span>
-                  <span className="ml-2">{selectedVehicle.mpg}</span>
+                  <span className="text-white/60">Status:</span>
+                  <span className="ml-2 capitalize">{selectedVehicle.status}</span>
                 </div>
               </div>
               <div>
