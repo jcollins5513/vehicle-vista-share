@@ -164,3 +164,34 @@ Assumptions:
 - Frontend integration will be handled in later subtasks.
 - No role-based auth yet.
 
+---
+# Next Session – Continue Section 2: File Upload & Media Management
+
+## Remaining Focus
+1. Slideshow Update
+   - [ ] Create GET `/api/vehicles/:id/media` & `/api/media/general` (handlers drafted – verify & test)
+   - [ ] Update `MediaSlideshow` to fetch vehicle + general media with SWR
+   - [ ] Merge lists and autoplay images/videos
+
+2. Playlist Management UI
+   - [ ] Build simple page to list, reorder, or delete general media items
+   - [ ] Hook into existing API routes (DELETE /media/:id, PATCH reorder)
+
+3. Quality Polish
+   - [ ] Fix TypeScript enum import lint errors
+   - [ ] Address `useCallback` dependency warning in `MediaUploader`
+   - [ ] Unit tests for S3 helper & media routes
+   - [ ] README updates (usage & env vars)
+
+---
+## New Conversation Prompt
+```
+We are continuing Section 2 of the master plan (File Upload & Media Management System).
+Focus on:
+1. Finalizing GET media endpoints and wiring `MediaSlideshow` to display vehicle-specific plus general playlist items.
+2. Building a simple UI to manage general media (list/reorder/delete).
+3. Cleaning up lint errors and adding unit tests.
+Please help me implement these remaining tasks.
+```
+
+

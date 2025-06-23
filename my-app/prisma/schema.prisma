@@ -47,6 +47,7 @@ model Media {
   type      MediaType
   vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
   vehicleId String?
+  order     Int      @default(0)
   createdAt DateTime @default(now())
 }
 

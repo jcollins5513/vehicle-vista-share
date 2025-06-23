@@ -1,8 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Play, SkipBack, SkipForward } from 'lucide-react';
+import { Play, SkipBack, SkipForward, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import useSWR from 'swr';
+import { Media, MediaType } from '@/types/media';
 
 interface Vehicle {
   id: string;
@@ -24,7 +26,7 @@ interface Vehicle {
   facebookPostId?: string;
   lastFacebookPostDate?: Date;
   lastMarketplacePostDate?: Date;
-  carfaxHighlights?: any;
+  carfaxHighlights?: Record<string, unknown>;
   bodyStyle?: string;
   vehicleClass?: string;
   status: 'available' | 'sold';
@@ -34,36 +36,64 @@ interface Vehicle {
 
 interface MediaSlideshowProps {
   vehicle: Vehicle;
+  showGeneralMedia?: boolean;
 }
 
-const MediaSlideshow = ({ vehicle }: MediaSlideshowProps) => {
+// Fetcher function for SWR
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
+const MediaSlideshow = ({ vehicle, showGeneralMedia = true }: MediaSlideshowProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-
-  // Use vehicle images from database if available, otherwise fallback to sample images
-  const mediaItems = vehicle.images.length > 0 
-    ? vehicle.images.map((url, index) => ({
-        type: 'image',
-        url,
-        caption: `View ${index + 1}`
+  
+  // Fetch vehicle-specific media
+  const { data: vehicleMedia, error: vehicleMediaError } = useSWR<Media[]>(
+    `/api/vehicles/${vehicle.id}/media`,
+    fetcher
+  );
+  
+  // Fetch general media
+  const { data: generalMedia, error: generalMediaError } = useSWR<Media[]>(
+    showGeneralMedia ? '/api/media/general' : null,
+    fetcher
+  );
+  
+  // Loading state
+  const isLoading = (!vehicleMedia && !vehicleMediaError) || (showGeneralMedia && !generalMedia && !generalMediaError);
+  
+  // Combine vehicle-specific and general media
+  const allMedia = [...(vehicleMedia || []), ...(showGeneralMedia ? (generalMedia || []) : [])];
+  
+  // Convert media to slideshow format
+  const mediaItems = allMedia.length > 0 
+    ? allMedia.map((media) => ({
+        type: media.type === MediaType.VIDEO ? 'video' : 'image',
+        url: media.url,
+        caption: media.type === MediaType.VIDEO ? 'Video' : `${vehicle.year} ${vehicle.make} ${vehicle.model}`
       }))
-    : [
-        {
+    : vehicle.images.length > 0 
+      ? vehicle.images.map((url, index) => ({
           type: 'image',
-          url: '/lovable-uploads/62f13105-748e-495f-8d8e-507a1df71f4e.png',
-          caption: 'Exterior View'
-        },
-        {
-          type: 'image',
-          url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
-          caption: 'Interior Dashboard'
-        },
-        {
-          type: 'image', 
-          url: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800',
-          caption: 'Side Profile'
-        }
-      ];
+          url,
+          caption: `View ${index + 1}`
+        }))
+      : [
+          {
+            type: 'image',
+            url: '/lovable-uploads/62f13105-748e-495f-8d8e-507a1df71f4e.png',
+            caption: 'Exterior View'
+          },
+          {
+            type: 'image',
+            url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
+            caption: 'Interior Dashboard'
+          },
+          {
+            type: 'image', 
+            url: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800',
+            caption: 'Side Profile'
+          }
+        ];
 
   const totalSlides = mediaItems.length;
 
@@ -92,13 +122,29 @@ const MediaSlideshow = ({ vehicle }: MediaSlideshowProps) => {
   return (
     <Card className="bg-white/10 backdrop-blur-sm border-white/20 overflow-hidden">
       <div className="relative aspect-video bg-black">
-        {mediaItems[currentSlide] && (
+        {isLoading ? (
+          <div className="flex items-center justify-center w-full h-full bg-gray-900">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+          </div>
+        ) : mediaItems[currentSlide] ? (
           <>
-            <img 
-              src={mediaItems[currentSlide].url}
-              alt={mediaItems[currentSlide].caption}
-              className="w-full h-full object-cover"
-            />
+            {mediaItems[currentSlide].type === 'video' ? (
+              <video 
+                src={mediaItems[currentSlide].url}
+                className="w-full h-full object-cover"
+                autoPlay
+                muted
+                loop
+                controls
+              />
+            ) : (
+              // Using img instead of next/image because we're displaying dynamic URLs from external sources
+              <img 
+                src={mediaItems[currentSlide].url}
+                alt={mediaItems[currentSlide].caption}
+                className="w-full h-full object-cover"
+              />
+            )}
             
             {/* Overlay Controls */}
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -118,7 +164,11 @@ const MediaSlideshow = ({ vehicle }: MediaSlideshowProps) => {
                   onClick={togglePlayback}
                   className="bg-black/50 text-white hover:bg-black/70"
                 >
-                  <Play className="w-8 h-8" />
+                  {isPlaying ? (
+                    <Pause className="w-8 h-8" />
+                  ) : (
+                    <Play className="w-8 h-8" />
+                  )}
                 </Button>
                 
                 <Button
@@ -148,6 +198,8 @@ const MediaSlideshow = ({ vehicle }: MediaSlideshowProps) => {
                     className={`w-3 h-1 rounded transition-all ${
                       index === currentSlide ? 'bg-white' : 'bg-white/40'
                     }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                    title={`Go to slide ${index + 1}`}
                   />
                 ))}
               </div>
@@ -158,7 +210,7 @@ const MediaSlideshow = ({ vehicle }: MediaSlideshowProps) => {
               {currentSlide + 1}/{totalSlides} media
             </div>
           </>
-        )}
+        ) : null}
       </div>
     </Card>
   );
