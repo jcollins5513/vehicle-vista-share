@@ -29,7 +29,9 @@ This document outlines the high-level roadmap for the Vehicle Vista Share projec
 - [x] Enhance `MediaUploader` component with better user feedback (e.g., progress bars, error messages).
 - [x] Develop a gallery view to display all media associated with a vehicle.
 - [x] Implement drag-and-drop reordering on the frontend.
-- [x] Enable deletion of manually uploaded media from the showroom view.
+- [x] ✅ Enable deletion of manually uploaded media from ShowroomView
+- [x] ✅ Fix dynamic route slug mismatch error
+- [x] ✅ Write tests for MediaGallery component tests using React Testing Library.
 - [ ] Write frontend component tests using React Testing Library.
 
 ### Section 5: Data Pipeline & Scraper Refinement (DEPRECATED)

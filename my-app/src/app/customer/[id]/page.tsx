@@ -7,7 +7,8 @@ import type { Vehicle } from '@/types';
 
 export default function CustomerPage() {
   const params = useParams();
-  const vehicleId = params.id as string;
+  // Support both [id] and [vehicleId] for backward compatibility
+  const vehicleId = (params.id || (params as any).vehicleId) as string;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [vehicleData, setVehicleData] = useState<Vehicle | null>(null);

@@ -2,11 +2,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Image as ImageIcon } from 'lucide-react';
 import MediaSlideshow from './MediaSlideshow';
 import VehicleDetails from './VehicleDetails';
 import ShowroomTools from './ShowroomTools';
 import AppointmentCalendar from './AppointmentCalendar';
+import MediaGallery from './MediaGallery';
+import { Card } from '@/components/ui/card';
 import type { VehicleWithMedia, Media, SlideshowItem } from '@/types';
 
 interface ShowroomViewProps {
@@ -23,6 +25,8 @@ const ShowroomView = ({ vehicles, customMedia = [] }: ShowroomViewProps) => {
   const [slideshowItems, setSlideshowItems] = useState<SlideshowItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [showMediaGallery, setShowMediaGallery] = useState(false);
+  const [vehicleCustomMedia, setVehicleCustomMedia] = useState<Media[]>([]);
 
   useEffect(() => {
     setIsClient(true);
@@ -76,6 +80,17 @@ const ShowroomView = ({ vehicles, customMedia = [] }: ShowroomViewProps) => {
       setSelectedVehicle(vehicles[0]);
     }
   }, [currentSlide, slideshowItems, vehicles]);
+
+  // Update vehicle custom media when selected vehicle changes
+  useEffect(() => {
+    if (selectedVehicle) {
+      // Filter custom media for the selected vehicle
+      const vehicleMedia = customMedia.filter(media => media.vehicleId === selectedVehicle.id);
+      setVehicleCustomMedia(vehicleMedia);
+    } else {
+      setVehicleCustomMedia([]);
+    }
+  }, [selectedVehicle, customMedia]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -158,6 +173,32 @@ const ShowroomView = ({ vehicles, customMedia = [] }: ShowroomViewProps) => {
             
             {/* Vehicle Details */}
             {selectedVehicle && <VehicleDetails vehicle={selectedVehicle} />}
+            
+            {/* Media Gallery (conditionally rendered) */}
+            {showMediaGallery && selectedVehicle && (
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-white text-xl font-bold flex items-center">
+                    <ImageIcon className="w-5 h-5 mr-2" />
+                    Media Gallery
+                  </h3>
+                  <button 
+                    onClick={() => setShowMediaGallery(false)}
+                    className="text-white/70 hover:text-white text-sm"
+                  >
+                    Close Gallery
+                  </button>
+                </div>
+                <MediaGallery 
+                  media={vehicleCustomMedia}
+                  onReorder={() => {
+                    // Refresh the media list after reordering
+                    // This would typically be handled by refetching from the API
+                    // but for now we'll just use the existing state
+                  }}
+                />
+              </Card>
+            )}
           </div>
 
           {/* Right Sidebar - 25% width */}
@@ -172,6 +213,7 @@ const ShowroomView = ({ vehicles, customMedia = [] }: ShowroomViewProps) => {
                 onVehicleSelect={setSelectedVehicle}
                 onGenerateLink={generateCustomerLink}
                 vehicles={vehicles}
+                onShowMediaGallery={() => setShowMediaGallery(true)}
               />
             )}
           </div>

@@ -29,7 +29,7 @@ export interface Vehicle {
   carfaxHighlights?: any;
   bodyStyle?: string;
   vehicleClass?: string;
-  status: 'available' | 'sold' | 'pending';
+  status: 'available' | 'sold';
   createdAt: Date;
   updatedAt: Date;
 }

@@ -12,9 +12,10 @@ interface ShowroomToolsProps {
   onVehicleSelect: (vehicle: VehicleWithMedia) => void;
   onGenerateLink: (vehicleIds: string[]) => void;
   vehicles: VehicleWithMedia[];
+  onShowMediaGallery?: () => void;
 }
 
-const ShowroomTools = ({ selectedVehicle, onVehicleSelect, onGenerateLink, vehicles }: ShowroomToolsProps) => {
+const ShowroomTools = ({ selectedVehicle, onVehicleSelect, onGenerateLink, vehicles, onShowMediaGallery }: ShowroomToolsProps) => {
   const [mediaUploadCount, setMediaUploadCount] = useState(0);
   const [selectedVehicles, setSelectedVehicles] = useState<VehicleWithMedia[]>([]);
   const [shareMode, setShareMode] = useState(false);
@@ -93,8 +94,19 @@ const ShowroomTools = ({ selectedVehicle, onVehicleSelect, onGenerateLink, vehic
           <Image className="w-4 h-4 mr-2" />
           Media Selection
         </h4>
-        <MediaUploader onUploaded={handleUploaded} />
-        <p className="text-white/60 text-xs mt-2">{mediaUploadCount} item{mediaUploadCount!==1 && 's'} uploaded</p>
+        <div className="space-y-2">
+          <MediaUploader onUploaded={handleUploaded} />
+          {onShowMediaGallery && (
+            <button
+              onClick={onShowMediaGallery}
+              className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded flex items-center justify-center text-sm"
+            >
+              <Image className="w-4 h-4 mr-2" />
+              Manage Media Gallery
+            </button>
+          )}
+          <p className="text-white/60 text-xs mt-2">{mediaUploadCount} item{mediaUploadCount!==1 && 's'} uploaded</p>
+        </div>
       </Card>
 
       {/* Generate Customer Link */}
