@@ -1,0 +1,114 @@
+name: Scrape Inventory
+
+on:
+  schedule:
+    - cron: '0 7 * * *'  # Run at 7 AM UTC (1 AM CST) every day
+  workflow_dispatch:  # Manual trigger
+  push:
+    paths:
+      - 'scripts/scrape.js'
+      - 'prisma/schema.prisma'
+      - '.github/workflows/scrape.yml'
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          npm ci
+          
+      - name: Setup Database
+        env:
+          POSTGRES_POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_POSTGRES_PRISMA_URL }}
+          POSTGRES_POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_POSTGRES_URL_NON_POOLING }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Generating Prisma Client..."
+          npx prisma generate
+          
+          echo "Pushing database changes..."
+          npx prisma migrate deploy
+        
+      - name: Run scraper
+        env:
+          # Database
+          POSTGRES_POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_POSTGRES_PRISMA_URL }}
+          POSTGRES_POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_POSTGRES_URL_NON_POOLING }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          
+          # Redis
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+          
+          # Environment
+          NODE_ENV: "production"  # Ensure production mode
+          VERCEL_ENV: "production"  # Force production mode to use KV
+          SCRAPE_INTERVAL_HOURS: "24"
+          
+          # CSS Selectors
+          CSS_SELECTOR_VEHICLE_CARD: ".vehicle-card"
+          CSS_SELECTOR_STOCK_NUMBER: "li[template='vehicleIdentitySpecs-stockNumber'] span.value"
+          CSS_SELECTOR_YEAR: "span[itemprop='vehicleModelDate']"
+          CSS_SELECTOR_MAKE: "span[itemprop='manufacturer']"
+          CSS_SELECTOR_MODEL: "span[itemprop='model']"
+          CSS_SELECTOR_TRIM: "span[itemprop='vehicleConfiguration']"
+          CSS_SELECTOR_PRICE: "span[itemprop='price'][data-action='priceSpecification'].value.big-and-bold"
+          CSS_SELECTOR_MILEAGE: "li[template='vehicleIdentitySpecs-miles'] span.value"
+          CSS_SELECTOR_VIN: "li[template='vehicleIdentitySpecs-vin'] span[itemprop='vehicleIdentificationNumber']"
+          CSS_SELECTOR_ENGINE: "li[template='vehicleIdentitySpecs-engine'] span[itemprop='name']"
+          CSS_SELECTOR_TRANSMISSION: "li[template='vehicleIdentitySpecs-transmission'] span[itemprop='name']"
+          CSS_SELECTOR_EXTERIOR_COLOR: "li[template='vehicleIdentitySpecs-exterior'] span[itemprop='color']"
+          CSS_SELECTOR_FEATURES: "li[itemprop='value'] span"
+          CSS_SELECTOR_PHOTOS: "figure img"
+          CSS_SELECTOR_VEHICLE_LINK: "a[data-insight='vehicleTitle']"
+          CSS_SELECTOR_BODY_STYLE: "li[template='vehicleIdentitySpecs-body'] span[itemprop='name']"
+          CSS_SELECTOR_CARFAX_HIGHLIGHTS: "#carfaxSection .carfax-one-owner-section"
+          
+        run: |
+          echo "Starting scraper..."
+          echo "Database configuration:"
+          echo "Using Prisma with connection pooling"
+          echo "Redis configuration:"
+          echo "KV_REST_API_URL: ${KV_REST_API_URL}"
+          echo "KV_REST_API_TOKEN: ${KV_REST_API_TOKEN:0:10}..." # Only show first 10 chars of token
+          
+          # Add the stock photo filter function to the scraper
+          echo "
+          // Add stock photo filtering
+          function isStockPhoto(photoUrl) {
+            // The only valid format is: https://inv.assets.sincrod.com/N/N/N/NNNNNNNNN.jpg
+            const realPhotoPattern = /https:\/\/inv\.assets\.sincrod\.com\/\d\/\d\/\d\/\d{9}\.jpg$/;
+            return !realPhotoPattern.test(photoUrl);
+          }
+
+          // Patch the scrapeVehicle function to filter images
+          const originalScrapeVehicle = scrapeVehicle;
+          scrapeVehicle = async function(url, browser) {
+            const data = await originalScrapeVehicle(url, browser);
+            if (data && data.images) {
+              data.images = data.images.filter(url => !isStockPhoto(url));
+              console.log('[DEBUG] Filtered images count:', data.images.length);
+            }
+            return data;
+          };" > filter.js
+          
+          node scripts/scrape.js
+          
+      - name: Handle errors
+        if: failure()
+        run: |
+          echo "::error::Scraper failed. Check the logs above for details."
+          echo "Last 100 lines of scraper output:"
+          tail -n 100 /home/runner/work/_temp/_github_workflow/scraper.log || true
+          exit 1

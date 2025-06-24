@@ -5,38 +5,11 @@ import MediaUploader from './MediaUploader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import VehicleSelector from './VehicleSelector';
-
-interface Vehicle {
-  id: string;
-  stockNumber: string;
-  vin: string;
-  year: number;
-  make: string;
-  model: string;
-  price: number;
-  mileage: number;
-  features: string[];
-  images: string[];
-  color: string;
-  trim?: string;
-  engine?: string;
-  transmission?: string;
-  description: string;
-  sourceUrl?: string;
-  facebookPostId?: string;
-  lastFacebookPostDate?: Date;
-  lastMarketplacePostDate?: Date;
-  carfaxHighlights?: any;
-  bodyStyle?: string;
-  vehicleClass?: string;
-  status: 'available' | 'sold';
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { VehicleWithMedia } from '@/types';
 
 interface ShowroomToolsProps {
-  selectedVehicle: Vehicle;
-  onVehicleSelect: (vehicle: Vehicle) => void;
+  selectedVehicle: VehicleWithMedia;
+  onVehicleSelect: (vehicle: VehicleWithMedia) => void;
   onGenerateLink: () => void;
 }
 
@@ -48,9 +21,10 @@ const ShowroomTools = ({ selectedVehicle, onVehicleSelect, onGenerateLink }: Sho
     alert('Facebook integration will be connected to post vehicle content');
   };
 
-  const handleUploaded = (result: { url: string; key: string }) => {
+  const handleUploaded = (media: { url: string; key: string }) => {
     setMediaUploadCount((prev) => prev + 1);
-    // TODO: Optionally associate result.url with selectedVehicle via API mutation
+    // TODO: Optionally associate media.url with selectedVehicle via API mutation
+    console.log('Uploaded media:', media);
   };
 
   return (

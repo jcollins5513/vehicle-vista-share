@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 /*
  * Centralised, typed AWS S3 client + helper.
@@ -51,4 +51,16 @@ export async function uploadBufferToS3(opts: {
 
   const url = `https://${BUCKET}.s3.${REGION}.amazonaws.com/${key}`;
   return { url, key };
+}
+
+export async function deleteObjectFromS3(key: string): Promise<void> {
+  if (!key) {
+    throw new Error("S3 object key cannot be empty.");
+  }
+  await s3Client.send(
+    new DeleteObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+    })
+  );
 }

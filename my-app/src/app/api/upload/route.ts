@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadBufferToS3 } from "@/lib/s3";
+import { prisma } from "@/lib/prisma";
+import { MediaType } from "@/types/media";
 
 // Explicitly opt into Node runtime so we can use Buffer & AWS SDK.
 export const runtime = "nodejs";
@@ -21,6 +23,7 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get("file");
+    const vehicleId = formData.get("vehicleId") as string | null;
     if (!file || !(file instanceof File)) {
       return new NextResponse("Bad Request: 'file' field missing", { status: 400 });
     }
@@ -43,7 +46,17 @@ export async function POST(req: NextRequest) {
 
     const { url, key } = await uploadBufferToS3({ buffer, mimeType: file.type });
 
-    return NextResponse.json({ url, key });
+    // Save metadata to database
+    const newMedia = await prisma.media.create({
+      data: {
+        url,
+        s3Key: key,
+        type: file.type.startsWith("image/") ? MediaType.IMAGE : MediaType.VIDEO,
+        ...(vehicleId && { vehicle: { connect: { id: vehicleId } } }),
+      },
+    });
+
+    return NextResponse.json(newMedia);
   } catch (err) {
     console.error("/api/upload error", err);
     return new NextResponse("Internal Server Error", { status: 500 });

@@ -44,6 +44,7 @@ enum VehicleStatus {
 model Media {
   id        String   @id @default(cuid())
   url       String
+  s3Key     String   @unique
   type      MediaType
   vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
   vehicleId String?

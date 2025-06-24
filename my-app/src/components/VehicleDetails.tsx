@@ -2,34 +2,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { DollarSign, Gauge, MapPin } from 'lucide-react';
-
-interface Vehicle {
-  id: string;
-  stockNumber: string;
-  vin: string;
-  year: number;
-  make: string;
-  model: string;
-  price: number;
-  mileage: number;
-  features: string[];
-  images: string[];
-  color: string;
-  trim?: string;
-  engine?: string;
-  transmission?: string;
-  description: string;
-  sourceUrl?: string;
-  facebookPostId?: string;
-  lastFacebookPostDate?: Date;
-  lastMarketplacePostDate?: Date;
-  carfaxHighlights?: any;
-  bodyStyle?: string;
-  vehicleClass?: string;
-  status: 'available' | 'sold';
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { Vehicle } from '@/types';
 
 interface VehicleDetailsProps {
   vehicle: Vehicle;

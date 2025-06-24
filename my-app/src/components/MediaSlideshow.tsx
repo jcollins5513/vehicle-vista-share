@@ -1,218 +1,104 @@
-
-import React, { useState, useEffect } from 'react';
-import { Play, SkipBack, SkipForward, Pause } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import useSWR from 'swr';
-import { Media, MediaType } from '@/types/media';
-
-interface Vehicle {
-  id: string;
-  stockNumber: string;
-  vin: string;
-  year: number;
-  make: string;
-  model: string;
-  price: number;
-  mileage: number;
-  features: string[];
-  images: string[];
-  color: string;
-  trim?: string;
-  engine?: string;
-  transmission?: string;
-  description: string;
-  sourceUrl?: string;
-  facebookPostId?: string;
-  lastFacebookPostDate?: Date;
-  lastMarketplacePostDate?: Date;
-  carfaxHighlights?: Record<string, unknown>;
-  bodyStyle?: string;
-  vehicleClass?: string;
-  status: 'available' | 'sold';
-  createdAt: Date;
-  updatedAt: Date;
-}
+import Image from 'next/image';
+import React, { useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
+import type { SlideshowItem } from '@/types';
 
 interface MediaSlideshowProps {
-  vehicle: Vehicle;
-  showGeneralMedia?: boolean;
+  items: SlideshowItem[];
+  currentSlide: number;
+  onSlideChange: (index: number) => void;
+  isPlaying: boolean;
+  onPlaybackToggle: () => void;
 }
 
-// Fetcher function for SWR
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
-const MediaSlideshow = ({ vehicle, showGeneralMedia = true }: MediaSlideshowProps) => {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  
-  // Fetch vehicle-specific media
-  const { data: vehicleMedia, error: vehicleMediaError } = useSWR<Media[]>(
-    `/api/vehicles/${vehicle.id}/media`,
-    fetcher
-  );
-  
-  // Fetch general media
-  const { data: generalMedia, error: generalMediaError } = useSWR<Media[]>(
-    showGeneralMedia ? '/api/media/general' : null,
-    fetcher
-  );
-  
-  // Loading state
-  const isLoading = (!vehicleMedia && !vehicleMediaError) || (showGeneralMedia && !generalMedia && !generalMediaError);
-  
-  // Combine vehicle-specific and general media
-  const allMedia = [...(vehicleMedia || []), ...(showGeneralMedia ? (generalMedia || []) : [])];
-  
-  // Convert media to slideshow format
-  const mediaItems = allMedia.length > 0 
-    ? allMedia.map((media) => ({
-        type: media.type === MediaType.VIDEO ? 'video' : 'image',
-        url: media.url,
-        caption: media.type === MediaType.VIDEO ? 'Video' : `${vehicle.year} ${vehicle.make} ${vehicle.model}`
-      }))
-    : vehicle.images.length > 0 
-      ? vehicle.images.map((url, index) => ({
-          type: 'image',
-          url,
-          caption: `View ${index + 1}`
-        }))
-      : [
-          {
-            type: 'image',
-            url: '/lovable-uploads/62f13105-748e-495f-8d8e-507a1df71f4e.png',
-            caption: 'Exterior View'
-          },
-          {
-            type: 'image',
-            url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
-            caption: 'Interior Dashboard'
-          },
-          {
-            type: 'image', 
-            url: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800',
-            caption: 'Side Profile'
-          }
-        ];
-
-  const totalSlides = mediaItems.length;
-
+const MediaSlideshow = ({ items, currentSlide, onSlideChange, isPlaying, onPlaybackToggle }: MediaSlideshowProps) => {
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying && totalSlides > 1) {
-      interval = setInterval(() => {
-        setCurrentSlide((prev) => (prev + 1) % totalSlides);
-      }, 4000);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying, totalSlides]);
+    if (!isPlaying || items.length <= 1) return;
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides);
+    const timer = setInterval(() => {
+      onSlideChange((currentSlide + 1) % items.length);
+    }, 10000); // 10-second interval
+
+    return () => clearInterval(timer);
+  }, [isPlaying, items.length, currentSlide, onSlideChange]);
+
+  const handleNext = () => {
+    onSlideChange((currentSlide + 1) % items.length);
   };
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  const handlePrev = () => {
+    onSlideChange((currentSlide - 1 + items.length) % items.length);
   };
 
-  const togglePlayback = () => {
-    setIsPlaying(!isPlaying);
-  };
+  if (items.length === 0) {
+    return (
+      <div className="relative w-full aspect-video bg-slate-800 rounded-lg flex items-center justify-center">
+        <p className="text-white">No media available.</p>
+      </div>
+    );
+  }
+
+  const currentItem = items[currentSlide];
 
   return (
-    <Card className="bg-white/10 backdrop-blur-sm border-white/20 overflow-hidden">
-      <div className="relative aspect-video bg-black">
-        {isLoading ? (
-          <div className="flex items-center justify-center w-full h-full bg-gray-900">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-          </div>
-        ) : mediaItems[currentSlide] ? (
-          <>
-            {mediaItems[currentSlide].type === 'video' ? (
-              <video 
-                src={mediaItems[currentSlide].url}
-                className="w-full h-full object-cover"
-                autoPlay
-                muted
-                loop
-                controls
-              />
-            ) : (
-              // Using img instead of next/image because we're displaying dynamic URLs from external sources
-              <img 
-                src={mediaItems[currentSlide].url}
-                alt={mediaItems[currentSlide].caption}
-                className="w-full h-full object-cover"
-              />
-            )}
-            
-            {/* Overlay Controls */}
-            <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-              <div className="flex items-center space-x-4">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={prevSlide}
-                  className="bg-black/50 text-white hover:bg-black/70"
-                >
-                  <SkipBack className="w-6 h-6" />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={togglePlayback}
-                  className="bg-black/50 text-white hover:bg-black/70"
-                >
-                  {isPlaying ? (
-                    <Pause className="w-8 h-8" />
-                  ) : (
-                    <Play className="w-8 h-8" />
-                  )}
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={nextSlide}
-                  className="bg-black/50 text-white hover:bg-black/70"
-                >
-                  <SkipForward className="w-6 h-6" />
-                </Button>
-              </div>
-            </div>
+    <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
+      {/* Main Image */}
+      {currentItem && (
+        <Image
+          key={currentItem.id}
+          src={currentItem.url}
+          alt={currentItem.vehicle?.model || 'Custom Media'}
+          layout="fill"
+          objectFit="contain" // Changed from 'cover' to 'contain'
+          className="transition-opacity duration-500 ease-in-out"
+          priority
+        />
+      )}
 
-            {/* Bottom Info */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-              <h3 className="text-white text-2xl font-bold mb-2">
-                {vehicle.year} {vehicle.make} {vehicle.model}
-              </h3>
-              <p className="text-white/80">{mediaItems[currentSlide].caption}</p>
-              
-              {/* Progress Indicators */}
-              <div className="flex space-x-2 mt-4">
-                {mediaItems.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSlide(index)}
-                    className={`w-3 h-1 rounded transition-all ${
-                      index === currentSlide ? 'bg-white' : 'bg-white/40'
-                    }`}
-                    aria-label={`Go to slide ${index + 1}`}
-                    title={`Go to slide ${index + 1}`}
-                  />
-                ))}
-              </div>
-            </div>
+      {/* Gradient Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent" />
 
-            {/* Slide Counter */}
-            <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded text-sm">
-              {currentSlide + 1}/{totalSlides} media
-            </div>
-          </>
-        ) : null}
+      {/* Controls */}
+      <div className="absolute top-1/2 left-4 right-4 flex justify-between items-center transform -translate-y-1/2">
+        <button onClick={handlePrev} className="bg-black/50 text-white p-2 rounded-full hover:bg-black/80 transition-all" aria-label="Previous slide">
+          <ChevronLeft size={24} />
+        </button>
+        <button onClick={handleNext} className="bg-black/50 text-white p-2 rounded-full hover:bg-black/80 transition-all" aria-label="Next slide">
+          <ChevronRight size={24} />
+        </button>
       </div>
-    </Card>
+
+      {/* Bottom Info Bar */}
+      <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
+        {/* Vehicle Info */}
+        <div className="text-white">
+          {currentItem?.vehicle && (
+            <>
+              <h3 className="text-xl font-bold">{`${currentItem.vehicle.year} ${currentItem.vehicle.make} ${currentItem.vehicle.model}`}</h3>
+              <p className="text-sm opacity-80">{`$${currentItem.vehicle.price.toLocaleString()} | ${currentItem.vehicle.mileage.toLocaleString()} miles`}</p>
+            </>
+          )}
+        </div>
+
+        {/* Playback and Dots */}
+        <div className="flex items-center space-x-4">
+          <button onClick={onPlaybackToggle} className="text-white" aria-label={isPlaying ? 'Pause slideshow' : 'Play slideshow'}>
+            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+          </button>
+          <div className="flex items-center space-x-2">
+            {items.map((slide, index) => (
+              <button
+                key={slide.id}
+                onClick={() => onSlideChange(index)}
+                className={`w-3 h-3 rounded-full transition-all ${index === currentSlide ? 'w-6 bg-white' : 'w-3 bg-white/40'}`}
+                aria-label={`Go to slide ${index + 1}`}
+                title={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
