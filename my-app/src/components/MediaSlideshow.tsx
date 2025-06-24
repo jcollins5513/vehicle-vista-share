@@ -48,10 +48,11 @@ const MediaSlideshow = ({ items, currentSlide, onSlideChange, isPlaying, onPlayb
           key={currentItem.id}
           src={currentItem.url}
           alt={currentItem.vehicle?.model || 'Custom Media'}
-          layout="fill"
-          objectFit="contain" // Changed from 'cover' to 'contain'
+          fill
+          style={{ objectFit: 'contain' }}
           className="transition-opacity duration-500 ease-in-out"
           priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
       )}
 

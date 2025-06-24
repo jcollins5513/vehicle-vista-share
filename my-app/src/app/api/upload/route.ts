@@ -47,18 +47,43 @@ export async function POST(req: NextRequest) {
     const { url, key } = await uploadBufferToS3({ buffer, mimeType: file.type });
 
     // Save metadata to database
+    const mediaData = {
+      url, // Use the direct S3 URL
+      s3Key: key,
+      type: file.type.startsWith("image/") ? MediaType.IMAGE : MediaType.VIDEO,
+    };
+    
+    // Only connect to a vehicle if vehicleId is provided and valid
+    if (vehicleId) {
+      try {
+        // Check if vehicle exists first
+        const vehicle = await prisma.vehicle.findUnique({
+          where: { id: vehicleId },
+          select: { id: true }
+        });
+        
+        if (vehicle) {
+          Object.assign(mediaData, {
+            vehicle: { connect: { id: vehicleId } }
+          });
+        } else {
+          console.warn(`Vehicle with ID ${vehicleId} not found, creating media without vehicle association`);
+        }
+      } catch (error) {
+        console.error(`Error checking vehicle existence: ${error}`);
+        // Continue without vehicle association
+      }
+    }
+    
     const newMedia = await prisma.media.create({
-      data: {
-        url,
-        s3Key: key,
-        type: file.type.startsWith("image/") ? MediaType.IMAGE : MediaType.VIDEO,
-        ...(vehicleId && { vehicle: { connect: { id: vehicleId } } }),
-      },
+      data: mediaData,
     });
 
     return NextResponse.json(newMedia);
   } catch (err) {
     console.error("/api/upload error", err);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    // Return more detailed error message for debugging
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return new NextResponse(`Internal Server Error: ${errorMessage}`, { status: 500 });
   }
 }

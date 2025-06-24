@@ -39,17 +39,21 @@ export async function uploadBufferToS3(opts: {
 
   const key = `${keyPrefix}/${uuidv4()}`;
 
+  // Upload the object to S3 with public-read ACL
   await s3Client.send(
     new PutObjectCommand({
       Bucket: BUCKET,
       Key: key,
       Body: buffer,
       ContentType: mimeType,
-      ACL: "public-read", // public bucket; adjust if using presigned URLs instead
+      CacheControl: 'max-age=31536000',
+      ACL: 'public-read', // Make object publicly accessible
     })
   );
-
+  
+  // Return the direct S3 URL
   const url = `https://${BUCKET}.s3.${REGION}.amazonaws.com/${key}`;
+  
   return { url, key };
 }
 

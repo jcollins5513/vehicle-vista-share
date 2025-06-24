@@ -50,7 +50,7 @@ const ShowroomView = ({ vehicles, customMedia = [] }: ShowroomViewProps) => {
     const customMediaItems: SlideshowItem[] = customMedia.map(media => ({
       id: `c-${media.id}`,
       url: media.url,
-      type: media.type,
+      type: media.type || 'IMAGE', // Use the correct property name from the Media interface
       vehicle: null,
     }));
 
@@ -82,14 +82,18 @@ const ShowroomView = ({ vehicles, customMedia = [] }: ShowroomViewProps) => {
     return () => clearInterval(timer);
   }, []);
 
-  const generateCustomerLink = () => {
-    if (!selectedVehicle) {
-      alert('Cannot generate link: No vehicle selected.');
+  const generateCustomerLink = (vehicleIds: string[]) => {
+    if (vehicleIds.length === 0) {
+      alert('Cannot generate link: No vehicles selected.');
       return;
     }
-    const customerUrl = `${window.location.origin}/customer/${selectedVehicle.id}`;
+    
+    // Create a URL with query parameters for multiple vehicles
+    const idsParam = vehicleIds.join(',');
+    const customerUrl = `${window.location.origin}/customer?ids=${idsParam}`;
+    
     navigator.clipboard.writeText(customerUrl);
-    alert('Customer link copied to clipboard!');
+    alert(`Customer link with ${vehicleIds.length} vehicle${vehicleIds.length > 1 ? 's' : ''} copied to clipboard!`);
   };
 
   const formatTime = (date: Date) => {
@@ -167,6 +171,7 @@ const ShowroomView = ({ vehicles, customMedia = [] }: ShowroomViewProps) => {
                 selectedVehicle={selectedVehicle}
                 onVehicleSelect={setSelectedVehicle}
                 onGenerateLink={generateCustomerLink}
+                vehicles={vehicles}
               />
             )}
           </div>
