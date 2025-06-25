@@ -28,24 +28,8 @@ jobs:
         run: |
           npm ci
           
-      - name: Setup Database
-        env:
-          POSTGRES_POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_POSTGRES_PRISMA_URL }}
-          POSTGRES_POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_POSTGRES_URL_NON_POOLING }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          echo "Generating Prisma Client..."
-          npx prisma generate
-          
-          echo "Pushing database changes..."
-          npx prisma migrate deploy
-        
       - name: Run scraper
         env:
-          # Database
-          POSTGRES_POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_POSTGRES_PRISMA_URL }}
-          POSTGRES_POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_POSTGRES_URL_NON_POOLING }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           
           # Redis
           KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
@@ -77,8 +61,6 @@ jobs:
           
         run: |
           echo "Starting scraper..."
-          echo "Database configuration:"
-          echo "Using Prisma with connection pooling"
           echo "Redis configuration:"
           echo "KV_REST_API_URL: ${KV_REST_API_URL}"
           echo "KV_REST_API_TOKEN: ${KV_REST_API_TOKEN:0:10}..." # Only show first 10 chars of token
