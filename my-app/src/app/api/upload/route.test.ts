@@ -22,7 +22,7 @@ if (!global.File) {
   global.File = class File extends Blob {
     name: string;
     lastModified: number;
-    constructor(bits: unknown[], name: string, options?: FilePropertyBag) {
+    constructor(bits: (Blob | ArrayBuffer | BinaryLike)[], name: string, options?: FilePropertyBag) {
       super(bits, options);
       this.name = name;
       this.lastModified = options?.lastModified ?? Date.now();
@@ -39,16 +39,16 @@ describe('/api/upload', () => {
   let mockedS3Helpers: unknown;
   let mockedPrisma: unknown;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.resetModules();
 
-    // Dynamically require modules after resetting
-    const route = // require() replaced by import, refactor as needed
-// import ... from ... //'./route');
-    mockedS3Helpers = // require() replaced by import, refactor as needed
-// import ... from ... //'@/lib/s3');
-    mockedPrisma = // require() replaced by import, refactor as needed
-// import ... from ... //'@/lib/prisma').prisma;
+    // Dynamically import route and mocks after resetting modules
+    const routeModule = await import('./route');
+    const s3Module = await import('@/lib/s3');
+    const prismaModule = await import('@/lib/prisma');
+    const route: { POST: (req: unknown) => Promise<{ status: number; json: () => Promise<unknown>; text: () => Promise<string>; }> } = routeModule as unknown;
+    mockedS3Helpers = s3Module as unknown;
+    mockedPrisma = (prismaModule as { prisma: unknown }).prisma;
     POST = route.POST;
   });
 
