@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
 import ShowroomView from '@/components/ShowroomView';
-import { notFound } from 'next/navigation';
 
 async function getShowroomData() {
   // Artificial delay to simulate network latency

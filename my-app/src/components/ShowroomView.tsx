@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, Image as ImageIcon } from 'lucide-react';
 import MediaSlideshow from './MediaSlideshow';
 import VehicleDetails from './VehicleDetails';

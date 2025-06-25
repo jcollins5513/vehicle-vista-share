@@ -3,14 +3,14 @@ import { MediaType } from '@/types/media';
 import { Blob } from 'buffer';
 import type { BinaryLike } from 'crypto';
 import { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
 
 // Type definitions for test request/response
 type MockRequest = NextRequest & {
   formData: () => Promise<FormData>;
 };
 
-type MockResponse = NextResponse & {
+type MockResponse = {
+  status: number;
   json: () => Promise<unknown>;
   text: () => Promise<string>;
 };
@@ -50,7 +50,7 @@ jest.mock('@/lib/s3');
 jest.mock('@/lib/prisma');
 
 describe('/api/upload', () => {
-  let POST: RequestHandler;
+  let POST: typeof import('./route').POST;
   let mockedS3Helpers: jest.Mocked<typeof import('@/lib/s3')>;
   let mockedPrisma: jest.Mocked<typeof import('@/lib/prisma').prisma>;
 
@@ -61,12 +61,9 @@ describe('/api/upload', () => {
     const routeModule = await import('./route');
     const s3Module = await import('@/lib/s3');
     const prismaModule = await import('@/lib/prisma');
-    
-    // Type assertions for modules
-    const route = routeModule as { POST: RequestHandler };
-    mockedS3Helpers = s3Module as jest.Mocked<typeof s3Module>;
-    mockedPrisma = (prismaModule as { prisma: typeof prismaModule.prisma }).prisma as jest.Mocked<typeof prismaModule.prisma>;
-    
+    const route = routeModule as typeof import('./route');
+    mockedS3Helpers = s3Module as typeof import('@/lib/s3');
+    mockedPrisma = (prismaModule as { prisma: typeof import('@/lib/prisma').prisma }).prisma;
     POST = route.POST;
   });
 
@@ -107,10 +104,10 @@ describe('/api/upload', () => {
       },
     });
 
-    (req as unknown as { formData: () => Promise<FormData> }).formData = jest.fn().mockResolvedValue(formData);
+    (req as unknown).formData = jest.fn().mockResolvedValue(formData);
 
     // Act
-    const response = await POST(req as unknown as NextRequest);
+    const response = await (POST as unknown as RequestHandler)(req as unknown as NextRequest);
     const data = await response.json();
 
     // Assert
@@ -144,10 +141,10 @@ describe('/api/upload', () => {
       },
     });
 
-    (req as unknown as { formData: () => Promise<FormData> }).formData = jest.fn().mockResolvedValue(formData);
+    (req as unknown).formData = jest.fn().mockResolvedValue(formData);
 
     // Act
-    const response = await POST(req as unknown as NextRequest);
+    const response = await (POST as (req: any) => Promise<{ status: number; json: () => Promise<unknown>; text: () => Promise<string>; }>)(req);
 
     // Assert
     expect(response.status).toBe(500);
@@ -167,10 +164,10 @@ describe('/api/upload', () => {
       },
     });
 
-    (req as unknown as { formData: () => Promise<FormData> }).formData = jest.fn().mockResolvedValue(formData);
+    (req as unknown).formData = jest.fn().mockResolvedValue(formData);
 
     // Act
-    const response = await POST(req as unknown as NextRequest);
+    const response = await (POST as (req: any) => Promise<{ status: number; json: () => Promise<unknown>; text: () => Promise<string>; }>)(req);
 
     // Assert
     expect(response.status).toBe(400);

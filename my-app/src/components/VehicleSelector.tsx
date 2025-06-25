@@ -11,7 +11,6 @@ import type { Vehicle } from '@/types';
 interface VehicleSelectorProps {
   currentVehicle: Vehicle;
   onVehicleSelect: (vehicle: Vehicle) => void;
-  isCustomerView: boolean;
   vehicles?: Vehicle[]; // Optional array of vehicles to display
   multiSelect?: boolean; // Enable multi-selection mode
   selectedVehicles?: Vehicle[]; // Array of selected vehicles for sharing
@@ -19,10 +18,9 @@ interface VehicleSelectorProps {
   maxSelections?: number; // Maximum number of vehicles that can be selected
 }
 
-const VehicleSelector = ({ 
-  currentVehicle, 
-  onVehicleSelect, 
-  isCustomerView, 
+const VehicleSelector = ({
+  currentVehicle,
+  onVehicleSelect,
   vehicles = [],
   multiSelect = false,
   selectedVehicles = [],

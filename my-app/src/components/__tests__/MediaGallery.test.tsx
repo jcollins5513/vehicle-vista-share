@@ -1,8 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { DndContext } from '@dnd-kit/core';
-import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import MediaGallery from '../MediaGallery';
 import type { Media } from '@/types';
 
@@ -13,34 +11,39 @@ type MediaGalleryProps = {
 };
 
 // Mock the MediaItem component for testing
-const MockMediaItem = ({ 
-  id, 
-  url, 
-  isMain, 
-  onSelect, 
+const MockMediaItem = ({
+  id,
+  url,
+  isMain,
+  onSelect,
   onDelete,
-  isCustomMedia 
-}: { 
-  id: string; 
-  url: string; 
-  isMain: boolean; 
-  onSelect: () => void; 
+  isCustomMedia
+}: {
+  id: string;
+  url: string;
+  isMain: boolean;
+  onSelect: () => void;
   onDelete: () => void;
   isCustomMedia: boolean;
 }) => (
-  <div 
+  <div
     data-testid={`media-item-${id}`}
     className={`relative cursor-grab ${isMain ? 'border-blue-500' : 'border-transparent'}`}
   >
-    <button 
+    <button
       onClick={onSelect}
       data-testid={`select-button-${id}`}
       className="w-full h-full"
     >
-      <img src={url} alt="Media item" className="w-full h-full object-cover" />
+      <img
+        src={url}
+        alt="Media item"
+        className="w-full h-full object-cover"
+        data-testid={`media-image-${id}`}
+      />
     </button>
     {isCustomMedia && (
-      <button 
+      <button
         onClick={onDelete}
         data-testid={`delete-button-${id}`}
         className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
@@ -58,13 +61,14 @@ jest.mock('../MediaGallery', () => {
       <div data-testid="media-gallery">
         {/* Main image display */}
         <div data-testid="main-image">
-          <img 
-            src={media[0]?.url || '/placeholder.png'} 
-            alt="Main media item" 
+          <img
+            src={media[0]?.url || '/placeholder.png'}
+            alt="Main media item"
             className="w-full h-auto"
+            data-testid="main-media-image"
           />
         </div>
-        
+
         {/* Thumbnails */}
         <div data-testid="thumbnails">
           {media.map((item) => (
@@ -73,7 +77,7 @@ jest.mock('../MediaGallery', () => {
               id={item.id}
               url={item.url}
               isMain={media[0]?.id === item.id}
-              onSelect={() => {}}
+              onSelect={() => { /* no-op for testing */ }}
               onDelete={() => {
                 // In a real test, we would mock the delete function
                 console.log(`Delete media ${item.id}`);
