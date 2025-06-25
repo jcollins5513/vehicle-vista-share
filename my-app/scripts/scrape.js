@@ -1,5 +1,4 @@
 require('dotenv').config();
-const { PrismaClient } = require('@prisma/client');
 const { Redis } = require('@upstash/redis');
 
 const puppeteer = require('puppeteer');
@@ -29,8 +28,6 @@ const selectors = {
   CSS_SELECTOR_CARFAX_HIGHLIGHTS: '#carfaxSection .carfax-one-owner-section'
 };
 
-// Initialize Prisma client
-const prisma = new PrismaClient();
 
 // Clean and format Redis URL and token
 const cleanUrl = (url) => {
@@ -68,63 +65,7 @@ const redis = new Redis({
   token: REDIS_TOKEN,
 });
 
-async function saveVehicle(vehicleData) {
-  if (!vehicleData) {
-    console.error('No vehicle data to save');
-    return null;
-  }
 
-  try {
-    return await prisma.vehicle.upsert({
-      where: { stockNumber: vehicleData.stockNumber },
-      update: {
-        make: vehicleData.make,
-        model: vehicleData.model,
-        year: vehicleData.year,
-        price: vehicleData.price,
-        mileage: vehicleData.mileage,
-        color: vehicleData.color,
-        vin: vehicleData.vin,
-        trim: vehicleData.trim,
-        engine: vehicleData.engine,
-        transmission: vehicleData.transmission,
-        bodyStyle: vehicleData.bodyStyle,
-        carfaxHighlights: vehicleData.carfaxHighlights,
-        features: vehicleData.features,
-        images: vehicleData.images,
-        description: vehicleData.description,
-        sourceUrl: vehicleData.sourceUrl,
-        status: 'available',
-        updatedAt: new Date()
-      },
-      create: {
-        stockNumber: vehicleData.stockNumber,
-        make: vehicleData.make,
-        model: vehicleData.model,
-        year: vehicleData.year,
-        price: vehicleData.price,
-        mileage: vehicleData.mileage,
-        color: vehicleData.color,
-        vin: vehicleData.vin,
-        trim: vehicleData.trim,
-        engine: vehicleData.engine,
-        transmission: vehicleData.transmission,
-        bodyStyle: vehicleData.bodyStyle,
-        carfaxHighlights: vehicleData.carfaxHighlights,
-        features: vehicleData.features,
-        images: vehicleData.images,
-        description: vehicleData.description,
-        sourceUrl: vehicleData.sourceUrl,
-        status: 'available',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    });
-  } catch (error) {
-    console.error('Error saving vehicle:', error);
-    return null;
-  }
-}
 
 async function scrapeVehicle(url, browser) {
   console.log('[DEBUG] Starting vehicle scrape:', url);
@@ -201,14 +142,6 @@ async function scrapeInventory() {
   let browser = null;
 
   try {
-    // Get all current stock numbers before scraping
-    console.log('[DEBUG] Fetching current available vehicles...');
-    const previousStockNumbers = await prisma.vehicle.findMany({
-      where: { status: 'available' },
-      select: { stockNumber: true }
-    });
-    const previousStockNumberSet = new Set(previousStockNumbers.map(v => v.stockNumber));
-    console.log(`[DEBUG] Found ${previousStockNumberSet.size} currently available vehicles`);
 
     // Launch browser with proper configuration
     const launchOptions = await getBrowserLaunchOptions();
@@ -261,8 +194,6 @@ async function scrapeInventory() {
         if (vehicleData) {
           vehicleData.sourceUrl = vehicleUrl;
           vehicles.push(vehicleData);
-          // Remove from previous stock numbers as we've found it
-          previousStockNumberSet.delete(vehicleData.stockNumber);
           console.log('[DEBUG] Vehicle data scraped successfully:', {
             stockNumber: vehicleData.stockNumber,
             make: vehicleData.make,
@@ -279,28 +210,9 @@ async function scrapeInventory() {
       currentPage++;
     }
 
-    // Save all scraped vehicles
-    console.log('[DEBUG] Saving scraped vehicles...');
-    for (const vehicle of vehicles) {
-      await saveVehicle(vehicle);
-    }
 
-    // Mark remaining vehicles as sold
-    if (previousStockNumberSet.size > 0) {
-      console.log(`[DEBUG] Marking ${previousStockNumberSet.size} vehicles as sold...`);
-      await prisma.vehicle.updateMany({
-        where: {
-          stockNumber: {
-            in: Array.from(previousStockNumberSet)
-          },
-          status: 'available'
-        },
-        data: {
-          status: 'sold',
-          updatedAt: new Date()
-        }
-      });
-    }
+
+
 
 
 
@@ -336,22 +248,6 @@ async function testSingleVehicle() {
     if (vehicleData) {
       console.log('[DEBUG] Vehicle data scraped successfully');
       
-      // Update database
-      await prisma.vehicle.upsert({
-        where: { stockNumber: vehicleData.stockNumber },
-        update: {
-          ...vehicleData,
-          sourceUrl: testUrl,
-          updatedAt: new Date()
-        },
-        create: {
-          ...vehicleData,
-          sourceUrl: testUrl,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      });
-
       // Update cache with the correct format
       console.log('[DEBUG] Updating Redis cache');
       const cacheData = {
@@ -371,18 +267,12 @@ async function testSingleVehicle() {
     console.error('Test scrape failed:', error);
   } finally {
     if (browser) await browser.close();
-    await prisma.$disconnect();
   }
 }
 
 async function main() {
   try {
     console.log('[DEBUG] Starting main function');
-    console.log('[DEBUG] Checking database connection...');
-    
-    // Test database connection
-    await prisma.$connect();
-    console.log('[DEBUG] Database connection successful');
     
     // Test Redis connection
     console.log('[DEBUG] Checking Redis connection...');
@@ -402,7 +292,7 @@ async function main() {
     console.error('[ERROR] Main function failed:', error);
     throw error;
   } finally {
-    await prisma.$disconnect();
+    // nothing to disconnect
   }
 }
 
