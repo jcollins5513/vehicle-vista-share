@@ -130,7 +130,7 @@ describe('/api/upload', () => {
     (req as unknown).formData = jest.fn().mockResolvedValue(formData);
 
     // Act
-    const response = await POST(req as unknown);
+    const response = await (POST as (req: any) => Promise<{ status: number; json: () => Promise<unknown>; text: () => Promise<string>; }>)(req);
 
     // Assert
     expect(response.status).toBe(500);
@@ -153,7 +153,7 @@ describe('/api/upload', () => {
     (req as unknown).formData = jest.fn().mockResolvedValue(formData);
 
     // Act
-    const response = await POST(req as unknown);
+    const response = await (POST as (req: any) => Promise<{ status: number; json: () => Promise<unknown>; text: () => Promise<string>; }>)(req);
 
     // Assert
     expect(response.status).toBe(400);
