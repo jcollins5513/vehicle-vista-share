@@ -15,35 +15,15 @@ interface CustomerViewProps {
   sharedVehicles?: Vehicle[]; // Vehicles specifically shared in this link
 }
 
-const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicle, sharedVehicles = [], allVehicles = [] }) => {
+const CustomerView: React.FC<CustomerViewProps> = ({ vehicle: providedVehicle, sharedVehicles = [], allVehicles = [] }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [hasMounted, setHasMounted] = useState(false);
 
-  // Debug: log render and environment
-  if (typeof window === 'undefined') {
-    // Server render
-    // eslint-disable-next-line no-console
-    console.log('[CustomerView] Rendered on SERVER', { currentTime });
-  } else {
-    // Client render
-    // eslint-disable-next-line no-console
-    console.log('[CustomerView] Rendered on CLIENT', { currentTime });
-  }
-
-
-  // Only use provided vehicle data, no placeholders
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(providedVehicle || null);
-
   useEffect(() => {
     setHasMounted(true);
-    // eslint-disable-next-line no-console
-    console.log('[CustomerView] useEffect: mounted on CLIENT', { currentTime });
     const timer = setInterval(() => {
-      const now = new Date();
-      setCurrentTime(now);
-      // eslint-disable-next-line no-console
-      console.log('[CustomerView] Timer tick: updating currentTime', { now });
+      setCurrentTime(new Date());
     }, 1000);
     return () => clearInterval(timer);
   }, []);
@@ -56,6 +36,8 @@ const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicl
       setCurrentImageIndex(0);
     }
   }, [providedVehicle]);
+
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(providedVehicle || null);
 
   const bookTestDrive = useCallback(() => {
     // In real implementation, this would integrate with Google Calendar
@@ -72,13 +54,6 @@ const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicl
     if (selectedVehicle?.images && selectedVehicle.images.length > 0) {
       setCurrentImageIndex((prev) => (prev - 1 + selectedVehicle.images.length) % selectedVehicle.images.length);
     }
-  };
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit'
-    });
   };
 
   const formatDate = (date: Date) => {

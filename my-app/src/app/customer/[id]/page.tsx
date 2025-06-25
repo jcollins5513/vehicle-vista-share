@@ -1,16 +1,16 @@
 import React from 'react';
-import { notFound } from 'next/navigation';
-import type { Vehicle } from '@/types';
-import CustomerView from '@/components/CustomerView';
+import CustomerView from "../../../components/CustomerView";
+import type { Vehicle, VehicleWithMedia } from "@/types";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
-interface CustomerPageParams {
-  id?: string;
-  vehicleId?: string;
-  [key: string]: string | string[] | undefined;
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  return {
+    title: `Customer View - ${params.id}`,
+  };
 }
 
-// Helper to fetch data from API routes on the server
-async function fetchVehicle(id: string): Promise<Vehicle | null> {
+async function fetchVehicle(id: string): Promise<VehicleWithMedia | null> {
   const res = await fetch(`/api/vehicle/${id}`, { cache: 'no-store' });
   if (!res.ok) return null;
   return res.json();
