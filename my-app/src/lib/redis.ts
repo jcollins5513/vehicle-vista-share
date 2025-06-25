@@ -10,48 +10,74 @@ if (!REDIS_URL || !REDIS_TOKEN) {
 
 // Create a Redis client
 const redis = new Redis({
-  host: new URL(REDIS_URL).hostname,
-  port: Number(new URL(REDIS_URL).port),
-  username: REDIS_URL.split('//')[1].split(':')[0],
+  host: REDIS_URL || 'localhost',
+  port: parseInt(process.env.UPSTASH_REDIS_REST_PORT || '6379'),
   password: REDIS_TOKEN,
-  tls: {},
+  tls: process.env.NODE_ENV === 'production' ? {} : undefined,
   maxRetriesPerRequest: 3,
-  retryStrategy: (times: number) => {
-    const delay = Math.min(times * 100, 5000);
+  retryStrategy: (times) => {
+    const delay = Math.min(times * 50, 2000);
     return delay;
   },
 });
 
 // Utility functions for common operations
+// Type-safe wrapper for Redis client
+type RedisZAddOptions = {
+  nx?: boolean;
+};
+
+type RedisZAddParams = {
+  score: number;
+  member: string;
+};
+
 export const redisClient = {
   // String operations
-  async set(key: string, value: string, ttl?: number): Promise<void> {
-    if (ttl) {
-      await redis.set(key, value, 'EX', ttl);
-    } else {
-      await redis.set(key, value);
-    }
-  },
-
   async get(key: string): Promise<string | null> {
     return redis.get(key);
   },
 
-  async del(key: string): Promise<number> {
+  async set(key: string, value: string, ttl?: number): Promise<'OK' | null> {
+    if (ttl) {
+      return redis.set(key, value, 'EX', ttl);
+    }
+    return redis.set(key, value);
+  },
+
+  async del(key: string | string[]): Promise<number> {
+    if (Array.isArray(key)) {
+      return redis.del(...key);
+    }
     return redis.del(key);
   },
 
-  // Hash operations
-  async hset(key: string, field: string, value: string): Promise<number> {
-    return redis.hset(key, field, value);
+  async exists(key: string | string[]): Promise<number> {
+    if (Array.isArray(key)) {
+      return redis.exists(...key);
+    }
+    return redis.exists(key);
   },
 
+  // Hash operations
   async hget(key: string, field: string): Promise<string | null> {
     return redis.hget(key, field);
   },
 
   async hgetall(key: string): Promise<Record<string, string>> {
-    return redis.hgetall(key);
+    const result = await redis.hgetall(key);
+    return result || {};
+  },
+
+  hset(key: string, field: string, value: string): Promise<number>;
+  hset(key: string, obj: Record<string, string>): Promise<number>;
+  async hset(key: string, fieldOrObj: string | Record<string, string>, value?: string): Promise<number> {
+    if (typeof fieldOrObj === 'string' && value !== undefined) {
+      return redis.hset(key, fieldOrObj, value);
+    } else if (typeof fieldOrObj === 'object') {
+      return redis.hset(key, fieldOrObj);
+    }
+    throw new Error('Invalid arguments for hset');
   },
 
   // Set operations
@@ -64,16 +90,18 @@ export const redisClient = {
   },
 
   // Sorted Set operations
-  async zadd(key: string, ...args: (string | number)[]): Promise<number> {
-    return redis.zadd(key, ...args);
+  async zadd(key: string, score: number, member: string, options?: RedisZAddOptions): Promise<number> {
+    const args: (string | number)[] = [key];
+    if (options?.nx) args.push('NX');
+    args.push(score, member);
+    return redis.zadd(...(args as [string, ...(string | number)[]]));
   },
 
   async zrange(key: string, start: number, stop: number, withScores = false): Promise<string[]> {
-    const args: (string | number)[] = [key, start, stop];
     if (withScores) {
-      args.push('WITHSCORES');
+      return redis.zrange(key, start, stop, 'WITHSCORES');
     }
-    return redis.zrange(...args as [string, number, number, ...string[]]);
+    return redis.zrange(key, start, stop);
   },
 
   async keys(pattern: string): Promise<string[]> {
@@ -81,17 +109,17 @@ export const redisClient = {
   },
 
   // Key operations
-  async exists(key: string): Promise<number> {
-    return redis.exists(key);
-  },
-
   async expire(key: string, seconds: number): Promise<number> {
     return redis.expire(key, seconds);
   },
 
-  // Close the Redis connection
-  async disconnect(): Promise<void> {
-    await redis.quit();
+  async ttl(key: string): Promise<number> {
+    return redis.ttl(key);
+  },
+
+  // Utility methods
+  async flushAll(): Promise<'OK'> {
+    return redis.flushall();
   },
 };
 

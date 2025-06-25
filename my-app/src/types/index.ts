@@ -38,10 +38,13 @@ export interface Vehicle {
  * Represents a user-uploaded media item.
  * Based on the Prisma schema.
  */
+export type MediaType = 'IMAGE' | 'VIDEO';
+
 export interface Media {
   id: string;
   url: string;
-  type: 'IMAGE' | 'VIDEO';
+  s3Key: string;  // Added s3Key to match Prisma model
+  type: MediaType;
   vehicleId?: string | null;
   order: number;
   createdAt: Date;

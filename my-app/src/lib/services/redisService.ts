@@ -1,5 +1,13 @@
 import { redisClient } from '@/lib/redis';
 import type { Vehicle, Media } from '@/types';
+import {
+  toVehicle,
+  toMedia,
+  vehicleToRedis,
+  mediaToRedis,
+  redisToVehicle,
+  redisToMedia,
+} from '@/lib/types/conversions';
 
 // Key patterns
 const VEHICLE_KEY = (id: string) => `vehicle:${id}`;
@@ -7,6 +15,7 @@ const VEHICLES_KEY = 'vehicles:all';
 const MEDIA_KEY = (id: string) => `media:${id}`;
 const VEHICLE_MEDIA_KEY = (vehicleId: string) => `vehicle:${vehicleId}:media`;
 const UNATTACHED_MEDIA_KEY = 'media:unattached';
+const SHOWROOM_CACHE_KEY = 'showroom:data';
 
 // TTL in seconds (1 hour)
 const DEFAULT_TTL = 60 * 60;
@@ -26,44 +35,43 @@ export const redisService = {
       return null;
     }
     
-    // Convert string values to their proper types
+    // Convert Redis hash to Vehicle type
+    const vehicle = redisToVehicle(vehicleData);
+    
+    // Get associated media
+    const media = await this.getVehicleMedia(id);
+    
+    // Create a new object without the media property to satisfy TypeScript
+    const { media: _, ...vehicleWithoutMedia } = vehicle as any;
+    
     return {
-      ...vehicleData,
-      id: vehicleData.id,
-      year: parseInt(vehicleData.year, 10),
-      price: parseInt(vehicleData.price, 10),
-      mileage: parseInt(vehicleData.mileage, 10),
-      features: JSON.parse(vehicleData.features || '[]'),
-      images: JSON.parse(vehicleData.images || '[]'),
-      status: vehicleData.status as 'available' | 'sold',
-      createdAt: new Date(vehicleData.createdAt),
-      updatedAt: new Date(vehicleData.updatedAt),
+      ...vehicleWithoutMedia,
+      media,
     } as Vehicle;
   },
 
   async cacheVehicle(vehicle: Vehicle, ttl = DEFAULT_TTL): Promise<void> {
     const key = VEHICLE_KEY(vehicle.id);
     
-    // Convert complex types to strings
-    const vehicleData = {
-      ...vehicle,
-      year: vehicle.year.toString(),
-      price: vehicle.price.toString(),
-      mileage: vehicle.mileage.toString(),
-      features: JSON.stringify(vehicle.features || []),
-      images: JSON.stringify(vehicle.images || []),
-      createdAt: vehicle.createdAt.toISOString(),
-      updatedAt: vehicle.updatedAt.toISOString(),
-    };
+    // Convert Vehicle to Redis-compatible format
+    const vehicleData = vehicleToRedis(vehicle);
     
     // Add to vehicles sorted set with timestamp for ordering
-    await redisClient.zadd(VEHICLES_KEY, Date.now(), vehicle.id);
+    await redisClient.zadd(VEHICLES_KEY, Date.now(), vehicle.id, { nx: true });
     
     // Set the vehicle data
     await redisClient.hset(key, vehicleData);
     
     // Set TTL
     await redisClient.expire(key, ttl);
+    
+    // Cache associated media if they exist
+    const media = (vehicle as any).media;
+    if (media && Array.isArray(media) && media.length > 0) {
+      await Promise.all(
+        media.map((m: any) => this.cacheMedia(m, ttl))
+      );
+    }
   },
 
   async getVehicles(): Promise<Vehicle[]> {
@@ -93,24 +101,15 @@ export const redisService = {
       return null;
     }
     
-    return {
-      ...mediaData,
-      id: mediaData.id,
-      order: parseInt(mediaData.order, 10),
-      createdAt: new Date(mediaData.createdAt),
-    } as Media;
+    // Convert Redis hash to Media type
+    return redisToMedia(mediaData);
   },
 
   async cacheMedia(media: Media, ttl = DEFAULT_TTL): Promise<void> {
     const key = MEDIA_KEY(media.id);
     
-    // Convert complex types to strings
-    const mediaData = {
-      ...media,
-      order: media.order.toString(),
-      createdAt: media.createdAt.toISOString(),
-      vehicleId: media.vehicleId || '',
-    };
+    // Convert Media to Redis-compatible format
+    const mediaData = mediaToRedis(media);
     
     // Set the media data
     await redisClient.hset(key, mediaData);
@@ -120,7 +119,8 @@ export const redisService = {
       await redisClient.zadd(
         VEHICLE_MEDIA_KEY(media.vehicleId),
         media.order,
-        media.id
+        media.id,
+        { nx: true }
       );
       await redisClient.expire(VEHICLE_MEDIA_KEY(media.vehicleId), ttl);
     } else {
@@ -178,6 +178,50 @@ export const redisService = {
     const keys = await redisClient.keys('*');
     if (keys.length > 0) {
       await Promise.all(keys.map(key => redisClient.del(key)));
+    }
+  },
+
+  // Get showroom data with Redis caching
+  async getShowroomData(useCache = true): Promise<{ vehicles: Vehicle[], customMedia: Media[], cachedAt: number }> {
+    const cacheKey = SHOWROOM_CACHE_KEY;
+    
+    try {
+      // Try to get from cache if enabled
+      if (useCache) {
+        const cachedData = await redisClient.get(cacheKey);
+        if (cachedData) {
+          return JSON.parse(cachedData);
+        }
+      }
+
+      // Fall back to database if cache miss or cache disabled
+      const { prisma } = await import('@/lib/prisma');
+      
+      const [vehicles, customMedia] = await Promise.all([
+        prisma.vehicle.findMany({
+          where: { status: 'available' },
+          orderBy: { createdAt: 'desc' },
+        }),
+        prisma.media.findMany({
+          where: { vehicleId: null },
+          orderBy: { order: 'asc' },
+        }),
+      ]);
+
+      // Convert to application types
+      const result = {
+        vehicles: vehicles.map(v => toVehicle(v)),
+        customMedia: customMedia.map(m => toMedia(m)),
+        cachedAt: Date.now(),
+      };
+
+      // Cache the result
+      await redisClient.set(cacheKey, JSON.stringify(result), 60 * 5); // 5 minute TTL
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting showroom data:', error);
+      throw error;
     }
   },
 };
