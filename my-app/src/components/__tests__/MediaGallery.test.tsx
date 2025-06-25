@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import Image from 'next/image';
 import MediaGallery from '../MediaGallery';
 import type { Media } from '@/types';
 
@@ -35,12 +36,15 @@ const MockMediaItem = ({
       data-testid={`select-button-${id}`}
       className="w-full h-full"
     >
-      <img
-        src={url}
-        alt="Media item"
-        className="w-full h-full object-cover"
-        data-testid={`media-image-${id}`}
-      />
+      <div className="relative w-full h-full">
+        <Image
+          src={url}
+          alt="Media item"
+          fill
+          className="object-cover"
+          data-testid={`media-image-${id}`}
+        />
+      </div>
     </button>
     {isCustomMedia && (
       <button
@@ -61,12 +65,15 @@ jest.mock('../MediaGallery', () => {
       <div data-testid="media-gallery">
         {/* Main image display */}
         <div data-testid="main-image">
-          <img
-            src={media[0]?.url || '/placeholder.png'}
-            alt="Main media item"
-            className="w-full h-auto"
-            data-testid="main-media-image"
-          />
+          <div className="relative w-full h-64">
+            <Image
+              src={media[0]?.url || '/placeholder.png'}
+              alt="Main media item"
+              fill
+              className="object-cover"
+              data-testid="main-media-image"
+            />
+          </div>
         </div>
 
         {/* Thumbnails */}
