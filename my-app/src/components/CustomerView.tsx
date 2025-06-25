@@ -14,7 +14,7 @@ interface CustomerViewProps {
   sharedVehicles?: Vehicle[]; // Vehicles specifically shared in this link
 }
 
-const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicle, allVehicles = [], sharedVehicles = [] }) => {
+const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicle }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
 
@@ -35,10 +35,10 @@ const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicl
     }
   }, [providedVehicle]);
 
-  const bookTestDrive = () => {
+  const bookTestDrive = useCallback(() => {
     // In real implementation, this would integrate with Google Calendar
     alert('Test drive booking feature will integrate with Google Calendar');
-  };
+  }, []);
 
   const handleNextImage = () => {
     if (selectedVehicle?.images && selectedVehicle.images.length > 0) {
@@ -226,19 +226,19 @@ const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicl
                 Shared Vehicles
               </h3>
               <div className="flex overflow-x-auto gap-3 pb-2">
-                {sharedVehicles.map((vehicle) => (
+                {sharedVehicles.map((vehicle: Vehicle) => (
                   <div 
                     key={vehicle.id} 
-                    className={`flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 ${selectedVehicle?.id === vehicle.id ? 'border-blue-500' : 'border-transparent'}`}
+                    className="flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 transition-colors"
                     onClick={() => {
                       setSelectedVehicle(vehicle);
                       setCurrentImageIndex(0);
                     }}
                   >
                     <div className="relative w-32 h-24">
-                      {vehicle.images && vehicle.images.length > 0 ? (
-                        <Image 
-                          src={vehicle.images[0]} 
+                      {vehicle.images?.[0] ? (
+                        <Image
+                          src={vehicle.images[0]}
                           alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                           fill
                           className="object-cover"
@@ -250,8 +250,12 @@ const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicl
                       )}
                     </div>
                     <div className="bg-black/70 p-1">
-                      <p className="text-white text-xs truncate">{vehicle.year} {vehicle.make}</p>
-                      <p className="text-white text-xs truncate">{vehicle.model}</p>
+                      <p className="text-white text-xs truncate">
+                        {vehicle.year} {vehicle.make}
+                      </p>
+                      <p className="text-white text-xs truncate">
+                        {vehicle.model}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -267,11 +271,11 @@ const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicl
             </h3>
             <div className="mb-4">
               <VehicleSelector 
-                currentVehicle={selectedVehicle as any} 
-                onVehicleSelect={(vehicle) => {
+                currentVehicle={selectedVehicle} 
+                onVehicleSelect={(vehicle: Vehicle) => {
                   if (vehicle) {
                     setSelectedVehicle(vehicle);
-                    setCurrentImageIndex(0); // Reset image index when vehicle changes
+                    setCurrentImageIndex(0);
                   }
                 }}
                 isCustomerView={true}
@@ -287,7 +291,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicl
               Schedule a Test Drive
             </h3>
             <p className="text-white/80 mb-4 text-sm">
-              Experience this {selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model} in person.
+              Experience this {selectedVehicle?.year} {selectedVehicle?.make} {selectedVehicle?.model} in person.
             </p>
             <Button 
               onClick={bookTestDrive}
@@ -314,4 +318,5 @@ const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicl
   );
 };
 
-export default CustomerView;
+// Memoize the component to prevent unnecessary re-renders
+export default React.memo(CustomerView);

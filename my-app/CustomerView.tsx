@@ -4,8 +4,8 @@ import { useParams } from 'react-router-dom';
 import { Calendar, Car, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import MediaSlideshow from './MediaSlideshow';
-import VehicleSelector from './VehicleSelector';
+import MediaSlideshow from '@/app/components/MediaSlideshow';
+import VehicleSelector from '@/app/components/VehicleSelector';
 
 interface Vehicle {
   id: string;
@@ -35,38 +35,38 @@ interface Vehicle {
   updatedAt: Date;
 }
 
-const CustomerView = () => {
-  const { vehicleId } = useParams();
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle>({
-    id: vehicleId || "1",
-    stockNumber: "BT2024001",
-    vin: "SCBCP7ZA1KC123456",
-    year: 2024,
-    make: "Bentley",
-    model: "Continental GT",
-    price: 185500,
-    color: "Beluga Black",
-    mileage: 450,
-    features: [
-      "Premium Leather Interior",
-      "Adaptive Cruise Control",
-      "360° Camera System",
-      "Heated & Ventilated Seats",
-      "Bang & Olufsen Sound System"
-    ],
-    images: [],
-    engine: "3.0L Twin-Turbo V6",
-    transmission: "8-Speed Automatic",
-    description: "Luxury grand tourer with exceptional performance and comfort",
-    status: "available" as const,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  });
+interface CustomerViewProps {
+  vehicle: Vehicle;
+  allVehicles: Vehicle[];
+}
 
+export default function CustomerView({ vehicle, allVehicles }: CustomerViewProps) {
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle>(vehicle);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  // Update selectedVehicle if the vehicle prop changes
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    setSelectedVehicle(vehicle);
+  }, [vehicle]);
+
+  // Set up time update interval
+  useEffect(() => {
+    // Only update the time if the component is still mounted
+    let mounted = true;
+    
+    const updateTime = () => {
+      if (mounted) {
+        setCurrentTime(new Date());
+      }
+    };
+    
+    const timer = setInterval(updateTime, 1000);
+    
+    // Cleanup function to clear interval and set mounted to false
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
   }, []);
 
   const bookTestDrive = () => {
@@ -92,54 +92,57 @@ const CustomerView = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-4">
-      {/* Top Section - Date, Time, and Vehicle Info */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Date and Time */}
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
-          <div className="flex items-center text-white mb-4">
-            <Clock className="w-6 h-6 mr-3" />
+      {/* Header with Date and Time */}
+      <div className="mb-6">
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-4 max-w-md">
+          <div className="flex items-center text-white">
+            <Clock className="w-5 h-5 mr-3" />
             <div>
-              <div className="text-2xl font-mono font-bold">{formatTime(currentTime)}</div>
-              <div className="text-white/80">{formatDate(currentTime)}</div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Vehicle Overview */}
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
-          <div className="text-white">
-            <h2 className="text-2xl font-bold mb-2">
-              {selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}
-            </h2>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-white/60">Price:</span>
-                <span className="ml-2 text-green-400 font-bold">
-                  ${selectedVehicle.price.toLocaleString()}
-                </span>
-              </div>
-              <div>
-                <span className="text-white/60">Color:</span>
-                <span className="ml-2">{selectedVehicle.color}</span>
-              </div>
-              <div>
-                <span className="text-white/60">Mileage:</span>
-                <span className="ml-2">{selectedVehicle.mileage} mi</span>
-              </div>
-              <div>
-                <span className="text-white/60">Stock:</span>
-                <span className="ml-2">{selectedVehicle.stockNumber}</span>
-              </div>
+              <div className="text-xl font-mono font-bold">{formatTime(currentTime)}</div>
+              <div className="text-white/80 text-sm">{formatDate(currentTime)}</div>
             </div>
           </div>
         </Card>
       </div>
 
+      {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Main Vehicle Display */}
+        {/* Left Column - Main Content */}
         <div className="lg:col-span-3 space-y-6">
-          <MediaSlideshow vehicle={selectedVehicle} />
-          
+          {/* Media Slideshow */}
+          <div className="relative">
+            <Suspense fallback={<div>Loading slideshow...</div>}>
+              <MediaSlideshow vehicle={selectedVehicle} />
+            </Suspense>
+            
+            {/* Vehicle Info - Static below slideshow */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-4 -mt-2">
+              <h2 className="text-2xl font-bold text-white mb-2">
+                {selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-white/60">Price:</span>
+                  <span className="ml-2 text-green-400 font-bold block">
+                    ${selectedVehicle.price.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-white/60">Mileage:</span>
+                  <span className="ml-2 block">{selectedVehicle.mileage.toLocaleString()} mi</span>
+                </div>
+                <div>
+                  <span className="text-white/60">Stock #:</span>
+                  <span className="ml-2 block">{selectedVehicle.stockNumber}</span>
+                </div>
+                <div>
+                  <span className="text-white/60">Status:</span>
+                  <span className="ml-2 capitalize">{selectedVehicle.status}</span>
+                </div>
+              </div>
+            </Card>
+          </div>
+
           {/* Vehicle Specifications */}
           <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
             <h3 className="text-white text-xl font-bold mb-4 flex items-center">
@@ -160,10 +163,12 @@ const CustomerView = () => {
                     <span className="ml-2">{selectedVehicle.transmission}</span>
                   </div>
                 )}
-                <div className="text-white">
-                  <span className="text-white/60">Status:</span>
-                  <span className="ml-2 capitalize">{selectedVehicle.status}</span>
-                </div>
+                {selectedVehicle.color && (
+                  <div className="text-white">
+                    <span className="text-white/60">Color:</span>
+                    <span className="ml-2 capitalize">{selectedVehicle.color.toLowerCase()}</span>
+                  </div>
+                )}
               </div>
               <div>
                 <h4 className="text-white font-semibold mb-3">Key Features</h4>
@@ -181,6 +186,20 @@ const CustomerView = () => {
 
         {/* Right Sidebar */}
         <div className="space-y-6">
+          {/* Dealership Information */}
+          <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
+            <h3 className="text-white text-xl font-bold mb-3">Bentley SuperCenter</h3>
+            <div className="space-y-2 text-white/90">
+              <p>2755 University Dr.</p>
+              <p>Huntsville, AL 35806</p>
+              <p className="mt-3">
+                <a href="tel:2569215525" className="hover:text-white transition-colors">
+                  (256) 921-5525
+                </a>
+              </p>
+            </div>
+          </Card>
+
           {/* Book Test Drive */}
           <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
             <h3 className="text-white text-lg font-bold mb-4 flex items-center">
@@ -207,4 +226,4 @@ const CustomerView = () => {
   );
 };
 
-export default CustomerView;
+export default React.memo(CustomerView);

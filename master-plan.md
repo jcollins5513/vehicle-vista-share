@@ -17,25 +17,33 @@ This document outlines the high-level roadmap for the Vehicle Vista Share projec
 - [x] Create a stable and reliable testing setup for S3 helper functions using manual mocks.
 - [x] Successfully write and pass unit tests for `uploadBufferToS3` and `deleteObjectFromS3`.
 
-### ✅ Section 3: API Endpoint Testing
+### Section 3: API Endpoint Testing
 - [x] Write unit/integration tests for the `/api/upload` endpoint.
 - [x] Write unit/integration tests for the `/api/media/:id` (delete) endpoint.
 - [x] Write unit/integration tests for the `/api/media/reorder` endpoint.
 - [x] Mock Prisma and S3 dependencies for isolated API tests.
 
-### ✅ Section 4: Frontend Development & UI/UX
+### Section 4: Frontend Development & UI/UX
 - [x] Fix slideshow and vehicle display UI, including image scaling and data synchronization.
 - [x] Resolve all type and hydration errors for a stable showroom view.
 - [x] Enhance `MediaUploader` component with better user feedback (e.g., progress bars, error messages).
 - [x] Develop a gallery view to display all media associated with a vehicle.
 - [x] Implement drag-and-drop reordering on the frontend.
-- [x] ✅ Enable deletion of manually uploaded media from ShowroomView
-- [x] ✅ Fix dynamic route slug mismatch error
-- [x] ✅ Write tests for MediaGallery component tests using React Testing Library.
-- [ ] Write frontend component tests using React Testing Library.
+- [x] Enable deletion of manually uploaded media from ShowroomView
+- [x] Fix dynamic route slug mismatch error
+- [x] Write tests for MediaGallery component tests using React Testing Library.
+- [x] Fix Prisma and UI flashing issues in CustomerPage
+- [x] Write frontend component tests using React Testing Library.
 
-### Section 5: Data Pipeline & Scraper Refinement (DEPRECATED)
+### Section 5: Customer Share Feature
+- [x] Implement basic customer shareable link functionality
+- [x] Create CustomerView component for shared vehicle viewing
+- [ ] Fix TypeScript errors and linting issues in CustomerPage
+- [ ] Add share button/feature in ShowroomView
+- [ ] Complete end-to-end testing of customer shareable flow
+- [ ] Optimize data fetching and state management in CustomerPage
+
+### Section 6: Data Pipeline & Scraper Refinement (DEPRECATED)
 > Note: This section was based on a misunderstanding. The scraper correctly saves image URLs to the `Vehicle.images` array. The `Media` table is only for manually uploaded content.
 - [ ] Investigate and fix the scraper script to ensure it saves all vehicle images to the `Media` table.
 - [ ] Verify that scraped media is correctly associated with the corresponding vehicle.
-- [ ] Ensure the scraper handles new, existing, and sold vehicles gracefully without data loss.

@@ -1,73 +1,68 @@
 # Granular Plan
 
----
-### ✅ COMPLETED: Showroom UI Overhaul
-- [x] Fixed all slideshow and vehicle display UI bugs.
-- [x] Resolved all outstanding type and hydration errors.
-- [x] Implemented a robust, centralized type system.
-- [] Enhanced slideshow to filter stock photos and sync with vehicle details.
+## ✅ COMPLETED: Showroom UI Overhaul & Customer Share Feature
+- [x] Fixed all slideshow and vehicle display UI bugs
+- [x] Resolved all outstanding type and hydration errors
+- [x] Implemented a robust, centralized type system
+- [x] Enhanced slideshow to filter stock photos and sync with vehicle details
+- [x] Fixed Prisma and UI flashing issues in CustomerPage
+- [x] Implemented basic customer shareable link functionality
+- [x] Created CustomerView component for shared vehicle viewing
 
-### ✅ COMPLETED: Section 4 - Frontend Development & UI/UX (Continued)
+## CURRENT: Customer Share Feature Refinements
 
-This plan details the remaining subtasks for implementing the frontend components and user experience for media management.
+### Completed Work
+- Basic customer shareable link functionality implemented
+- CustomerView component created for shared vehicle viewing
+- Vehicle switching functionality in CustomerView
+- Image slideshow navigation in CustomerView
+- Stock photo filtering in slideshow (filters ChromeColorMatch, RTT, Default, WHITE)
 
-#### Subtasks:
+### Remaining Tasks
+1. **Fix TypeScript and Linting Issues**
+   - [ ] Resolve TypeScript errors in CustomerPage
+   - [ ] Fix linting warnings in CustomerView
+   - [ ] Clean up unused imports and variables
 
-1.  **Enhance `MediaUploader` Component:**
-    -   [x] Add a visual progress bar to show upload progress.
-    -   [x] Display clear success messages upon completion.
-    -   [x] Show informative error messages if an upload fails.
+2. **Enhance CustomerView**
+   - [ ] Fix remaining UI flashing issues
+   - [ ] Optimize data fetching in CustomerPage
+   - [ ] Add loading states and error boundaries
 
-2.  **Develop `MediaGallery` View:**
-    -   [x] Implement logic to display all media (scraped images and custom uploads) associated with a vehicle.
-    -   [x] Implement drag-and-drop reordering for custom media using a library like `react-beautiful-dnd`.
-    -   [x] Call the `/api/media/reorder` endpoint to persist the new order.
+3. **ShowroomView Share Feature**
+   - [ ] Add share button/UI in ShowroomView
+   - [ ] Implement vehicle selection for sharing (1-3 vehicles)
+   - [ ] Generate shareable links with vehicle IDs
 
-3.  **Write Frontend Component Tests:**
-    -   [ ] Set up React Testing Library with Jest.
-    -   [ ] Write tests for the `MediaUploader` component.
-    -   [ ] Write tests for the `MediaGallery` component.
+4. **Testing & Optimization**
+   - [ ] Write component tests for CustomerView
+   - [ ] Perform end-to-end testing of share flow
+   - [ ] Optimize image loading and performance
 
----
-
-### CURRENT: Customer Shareable Inventory Flow
-
-#### Completed Work
-- Customer shareable inventory flow is partially implemented
-
- 
-
-#### Remaining Tasks#### Next Session Focus: Customer Shareable Inventory Completion
-# CUSTOMER VIEW #
-- CustomerView needs to display a single-vehicle slideshow (starting with the shared vehicle) without reusing MediaSlideshow, but still allow browsing other inventory.
-- SHOWROOM VIEW Vehicle selector on the showroom view needs to be able to select up to three vehicle to be included in the shareable link and share 1-3 vehicles and show remaining vehicles in the CUSTOMER VIEW as thumbnails if customer wants to select other vehicles but still only show 1 vehicle at a time in the CUSTOMER VIEW slideshow
-- Created `/customer/[id]` page that needs to fetch the single vehicle that was shared from the showroom view as well as all vehicles with thumbnails
-- SHOWROOM VIEW needs feature to select and share a specific vehicle
-- VehicleSelector still has placeholder fallbacks that need removal
-- TypeScript errors in Vehicle interface (status enum mismatch)
-- Write frontend component tests using React Testing Library
-- Added vehicle switching functionality in CustomerView
-- CustomerView with image slideshow navigation
-- Updated VehicleSelector to accept and use vehicles prop
-- Enhanced slideshow to filter stock photos if they have the keywords ChromeColorMatch, RTT, Default, WHITE, they are stock photos, and do not need to be displayed and sync with vehicle details.
-- Need to be able to delete manually loaded media from the showroom view.
-
-
-- Implement ShowroomView share selection feature
-- Remove placeholder fallbacks from VehicleSelector
-- Fix Vehicle interface TypeScript errors
-- Complete end-to-end testing of customer shareable flow
-- Begin writing component tests
+5. **Documentation**
+   - [ ] Document the share feature implementation
+   - [ ] Add JSDoc comments to components
+   - [ ] Update README with new features
 
 ---
 
 ### New Conversation Prompt
 
-Continue implementing the customer-facing vehicle share feature for Vehicle Vista. The main tasks are:
+Let's continue working on the Vehicle Vista customer share feature. Here's what we need to focus on next:
 
-1. Add a share button/feature in ShowroomView to generate shareable links for specific vehicles
-2. Remove placeholder fallbacks from VehicleSelector component
-3. Fix TypeScript errors in the Vehicle interface (status enum mismatch)
-4. Complete end-to-end testing of the customer shareable flow
+1. **Fix TypeScript and Linting Issues**
+   - Resolve TypeScript errors in CustomerPage
+   - Clean up unused imports and variables
+   - Fix any remaining linting warnings
 
-The shareable link functionality should allow customers to view a specific vehicle and browse other inventory. The ShowroomView needs a UI element to generate these links, and the CustomerView component needs to properly display the shared vehicle without relying on placeholder data.
+2. **Enhance CustomerView**
+   - Investigate and fix any remaining UI flashing issues
+   - Optimize data fetching in CustomerPage to prevent unnecessary re-renders
+   - Ensure proper error handling and loading states
+
+3. **Prepare for Share Feature Implementation**
+   - Review and finalize the data flow for sharing vehicles
+   - Plan the UI for the share button in ShowroomView
+   - Document the sharing functionality for future reference
+
+Current status: The basic structure is in place, but we need to stabilize the TypeScript implementation and optimize the data fetching before proceeding with the full share feature implementation. The CustomerView should display a single vehicle with a slideshow and allow browsing other inventory.
