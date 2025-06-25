@@ -6,19 +6,18 @@ jest.mock('@/lib/prisma');
 
 describe('/api/media/[id]', () => {
   let DELETE: unknown;
-  let mockedS3Helpers: unknown;
-  let mockedPrisma: unknown;
+  let mockedS3Helpers: typeof import('@/lib/s3');
+  let mockedPrisma: typeof import('@/lib/prisma').prisma;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.resetModules();
-    // Dynamically require modules after resetting
     // Dynamically import route and mocks after resetting modules
     const routeModule = await import('./route');
     const s3Module = await import('@/lib/s3');
     const prismaModule = await import('@/lib/prisma');
-    const route: { DELETE: (req: unknown, ctx: { params: { id: string } }) => Promise<{ status: number; json: () => Promise<unknown>; }> } = routeModule as unknown;
-    mockedS3Helpers = s3Module as unknown;
-    mockedPrisma = (prismaModule as { prisma: unknown }).prisma;
+    const route = routeModule as typeof import('./route');
+    mockedS3Helpers = s3Module as typeof import('@/lib/s3');
+    mockedPrisma = (prismaModule as { prisma: typeof import('@/lib/prisma').prisma }).prisma;
     DELETE = route.DELETE;
   });
 
@@ -37,7 +36,7 @@ describe('/api/media/[id]', () => {
     };
 
     (mockedPrisma.media.findUnique as jest.Mock).mockResolvedValue(mockMedia);
-    mockedS3Helpers.deleteObjectFromS3.mockResolvedValue({});
+    (mockedS3Helpers.deleteObjectFromS3 as jest.Mock).mockResolvedValue({});
     (mockedPrisma.media.delete as jest.Mock).mockResolvedValue({});
 
     const { req } = createMocks({
@@ -84,7 +83,7 @@ describe('/api/media/[id]', () => {
 
     (mockedPrisma.media.findUnique as jest.Mock).mockResolvedValue(mockMedia);
     const s3Error = new Error('S3 deletion failed');
-    mockedS3Helpers.deleteObjectFromS3.mockRejectedValue(s3Error);
+    (mockedS3Helpers.deleteObjectFromS3 as jest.Mock).mockRejectedValue(s3Error);
 
     const { req } = createMocks({
       method: 'DELETE',

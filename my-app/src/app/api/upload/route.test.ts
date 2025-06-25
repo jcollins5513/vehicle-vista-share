@@ -1,6 +1,7 @@
 import { createMocks } from 'node-mocks-http';
 import { MediaType } from '@/types/media';
 import { Blob } from 'buffer';
+import type { BinaryLike } from 'crypto';
 
 // Polyfill FormData and File for the Node.js environment
 if (!global.FormData) {
@@ -35,9 +36,9 @@ jest.mock('@/lib/s3');
 jest.mock('@/lib/prisma');
 
 describe('/api/upload', () => {
-  let POST: unknown;
-  let mockedS3Helpers: unknown;
-  let mockedPrisma: unknown;
+  let POST: typeof import('./route').POST;
+  let mockedS3Helpers: jest.Mocked<typeof import('@/lib/s3')>;
+  let mockedPrisma: jest.Mocked<typeof import('@/lib/prisma').prisma>;
 
   beforeEach(async () => {
     jest.resetModules();
@@ -46,9 +47,9 @@ describe('/api/upload', () => {
     const routeModule = await import('./route');
     const s3Module = await import('@/lib/s3');
     const prismaModule = await import('@/lib/prisma');
-    const route: { POST: (req: unknown) => Promise<{ status: number; json: () => Promise<unknown>; text: () => Promise<string>; }> } = routeModule as unknown;
-    mockedS3Helpers = s3Module as unknown;
-    mockedPrisma = (prismaModule as { prisma: unknown }).prisma;
+    const route = routeModule as typeof import('./route');
+    mockedS3Helpers = s3Module as typeof import('@/lib/s3');
+    mockedPrisma = (prismaModule as { prisma: typeof import('@/lib/prisma').prisma }).prisma;
     POST = route.POST;
   });
 
@@ -92,7 +93,7 @@ describe('/api/upload', () => {
     (req as unknown).formData = jest.fn().mockResolvedValue(formData);
 
     // Act
-    const response = await POST(req as unknown);
+    const response = await (POST as (req: any) => Promise<{ status: number; json: () => Promise<unknown>; }>)(req);
     const data = await response.json();
 
     // Assert
@@ -117,7 +118,7 @@ describe('/api/upload', () => {
     formData.append('file', mockFile);
 
     const s3Error = new Error('S3 is having a bad day');
-    mockedS3Helpers.uploadBufferToS3.mockRejectedValue(s3Error);
+    (mockedS3Helpers.uploadBufferToS3 as jest.Mock).mockRejectedValue(s3Error);
 
     const { req } = createMocks({
       method: 'POST',

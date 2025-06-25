@@ -11,8 +11,8 @@ describe('/api/media/reorder', () => {
     // Dynamically import route and mocks after resetting modules
     const routeModule = await import('./route');
     const prismaModule = await import('@/lib/prisma');
-    const route: { PATCH: (req: unknown) => Promise<{ status: number; json: () => Promise<unknown>; }> } = routeModule as unknown;
-    mockedPrisma = (prismaModule as { prisma: unknown }).prisma;
+    const route = routeModule as typeof import('./route');
+    mockedPrisma = (prismaModule as { prisma: typeof import('@/lib/prisma').prisma }).prisma;
     PATCH = route.PATCH;
   });
 
