@@ -19,8 +19,6 @@ const MediaManager = () => {
     }
   }, [data]);
 
-  import type { DropResult } from '@hello-pangea/dnd';
-
 const onDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
 
