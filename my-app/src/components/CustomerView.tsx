@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+'use client';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, Car, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -14,15 +15,36 @@ interface CustomerViewProps {
   sharedVehicles?: Vehicle[]; // Vehicles specifically shared in this link
 }
 
-const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicle }) => {
+const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicle, sharedVehicles = [], allVehicles = [] }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  // Debug: log render and environment
+  if (typeof window === 'undefined') {
+    // Server render
+    // eslint-disable-next-line no-console
+    console.log('[CustomerView] Rendered on SERVER', { currentTime });
+  } else {
+    // Client render
+    // eslint-disable-next-line no-console
+    console.log('[CustomerView] Rendered on CLIENT', { currentTime });
+  }
+
 
   // Only use provided vehicle data, no placeholders
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(providedVehicle || null);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    setHasMounted(true);
+    // eslint-disable-next-line no-console
+    console.log('[CustomerView] useEffect: mounted on CLIENT', { currentTime });
+    const timer = setInterval(() => {
+      const now = new Date();
+      setCurrentTime(now);
+      // eslint-disable-next-line no-console
+      console.log('[CustomerView] Timer tick: updating currentTime', { now });
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -88,9 +110,13 @@ const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicl
         <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
           <div className="flex items-center space-x-2">
             <Clock className="text-white" />
-            <p className="text-white">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            {hasMounted && (
+              <>
+                <p className="text-white">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                <div className="text-white/80">{formatDate(currentTime)}</div>
+              </>
+            )}
           </div>
-          <div className="text-white/80">{formatDate(currentTime)}</div>
         </Card>
 
         {/* Vehicle Overview */}
@@ -134,6 +160,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicl
                   src={selectedVehicle.images[currentImageIndex]}
                   alt={`${selectedVehicle?.year || ''} ${selectedVehicle?.make || ''} ${selectedVehicle?.model || ''}`}
                   fill
+                  sizes="(max-width: 768px) 100vw, 100vw"
                   className="object-contain"
                 />
                 
@@ -241,6 +268,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ id, vehicle: providedVehicl
                           src={vehicle.images[0]}
                           alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                           fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
                           className="object-cover"
                         />
                       ) : (

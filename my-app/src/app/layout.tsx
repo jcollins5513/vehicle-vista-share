@@ -11,6 +11,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  if (typeof window === 'undefined') {
+    // Server render
+    // eslint-disable-next-line no-console
+    console.log('[RootLayout] Rendered on SERVER');
+  } else {
+    // Client render
+    // eslint-disable-next-line no-console
+    console.log('[RootLayout] Rendered on CLIENT');
+  }
   return (
     <html lang="en">
       <body

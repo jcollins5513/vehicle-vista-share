@@ -69,6 +69,7 @@ const VehicleSelector = ({
                     src={vehicle.images[0]} 
                     alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                     fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover"
                   />
                 ) : (

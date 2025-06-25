@@ -102,13 +102,11 @@ const ShowroomView = ({ vehicles, customMedia = [] }: ShowroomViewProps) => {
       alert('Cannot generate link: No vehicles selected.');
       return;
     }
-    
-    // Create a URL with query parameters for multiple vehicles
-    const idsParam = vehicleIds.join(',');
-    const customerUrl = `${window.location.origin}/customer?ids=${idsParam}`;
-    
+    // Restrict to single vehicle sharing
+    const id = vehicleIds[0];
+    const customerUrl = `${window.location.origin}/customer/${id}`;
     navigator.clipboard.writeText(customerUrl);
-    alert(`Customer link with ${vehicleIds.length} vehicle${vehicleIds.length > 1 ? 's' : ''} copied to clipboard!`);
+    alert(`Customer link: ${customerUrl} copied to clipboard! Only one vehicle can be shared at a time.`);
   };
 
   const formatTime = (date: Date) => {
