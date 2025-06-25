@@ -57,10 +57,10 @@ export const redisService = {
     const vehicleData = vehicleToRedis(vehicle);
     
     // Add to vehicles sorted set with timestamp for ordering
-    await redisClient.zadd(VEHICLES_KEY, Date.now(), vehicle.id, { nx: true });
+    await redisClient.zadd(VEHICLES_KEY, Date.now(), vehicle.id);
     
     // Set the vehicle data
-    await redisClient.hset(key, vehicleData);
+    await redisClient.hmset(key, vehicleData);
     
     // Set TTL
     await redisClient.expire(key, ttl);
@@ -75,15 +75,21 @@ export const redisService = {
   },
 
   async getVehicles(): Promise<Vehicle[]> {
-    // Get all vehicle IDs in order
-    const vehicleIds = await redisClient.zrange(VEHICLES_KEY, 0, -1);
+    // Get all vehicle IDs in order with scores
+    const vehicleData = await redisClient.zrange(VEHICLES_KEY, 0, -1, true);
     
-    // Get all vehicles in parallel
+    if (!vehicleData || vehicleData.length === 0) {
+      return [];
+    }
+    
+    // Extract vehicle IDs (every other element when withScores is true)
+    const vehicleIds = vehicleData.filter((_, index) => index % 2 === 0);
+    
+    // Get all vehicles
     const vehicles = await Promise.all(
-      vehicleIds.map(id => this.getVehicle(id))
+      vehicleIds.map((id: string) => this.getVehicle(id))
     );
     
-    // Filter out any null values and return
     return vehicles.filter((v): v is Vehicle => v !== null);
   },
 

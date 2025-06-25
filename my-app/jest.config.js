@@ -8,9 +8,9 @@ const createJestConfig = nextJest({
 // Add any custom config to be passed to Jest
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  testEnvironment: 'jest-environment-jsdom',
+  testEnvironment: 'node', // Changed to node for backend/API tests
   moduleNameMapper: {
-    // Handle module aliases (this will be automatically configured for you soon)
+    // Handle module aliases
     '^@/components/(.*)$': '<rootDir>/src/components/$1',
     '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
     '^@/types/(.*)$': '<rootDir>/src/types/$1',
@@ -19,15 +19,24 @@ const customJestConfig = {
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
   transform: {
     // Use babel-jest to transpile tests with the next/babel preset
-    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { 
+      presets: ['next/babel'],
+      plugins: ['@babel/plugin-transform-modules-commonjs']
+    }],
   },
   transformIgnorePatterns: [
-    '/node_modules/',
+    'node_modules/(?!(uncrypto|@upstash/redis)/)',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
+  extensionsToTreatAsEsm: ['.ts'],
+  globals: {
+    'ts-jest': {
+      useESM: true,
+    },
+  },
   collectCoverage: true,
   collectCoverageFrom: [
-    'src/**/*.{js,jsx,ts,tsx}',
+    'src/lib/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
     '!src/**/_*.{js,jsx,ts,tsx}',
     '!**/node_modules/**',

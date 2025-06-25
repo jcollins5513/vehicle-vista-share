@@ -1,0 +1,291 @@
+  console.log
+    [redis] Environment variables: {
+      REDIS_URL: 'https://engaged-cattle-25845.upstash.io',
+      REDIS_TOKEN: '***'
+    }
+
+      at Object.log (src/lib/redis.ts:12:11)
+
+  console.log
+    [redis] Creating Redis client, provided client: false
+
+      at log (src/lib/redis.ts:20:22)
+
+  console.log
+    [redis] Creating new Upstash Redis client
+
+      at log (src/lib/redis.ts:35:22)
+
+  console.log
+    [redis] Redis client created successfully
+
+      at log (src/lib/redis.ts:41:22)
+
+  console.log
+    === Simple Redis test file loaded ===
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:2:9)
+
+  console.log
+    === Environment variables ===
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:9:9)
+
+  console.log
+    {
+      NODE_ENV: 'test',
+      UPSTASH_REDIS_REST_URL: 'https://test-redis-url.com',
+      UPSTASH_REDIS_REST_TOKEN: '***'
+    }
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:10:9)
+
+  console.log
+    
+    === Setting up Redis mock ===
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:17:9)
+
+  console.log
+    Redis mock imported: { Redis: 'function' }
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:24:9)
+
+  console.log
+    
+    === Importing Redis client ===
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:27:9)
+
+  console.log
+    Redis client imported
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:29:9)
+
+  console.log
+    
+    === Starting Redis client tests ===
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:32:9)
+
+  console.log
+    
+    === Running beforeAll hook ===
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:38:13)
+
+  console.log
+    
+    --- Running beforeEach hook ---
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:46:13)
+
+  console.log
+    Clearing all Jest mocks
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:49:13)
+
+  console.log
+    Creating new mock Redis instance
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:53:13)
+
+  console.log
+    Mock Redis instance created: { hasGet: true, hasSet: true }
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:58:13)
+
+  console.log
+    Test environment setup complete
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:78:13)
+
+  console.log
+    
+    --- Running test: should create a Redis client ---
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:90:13)
+
+  console.log
+    Creating Redis client with mock
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:93:13)
+
+  console.log
+    [redis] Creating Redis client, provided client: true
+
+      at log (src/lib/redis.ts:20:22)
+
+  console.log
+    [redis] Using provided client
+
+      at log (src/lib/redis.ts:24:24)
+
+  console.log
+    Γ£à Redis client created successfully
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:101:13)
+
+  console.log
+    
+    --- Running afterEach hook ---
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:82:13)
+
+  console.log
+    Mock call history: { set: [], get: [] }
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:83:13)
+
+  console.log
+    
+    --- Running beforeEach hook ---
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:46:13)
+
+  console.log
+    Clearing all Jest mocks
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:49:13)
+
+  console.log
+    Creating new mock Redis instance
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:53:13)
+
+  console.log
+    Mock Redis instance created: { hasGet: true, hasSet: true }
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:58:13)
+
+  console.log
+    Test environment setup complete
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:78:13)
+
+  console.log
+    
+    --- Running test: should set and get a value ---
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:105:13)
+
+  console.log
+    Creating Redis client with mock
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:109:15)
+
+  console.log
+    [redis] Creating Redis client, provided client: true
+
+      at log (src/lib/redis.ts:20:22)
+
+  console.log
+    [redis] Using provided client
+
+      at log (src/lib/redis.ts:24:24)
+
+  console.log
+    Testing set operation
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:116:15)
+
+  console.log
+    [MOCK] set called with key: test-key, value: test-value
+
+      at Redis.log (src/lib/__tests__/simple-redis.test.ts:74:15)
+
+  console.log
+    Set operation result: OK
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:118:15)
+
+  console.error
+    Test failed with error: JestAssertionError: expect(jest.fn()).toHaveBeenCalledWith(...expected)
+    
+    Expected: "test-key", "test-value", undefined
+    Received: "test-key", "test-value"
+    
+    Number of calls: 1
+        at Object.toHaveBeenCalledWith (D:\vehicle-vista-share\my-app\src\lib\__tests__\simple-redis.test.ts:123:29) {
+      matcherResult: {
+        message: 'expect(jest.fn()).toHaveBeenCalledWith(...expected)\n' +
+          '\n' +
+          'Expected: "test-key", "test-value", undefined\n' +
+          'Received: "test-key", "test-value"\n' +
+          '\n' +
+          'Number of calls: 1',
+        pass: false
+      }
+    }
+
+    [0m [90m 135 |[39m       console[33m.[39mlog([32m'Γ£à Redis set/get test completed successfully'[39m)[33m;[39m
+     [90m 136 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 137 |[39m       console[33m.[39merror([32m'Test failed with error:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 138 |[39m       [36mthrow[39m error[33m;[39m
+     [90m 139 |[39m     }
+     [90m 140 |[39m   })[33m;[39m[0m
+
+      at Object.error (src/lib/__tests__/simple-redis.test.ts:137:15)
+
+  console.log
+    
+    --- Running afterEach hook ---
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:82:13)
+
+  console.log
+    Mock call history: { set: [ [ 'test-key', 'test-value' ] ], get: [] }
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:83:13)
+
+  console.log
+    
+    === Running afterAll hook ===
+
+      at Object.log (src/lib/__tests__/simple-redis.test.ts:42:13)
+
+FAIL src/lib/__tests__/simple-redis.test.ts
+  Simple Redis Client Test
+    ΓêÜ should create a Redis client (8 ms)
+    ├ù should set and get a value (16 ms)
+
+  ΓùÅ Simple Redis Client Test ΓÇ║ should set and get a value
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "test-key", "test-value", undefined
+    Received: "test-key", "test-value"
+
+    Number of calls: 1
+
+      121 |       expect(setResult).toBe('OK');
+      122 |       expect(mockRedis.set).toHaveBeenCalledTimes(1);
+    > 123 |       expect(mockRedis.set).toHaveBeenCalledWith('test-key', 'test-value', undefined);
+          |                             ^
+      124 |       
+      125 |       // Test get operation
+      126 |       console.log('Testing get operation');
+
+      at Object.toHaveBeenCalledWith (src/lib/__tests__/simple-redis.test.ts:123:29)
+
+------------------|---------|----------|---------|---------|---------------------
+File              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s   
+------------------|---------|----------|---------|---------|---------------------
+All files         |    8.92 |     4.64 |    1.49 |    7.96 |                     
+ lib              |   17.24 |    15.94 |     3.7 |    15.5 |                     
+  media-api.ts    |       0 |        0 |       0 |       0 | 10-44               
+  prisma.ts       |       0 |        0 |     100 |       0 | 1-15                
+  redis.ts        |   25.51 |    21.15 |    4.76 |   23.52 | 30-32,52-63,112-247 
+  s3.ts           |       0 |        0 |       0 |       0 | 1-64                
+  utils.ts        |       0 |      100 |       0 |       0 | 1-5                 
+ lib/services     |       0 |        0 |       0 |       0 |                     
+  redisService.ts |       0 |        0 |       0 |       0 | 1-235               
+ lib/types        |       0 |        0 |       0 |       0 |                     
+  conversions.ts  |       0 |        0 |       0 |       0 | 8-204               
+------------------|---------|----------|---------|---------|---------------------
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 passed, 2 total
+Snapshots:   0 total
+Time:        0.738 s
+Ran all test suites matching src/lib/__tests__/simple-redis.test.ts.
