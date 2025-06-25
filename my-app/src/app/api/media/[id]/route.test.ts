@@ -12,12 +12,13 @@ describe('/api/media/[id]', () => {
   beforeEach(() => {
     jest.resetModules();
     // Dynamically require modules after resetting
-    const route = // require() replaced by import, refactor as needed
-// import ... from ... //'./route');
-    mockedS3Helpers = // require() replaced by import, refactor as needed
-// import ... from ... //'@/lib/s3');
-    mockedPrisma = // require() replaced by import, refactor as needed
-// import ... from ... //'@/lib/prisma').prisma;
+    // Dynamically import route and mocks after resetting modules
+    const routeModule = await import('./route');
+    const s3Module = await import('@/lib/s3');
+    const prismaModule = await import('@/lib/prisma');
+    const route: { DELETE: (req: unknown, ctx: { params: { id: string } }) => Promise<{ status: number; json: () => Promise<unknown>; }> } = routeModule as unknown;
+    mockedS3Helpers = s3Module as unknown;
+    mockedPrisma = (prismaModule as { prisma: unknown }).prisma;
     DELETE = route.DELETE;
   });
 

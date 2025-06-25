@@ -6,12 +6,13 @@ describe('/api/media/reorder', () => {
   let PATCH: unknown;
   let mockedPrisma: unknown;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.resetModules();
-    const route = // require() replaced by import, refactor as needed
-// import ... from ... //'./route');
-    mockedPrisma = // require() replaced by import, refactor as needed
-// import ... from ... //'@/lib/prisma').prisma;
+    // Dynamically import route and mocks after resetting modules
+    const routeModule = await import('./route');
+    const prismaModule = await import('@/lib/prisma');
+    const route: { PATCH: (req: unknown) => Promise<{ status: number; json: () => Promise<unknown>; }> } = routeModule as unknown;
+    mockedPrisma = (prismaModule as { prisma: unknown }).prisma;
     PATCH = route.PATCH;
   });
 
