@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import useSWR from 'swr';
-import { Media } from '@/types/media';
+import Image from 'next/image';
+import type { Media } from '@/types';
+import type { DropResult } from '@hello-pangea/dnd';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -17,7 +19,9 @@ const MediaManager = () => {
     }
   }, [data]);
 
-  const onDragEnd = async (result: any) => {
+  import type { DropResult } from '@hello-pangea/dnd';
+
+const onDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
 
     const items = Array.from(mediaItems);
@@ -63,8 +67,12 @@ const MediaManager = () => {
                       className="flex items-center justify-between p-4 mb-2 bg-gray-100 rounded-lg shadow"
                     >
                       <div className="flex items-center">
-                        <img src={item.url} alt="media thumbnail" className="w-16 h-16 object-cover rounded mr-4" />
-                        <span>{item.s3Key}</span>
+                        <Image
+                          src={item.url}
+                          alt={`Media ${item.id}`}
+                          className="w-16 h-16 object-cover rounded mr-4"
+                        />
+                        <span>{item.url}</span>
                       </div>
                       <button
                         onClick={() => handleDelete(item.id)}

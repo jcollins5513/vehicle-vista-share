@@ -61,5 +61,4 @@ export interface SlideshowItem {
 
 // Re-export Vehicle as VehicleWithMedia for semantic consistency in components
 export type VehicleWithMedia = Vehicle;
-
-
+export type SomeType = unknown;
