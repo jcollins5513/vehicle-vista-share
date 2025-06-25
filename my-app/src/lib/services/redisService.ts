@@ -1,13 +1,19 @@
 import { redisClient } from '@/lib/redis';
 import type { Vehicle, Media } from '@/types';
 import {
-  toVehicle,
-  toMedia,
   vehicleToRedis,
   mediaToRedis,
   redisToVehicle,
   redisToMedia,
 } from '@/lib/types/conversions';
+
+// Error class for Redis operations
+class RedisError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RedisError';
+  }
+}
 
 // Key patterns
 const VEHICLE_KEY = (id: string) => `vehicle:${id}`;
@@ -30,10 +36,12 @@ export const redisService = {
       return null;
     }
     
-    const vehicleData = await redisClient.hgetall(key);
-    if (!vehicleData || Object.keys(vehicleData).length === 0) {
+    const vehicleDataStr = await redisClient.get(key);
+    if (!vehicleDataStr) {
       return null;
     }
+    
+    const vehicleData = JSON.parse(vehicleDataStr);
     
     // Convert Redis hash to Vehicle type
     const vehicle = redisToVehicle(vehicleData);
@@ -59,11 +67,8 @@ export const redisService = {
     // Add to vehicles sorted set with timestamp for ordering
     await redisClient.zadd(VEHICLES_KEY, Date.now(), vehicle.id);
     
-    // Set the vehicle data
-    await redisClient.hmset(key, vehicleData);
-    
-    // Set TTL
-    await redisClient.expire(key, ttl);
+    // Set the vehicle data with TTL
+    await redisClient.set(key, JSON.stringify(vehicleData), ttl);
     
     // Cache associated media if they exist
     const media = (vehicle as any).media;
@@ -102,13 +107,14 @@ export const redisService = {
       return null;
     }
     
-    const mediaData = await redisClient.hgetall(key);
-    if (!mediaData || Object.keys(mediaData).length === 0) {
+    const mediaData = await redisClient.get(key);
+    if (!mediaData) {
       return null;
     }
     
-    // Convert Redis hash to Media type
-    return redisToMedia(mediaData);
+    // Parse and convert the media data
+    const parsedData = JSON.parse(mediaData);
+    return redisToMedia(parsedData);
   },
 
   async cacheMedia(media: Media, ttl = DEFAULT_TTL): Promise<void> {
@@ -117,22 +123,16 @@ export const redisService = {
     // Convert Media to Redis-compatible format
     const mediaData = mediaToRedis(media);
     
-    // Set the media data
-    await redisClient.hset(key, mediaData);
+    // Set the media data with TTL
+    await redisClient.set(key, JSON.stringify(mediaData), ttl);
+    await redisClient.expire(key, ttl);
     
-    // If media is attached to a vehicle, add to vehicle's media set
-    if (media.vehicleId) {
-      await redisClient.zadd(
-        VEHICLE_MEDIA_KEY(media.vehicleId),
-        media.order,
-        media.id,
-        { nx: true }
-      );
-      await redisClient.expire(VEHICLE_MEDIA_KEY(media.vehicleId), ttl);
-    } else {
-      // Add to unattached media set
+    // If media is not attached to a vehicle, add to unattached set
+    if (!media.vehicleId) {
       await redisClient.sadd(UNATTACHED_MEDIA_KEY, media.id);
-      await redisClient.expire(UNATTACHED_MEDIA_KEY, ttl);
+    } else {
+      // If media is attached to a vehicle, add to vehicle's media set
+      await redisClient.sadd(VEHICLE_MEDIA_KEY(media.vehicleId), media.id);
     }
     
     // Set TTL
@@ -140,33 +140,27 @@ export const redisService = {
   },
 
   async getVehicleMedia(vehicleId: string): Promise<Media[]> {
-    // Get all media IDs for the vehicle
-    const mediaIds = await redisClient.zrange(VEHICLE_MEDIA_KEY(vehicleId), 0, -1);
+    const mediaIds = await redisClient.smembers(VEHICLE_MEDIA_KEY(vehicleId));
+    if (!mediaIds || mediaIds.length === 0) {
+      return [];
+    }
     
-    // Get all media in parallel
-    const mediaItems = await Promise.all(
-      mediaIds.map(id => this.getMedia(id))
-    );
+    const mediaPromises = mediaIds.map(id => this.getMedia(id));
+    const mediaItems = await Promise.all(mediaPromises);
     
-    // Filter out any null values and return sorted by order
-    return mediaItems
-      .filter((m): m is Media => m !== null)
-      .sort((a, b) => a.order - b.order);
+    return mediaItems.filter((m): m is Media => m !== null);
   },
 
   async getUnattachedMedia(): Promise<Media[]> {
-    // Get all unattached media IDs
     const mediaIds = await redisClient.smembers(UNATTACHED_MEDIA_KEY);
+    if (!mediaIds || mediaIds.length === 0) {
+      return [];
+    }
     
-    // Get all media in parallel
-    const mediaItems = await Promise.all(
-      mediaIds.map(id => this.getMedia(id))
-    );
+    const mediaPromises = mediaIds.map(id => this.getMedia(id));
+    const mediaItems = await Promise.all(mediaPromises);
     
-    // Filter out any null values and return sorted by creation date
-    return mediaItems
-      .filter((m): m is Media => m !== null)
-      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    return mediaItems.filter((m): m is Media => m !== null);
   },
 
   // Cache warming
@@ -188,46 +182,80 @@ export const redisService = {
   },
 
   // Get showroom data with Redis caching
-  async getShowroomData(useCache = true): Promise<{ vehicles: Vehicle[], customMedia: Media[], cachedAt: number }> {
+  async getShowroomData(useCache = true): Promise<{ 
+    vehicles: Vehicle[]; 
+    customMedia: Media[]; 
+    cachedAt: number; 
+    fromCache: boolean; 
+    error?: string 
+  }> {
     const cacheKey = SHOWROOM_CACHE_KEY;
     
     try {
+      // Check if Redis is available
+      if (!redisClient) {
+        throw new RedisError('Redis client not available');
+      }
+
       // Try to get from cache if enabled
       if (useCache) {
-        const cachedData = await redisClient.get(cacheKey);
-        if (cachedData) {
-          return JSON.parse(cachedData);
+        try {
+          const cachedData = await redisClient.jsonGet<{
+            vehicles: Vehicle[];
+            customMedia: Media[];
+            cachedAt: number;
+          }>(cacheKey);
+          
+          if (cachedData && 
+              Array.isArray(cachedData.vehicles) && 
+              Array.isArray(cachedData.customMedia) &&
+              typeof cachedData.cachedAt === 'number') {
+            return { 
+              vehicles: cachedData.vehicles, 
+              customMedia: cachedData.customMedia, 
+              cachedAt: cachedData.cachedAt, 
+              fromCache: true 
+            };
+          }
+        } catch (cacheError) {
+          console.warn('Cache miss or invalid cache data, fetching fresh data:', cacheError);
+          // Continue to fetch fresh data if cache is invalid
         }
       }
 
-      // Fall back to database if cache miss or cache disabled
-      const { prisma } = await import('@/lib/prisma');
-      
+      // Get fresh data from Redis
       const [vehicles, customMedia] = await Promise.all([
-        prisma.vehicle.findMany({
-          where: { status: 'available' },
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.media.findMany({
-          where: { vehicleId: null },
-          orderBy: { order: 'asc' },
-        }),
+        this.getVehicles(),
+        this.getUnattachedMedia()
       ]);
-
-      // Convert to application types
+      
       const result = {
-        vehicles: vehicles.map(v => toVehicle(v)),
-        customMedia: customMedia.map(m => toMedia(m)),
+        vehicles: Array.isArray(vehicles) ? vehicles : [],
+        customMedia: Array.isArray(customMedia) ? customMedia : [],
         cachedAt: Date.now(),
+        fromCache: false
       };
 
-      // Cache the result
-      await redisClient.set(cacheKey, JSON.stringify(result), 60 * 5); // 5 minute TTL
+      try {
+        // Cache the result with TTL using jsonSet for proper serialization
+        await redisClient.jsonSet(cacheKey, result, DEFAULT_TTL);
+      } catch (cacheError) {
+        console.error('Failed to cache showroom data:', cacheError);
+        // Don't fail the request if caching fails
+      }
       
       return result;
     } catch (error) {
-      console.error('Error getting showroom data:', error);
-      throw error;
+      console.error('Error in getShowroomData:', error);
+      
+      // Return empty data if there's an error
+      return {
+        vehicles: [],
+        customMedia: [],
+        cachedAt: Date.now(),
+        fromCache: false,
+        error: error instanceof Error ? error.message : 'Failed to load showroom data',
+      };
     }
   },
 };

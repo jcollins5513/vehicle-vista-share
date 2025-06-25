@@ -6,23 +6,18 @@ export const revalidate = 300;
 
 async function getShowroomData() {
   try {
-    // First try to get from Redis cache
-    const cachedData = await redisService.getShowroomData();
+    // Try to get fresh data from Redis
+    const data = await redisService.getShowroomData();
     
-    // If we have cached data and it's not too old, use it
-    if (cachedData && (Date.now() - cachedData.cachedAt < 5 * 60 * 1000)) {
-      return {
-        vehicles: cachedData.vehicles,
-        customMedia: cachedData.customMedia,
-        fromCache: true,
-      };
+    // If we have an error in the response, treat it as a failure
+    if (data.error) {
+      throw new Error(data.error);
     }
     
-    // If cache is stale or missing, try to refresh it
-    const freshData = await redisService.getShowroomData(false);
     return {
-      ...freshData,
-      fromCache: false,
+      vehicles: data.vehicles || [],
+      customMedia: data.customMedia || [],
+      fromCache: data.fromCache || false,
     };
   } catch (error) {
     console.error('Error in getShowroomData:', error);
@@ -32,7 +27,7 @@ async function getShowroomData() {
       vehicles: [],
       customMedia: [],
       fromCache: false,
-      error: 'Failed to load showroom data',
+      error: error instanceof Error ? error.message : 'Failed to load showroom data',
     };
   }
 }

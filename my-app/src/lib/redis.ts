@@ -1,251 +1,410 @@
 import { Redis as UpstashRedis } from '@upstash/redis';
 
-// Enable debug logging
-const DEBUG = process.env.NODE_ENV !== 'production';
+type RedisValue = string | number | boolean | object | null;
+type RedisClientOptions = { ex?: number; nx?: boolean; xx?: boolean };
 
-// Get Redis connection details from environment variables
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-// Log environment variables (masking token for security)
-if (DEBUG) {
-  console.log('[redis] Environment variables:', {
-    REDIS_URL,
-    REDIS_TOKEN: REDIS_TOKEN ? '***' : 'undefined'
-  });
+// Extend the Upstash Redis client with our custom methods
+interface RedisClient extends Omit<UpstashRedis, 'get' | 'set' | 'hset' | 'hgetall' | 'zadd' | 'zrange' | 'zrem'> {
+  // Core methods with proper typing
+  get<T = string>(key: string): Promise<T | null>;
+  set<T>(key: string, value: T, options?: RedisClientOptions): Promise<'OK'>;
+  jsonGet<T = RedisValue>(key: string): Promise<T | null>;
+  jsonSet(key: string, value: RedisValue, options?: RedisClientOptions): Promise<'OK'>;
+  
+  // Hash methods
+  hset(key: string, field: string, value: string): Promise<number>;
+  hset(key: string, obj: Record<string, string>): Promise<number>;
+  hgetall(key: string): Promise<Record<string, string> | null>;
+  
+  // Sorted set methods
+  zadd(key: string, score: number, member: string): Promise<number>;
+  zrange<T = string>(key: string, start: number, stop: number, withScores?: boolean): Promise<T[]>;
+  zrem(key: string, ...members: string[]): Promise<number>;
+  
+  // Allow dynamic properties for other Redis commands
+  [key: string]: any;
 }
 
-// Create a function to create a Redis client
-export const createRedisClient = (client?: any) => {
-  if (DEBUG) console.log('[redis] Creating Redis client, provided client:', !!client);
-  
-  // If a client is provided (e.g., for testing), use it
-  if (client) {
-    if (DEBUG) console.log('[redis] Using provided client');
-    return client;
-  }
+declare global {
+  // eslint-disable-next-line no-var
+  var redis: RedisClient | undefined;
+}
 
-  // Otherwise, create a new Redis client
-  if (!REDIS_URL || !REDIS_TOKEN) {
-    const error = new Error('Missing required Redis environment variables');
-    if (DEBUG) console.error('[redis] Error creating client:', error);
-    throw error;
-  }
+const isProduction = process.env.NODE_ENV === 'production';
 
-  if (DEBUG) console.log('[redis] Creating new Upstash Redis client');
-  const redisClient = new UpstashRedis({
-    url: REDIS_URL,
-    token: REDIS_TOKEN,
-  });
-  
-  if (DEBUG) console.log('[redis] Redis client created successfully');
-  return redisClient;
+// Use KV_REST in production, UPSTASH_REDIS in development
+const REDIS_CONFIG = {
+  url: isProduction ? process.env.KV_REST_API_URL : process.env.UPSTASH_REDIS_REST_URL,
+  token: isProduction ? process.env.KV_REST_API_TOKEN : process.env.UPSTASH_REDIS_REST_TOKEN
 };
 
-// Create the default Redis client
-const redis = createRedisClient();
+if (!REDIS_CONFIG.url || !REDIS_CONFIG.token) {
+  throw new Error(
+    `Redis configuration missing for ${isProduction ? 'production' : 'development'} environment. ` +
+    `Missing: ${!REDIS_CONFIG.url ? 'URL' : ''} ${!REDIS_CONFIG.token ? 'TOKEN' : ''}`
+  );
+}
 
-// Helper function to handle retries
-const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> => {
-  let lastError: Error;
-  
-  for (let i = 0; i < maxRetries; i++) {
+// Create the Redis client instance
+function createRedisClient(): RedisClient {
+  // Create base client
+  const client = new UpstashRedis({
+    url: REDIS_CONFIG.url!,
+    token: REDIS_CONFIG.token!,
+    retry: {
+      retries: 3,
+      backoff: (retryCount) => {
+        const delay = Math.min(Math.exp(retryCount) * 50, 1000);
+        console.log(`[Redis] Retry ${retryCount + 1}, delay: ${delay}ms`);
+        return delay;
+      }
+    }
+  }) as unknown as RedisClient;
+
+  // Helper function to handle Redis commands with error handling
+  const withErrorHandling = async <T>(fn: () => Promise<T>): Promise<T> => {
     try {
       return await fn();
     } catch (error) {
-      lastError = error as Error;
-      if (i < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, Math.min(50 * Math.pow(2, i), 2000)));
-      }
+      console.error('Redis operation failed:', error);
+      throw error;
     }
-  }
-  
-  throw lastError!;
-};
+  };
 
-// Utility functions for common operations
-// Type-safe wrapper for Redis client
-type RedisZAddOptions = {
-  nx?: boolean;
-};
+  // Save original methods
+  const originalGet = client.get.bind(client);
+  const originalSet = client.set.bind(client);
+  const originalHset = client.hset?.bind(client) || 
+    ((...args: any[]) => client.command('hset', ...args));
+  const originalHgetall = client.hgetall?.bind(client) || 
+    (async (key: string) => client.command('hgetall', key));
+  const originalZadd = client.zadd?.bind(client) || 
+    ((...args: any[]) => client.command('zadd', ...args));
+  const originalZrange = client.zrange?.bind(client) || 
+    ((...args: any[]) => client.command('zrange', ...args));
+  const originalZrem = client.zrem?.bind(client) || 
+    ((...args: any[]) => client.command('zrem', ...args));
 
-type RedisZAddParams = {
-  score: number;
-  member: string;
-};
+  // Override get with JSON parsing
+  client.get = async function<T = string>(key: string): Promise<T | null> {
+    return withErrorHandling(async () => {
+      const result = await originalGet(key);
+      if (result === null) return null;
+      
+      if (typeof result === 'string') {
+        try {
+          return JSON.parse(result) as T;
+        } catch (e) {
+          // If not valid JSON, return as string
+          return result as unknown as T;
+        }
+      }
+      return result as T;
+    });
+  };
 
-// Define Redis client interface
-export interface RedisClient {
-  // String operations
-  get(key: string): Promise<string | null>;
-  set(key: string, value: string, ttl?: number): Promise<'OK'>;
-  del(key: string | string[]): Promise<number>;
-  exists(key: string | string[]): Promise<number>;
-  
-  // Hash operations
-  hget(key: string, field: string): Promise<string | null>;
-  hgetall(key: string): Promise<Record<string, string>>;
-  hset(key: string, field: string, value: string): Promise<number>;
-  hmset(key: string, obj: Record<string, string>): Promise<'OK'>;
-  
-  // Set operations
-  sadd(key: string, ...members: string[]): Promise<number>;
-  smembers(key: string): Promise<string[]>;
-  
-  // Sorted Set operations
-  zadd(key: string, score: number, member: string, options?: RedisZAddOptions): Promise<number>;
-  zrange(key: string, start: number, stop: number, withScores?: boolean): Promise<string[]>;
-  
-  // Key operations
-  keys(pattern: string): Promise<string[]>;
-  expire(key: string, seconds: number): Promise<number>;
-  ttl(key: string): Promise<number>;
-  
-  // Utility methods
-  flushAll(): Promise<'OK'>;
+  // Override set with JSON stringification
+  client.set = async function<T>(
+    key: string, 
+    value: T, 
+    options: RedisClientOptions = {}
+  ): Promise<'OK'> {
+    return withErrorHandling(async () => {
+      // Handle primitive values directly
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        return originalSet(key, value, options);
+      }
+      
+      // Handle object values with JSON stringification
+      if (value !== null && typeof value === 'object') {
+        const serializedValue = JSON.stringify(value);
+        return originalSet(key, serializedValue, options);
+      }
+      
+      throw new Error(`Unsupported value type for Redis SET: ${typeof value}`);
+    });
+  };
+
+  // Add jsonGet convenience method
+  client.jsonGet = async function<T = RedisValue>(key: string): Promise<T | null> {
+    return withErrorHandling(async () => {
+      const value = await originalGet<string>(key);
+      if (value === null) return null;
+      
+      try {
+        return JSON.parse(value) as T;
+      } catch (e) {
+        console.error(`Error parsing JSON for key ${key}:`, e);
+        return null;
+      }
+    });
+  };
+
+  // Add jsonSet convenience method
+  client.jsonSet = async function(
+    key: string, 
+    value: RedisValue, 
+    options: RedisClientOptions = {}
+  ): Promise<'OK'> {
+    return withErrorHandling(async () => {
+      const serialized = JSON.stringify(value);
+      return originalSet(key, serialized, options);
+    });
+  };
+
+  // Implement hash methods
+  client.hset = async function(
+    key: string, 
+    fieldOrObj: string | Record<string, string>, 
+    value?: string
+  ): Promise<number> {
+    return withErrorHandling(async () => {
+      if (typeof fieldOrObj === 'string' && value !== undefined) {
+        return originalHset(key, fieldOrObj, value);
+      } else if (typeof fieldOrObj === 'object' && fieldOrObj !== null) {
+        return originalHset(key, fieldOrObj);
+      }
+      throw new Error('Invalid arguments for hset');
+    });
+  };
+
+  client.hgetall = async function(key: string): Promise<Record<string, string> | null> {
+    return withErrorHandling(async () => {
+      const result = await originalHgetall(key);
+      return result as Record<string, string>;
+    });
+  };
+
+  // Implement sorted set methods
+  client.zadd = async function(
+    key: string, 
+    score: number, 
+    member: string
+  ): Promise<number> {
+    return withErrorHandling(async () => {
+      return originalZadd(key, { score, member });
+    });
+  };
+
+  client.zrange = async function<T = string>(
+    key: string, 
+    start: number, 
+    stop: number, 
+    withScores = false
+  ): Promise<T[]> {
+    return withErrorHandling(async () => {
+      const args: any[] = [key, start, stop];
+      if (withScores) {
+        args.push('WITHSCORES');
+      }
+      return originalZrange(...args);
+    });
+  };
+
+  client.zrem = async function(
+    key: string, 
+    ...members: string[]
+  ): Promise<number> {
+    return withErrorHandling(async () => {
+      return originalZrem(key, ...members);
+    });
+  };
+
+  return client;
 }
 
-// Create the Redis client wrapper
-export const redisClient: RedisClient = {
-  // String operations
-  async get(key: string): Promise<string | null> {
-    return redis.get(key);
-  },
+// Create or reuse Redis client
+const redis: RedisClient = global.redis || createRedisClient();
 
-  async set(key: string, value: string, ttl?: number): Promise<'OK'> {
-    if (ttl) {
-      await redis.set(key, value, { ex: ttl });
-    } else {
-      await redis.set(key, value);
-    }
-    return 'OK';
-  },
+// Cache the instance in development to prevent too many connections
+if (process.env.NODE_ENV !== 'production' && !global.redis) {
+  global.redis = redis;
+}
 
-  async del(keys: string | string[]): Promise<number> {
-    const keyArray = Array.isArray(keys) ? keys : [keys];
-    return redis.del(...keyArray);
-  },
+// Test Redis connection on startup
+async function testRedisConnection() {
+  try {
+    await redis.ping();
+    console.log('[Redis] Connection successful');
+  } catch (error) {
+    console.error('[Redis] Connection failed:', error);
+    throw error;
+  }
+}
 
-  async exists(keys: string | string[]): Promise<number> {
-    const keyArray = Array.isArray(keys) ? keys : [keys];
-    const results = await Promise.all(keyArray.map(k => redis.exists(k)));
-    return results.reduce((sum, val) => sum + (val ? 1 : 0), 0);
-  },
+// Only test connection if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  testRedisConnection().catch(console.error);
+}
 
-  // Hash operations
-  async hget(key: string, field: string): Promise<string | null> {
-    const result = await redis.hget(key, field);
-    return result ? String(result) : null;
-  },
-
-  async hgetall(key: string): Promise<Record<string, string>> {
-    const result = await redis.hgetall(key);
-    if (!result) return {};
-    
-    // Convert all values to strings
-    const stringResult: Record<string, string> = {};
-    for (const [k, v] of Object.entries(result)) {
-      stringResult[k] = String(v);
-    }
-    return stringResult;
-  },
-
-  async hset(key: string, field: string, value: string): Promise<number> {
-    const result = await redis.hset(key, { [field]: value });
-    return result || 0;
-  },
-  
-  async hmset(key: string, obj: Record<string, string>): Promise<'OK'> {
-    // Convert all values to strings
-    const stringObj: Record<string, string> = {};
-    for (const [k, v] of Object.entries(obj)) {
-      stringObj[k] = String(v);
-    }
-    
-    await redis.hset(key, stringObj);
-    return 'OK';
-  },
-
-  // Set operations
-  async sadd(key: string, ...members: string[]): Promise<number> {
-    return redis.sadd(key, ...members);
-  },
-
-  async smembers(key: string): Promise<string[]> {
-    return redis.smembers(key);
-  },
-
-  // Sorted Set operations
-  async zadd(
-    key: string,
-    score: number,
-    member: string,
-    options?: RedisZAddOptions
-  ): Promise<number> {
-    const command = ['ZADD', key];
-    
-    if (options?.nx) {
-      command.push('NX');
-    }
-    
-    command.push(score.toString(), member);
-    
-    try {
-      const result = await redis.sendCommand<number>(command);
-      return result || 0;
-    } catch (error) {
-      console.error('Redis zadd error:', error);
-      throw error;
-    }
-  },
-
-  async zrange(
-    key: string,
-    start: number,
-    stop: number,
-    withScores = false
-  ): Promise<string[]> {
-    const command = ['ZRANGE', key, start.toString(), stop.toString()];
-    
-    if (withScores) {
-      command.push('WITHSCORES');
-    }
-    
-    try {
-      const result = await redis.sendCommand<(string | number)[]>(command);
-      return result?.map(String) || [];
-    } catch (error) {
-      console.error('Redis zrange error:', error);
-      throw error;
-    }
-  },
-
-  // Key operations
-  async keys(pattern: string): Promise<string[]> {
-    const result = await redis.keys(pattern);
-    return Array.isArray(result) ? result.map(String) : [];
-  },
-
-  async expire(key: string, seconds: number): Promise<number> {
-    const result = await redis.expire(key, seconds);
-    return result ? 1 : 0;
-  },
-
-  async ttl(key: string): Promise<number> {
-    try {
-      const result = await redis.ttl(key);
-      return result !== null ? result : -2; // -2 means key doesn't exist
-    } catch (error) {
-      console.error('Redis ttl error:', error);
-      return -2;
-    }
-  },
-
-  // Utility methods
-  async flushAll(): Promise<'OK'> {
-    await redis.flushall();
-    return 'OK';
-  },
-};
+// Export the Redis instance
+export const CACHE_KEY = 'showroom:data';
+export const CACHE_TTL = parseInt(process.env.CACHE_TTL_HOURS || '4') * 60 * 60;
 
 export default redis;
+  // Helper function to handle Redis commands with error handling
+  const withErrorHandling = async <T>(fn: () => Promise<T>): Promise<T> => {
+    try {
+      return await fn();
+    } catch (error) {
+      console.error('Redis operation failed:', error);
+      throw error;
+    }
+  };
+  
+  // Helper to handle string or array of strings for commands like del and exists
+  const handleStringOrArray = async <T>(
+    command: string,
+    keys: string | string[]
+  ): Promise<T> => {
+    const keyArray = Array.isArray(keys) ? keys : [keys];
+    if (keyArray.length === 0) return 0 as unknown as T;
+    
+    // Use the client's command method for direct command execution
+    const result = await withErrorHandling(() => 
+      (client as any).command(command, keyArray)
+    );
+    
+    return result as T;
+  };
+
+  // Create a type-safe Redis client with JSON support
+  const redisClient: RedisClient = {
+    // Generic get with type inference
+    get: <T = string>(key: string) => 
+      withErrorHandling(async (): Promise<T | null> => {
+        const result = await client.get(key);
+        if (result === null) return null;
+        try {
+          return JSON.parse(result as string) as T;
+        } catch {
+          return result as unknown as T;
+        }
+      }),
+    
+    // Generic set with type safety
+    set: <T = string>(key: string, value: T, ttl?: number) => 
+      withErrorHandling(async () => {
+        const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+        if (ttl) {
+          await client.set(key, stringValue, { ex: ttl });
+        } else {
+          await client.set(key, stringValue);
+        }
+        return 'OK' as const;
+      }),
+      
+    // JSON-specific get with proper typing
+    jsonGet: <T = any>(key: string) => 
+      withErrorHandling(async (): Promise<T | null> => {
+        const result = await client.get(key);
+        if (result === null) return null;
+        try {
+          return JSON.parse(result as string) as T;
+        } catch (error) {
+          console.error(`Failed to parse JSON for key ${key}:`, error);
+          return null;
+        }
+      }),
+      
+    // JSON-specific set with proper typing
+    jsonSet: <T = any>(key: string, value: T, ttl?: number) => 
+      withErrorHandling(async () => {
+        const stringValue = JSON.stringify(value);
+        if (ttl) {
+          await client.set(key, stringValue, { ex: ttl });
+        } else {
+          await client.set(key, stringValue);
+        }
+        return 'OK' as const;
+      }),
+    
+    del: (keys: string | string[]) => 
+      handleStringOrArray<number>('DEL', keys),
+    
+    exists: (keys: string | string[]) => 
+      handleStringOrArray<number>('EXISTS', keys),
+    
+    // Hash operations
+    hget: (key: string, field: string) => 
+      withErrorHandling(() => client.hget(key, field)),
+      
+    hgetall: (key: string) => 
+      withErrorHandling<Record<string, string>>(() => client.hgetall(key)),
+      
+    hset: (key: string, field: string, value: string) => 
+      withErrorHandling<number>(() => client.hset(key, field, value)),
+      
+    hdel: (key: string, fields: string | string[]) => 
+      handleStringOrArray<number>('HDEL', key, fields),
+      
+    hmset: (key: string, obj: Record<string, string>) => 
+      withErrorHandling(async () => {
+        await client.hset(key, obj);
+        return 'OK' as const;
+      }),
+    
+    // Set operations
+    sadd: (key: string, ...members: string[]) => 
+      withErrorHandling<number>(() => client.sadd(key, ...members)),
+      
+    smembers: (key: string) => 
+      withErrorHandling<string[]>(() => client.smembers(key)),
+    
+    // Sorted Set operations
+    zadd: (key: string, score: number, member: string) => 
+      withErrorHandling<number>(() => client.zadd(key, score, member)),
+      
+    zrange: (key: string, start: number, stop: number, withScores = false) => 
+      withErrorHandling<string[]>(
+        () => client.zrange(key, start, stop, withScores ? 'WITHSCORES' : undefined)
+      ),
+      
+    zrevrange: (key: string, start: number, stop: number, withScores = false) => 
+      withErrorHandling<string[]>(
+        () => client.zrevrange(key, start, stop, withScores ? 'WITHSCORES' : undefined)
+      ),
+    
+    // Key operations
+    keys: (pattern: string) => 
+      withErrorHandling<string[]>(() => client.keys(pattern)),
+      
+    expire: (key: string, seconds: number) => 
+      withErrorHandling(() => client.expire(key, seconds)),
+      
+    ttl: (key: string) => 
+      withErrorHandling(() => client.ttl(key)),
+    
+    // Raw command execution - using client.command for direct Redis commands
+    sendCommand: async <T = unknown>(command: string, ...args: (string | number)[]): Promise<T> => {
+      return withErrorHandling(async () => {
+        // Convert all arguments to strings as required by Redis
+        const stringArgs = args.map(String);
+        // Use the command method which is the correct way to send raw commands in @upstash/redis
+        const result = await (client as any).command(command, stringArgs);
+        return result as T;
+      });
+    },
+    
+    // Utility methods
+    flushAll: () => withErrorHandling(() => (client as any).command('FLUSHALL') as Promise<'OK'>),
+  };
+  
+  return redisClient;
+};
+
+// Function to create a new Redis client instance
+export const createRedisClient = (): RedisClient => {
+  const { url, token } = getRedisConfig();
+  const client = new UpstashRedis({ url, token });
+  return wrapRedisClient(client);
+};
+
+// Create the default Redis client instance
+const redis = createRedisClient();
+
+// Export the default client
+export default redis;
+
+// Export as redisClient for backward compatibility
+export const redisClient = redis;
