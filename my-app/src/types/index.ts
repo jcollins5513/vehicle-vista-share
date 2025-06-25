@@ -26,7 +26,7 @@ export interface Vehicle {
   facebookPostId?: string;
   lastFacebookPostDate?: Date;
   lastMarketplacePostDate?: Date;
-  carfaxHighlights?: any;
+  carfaxHighlights?: unknown;
   bodyStyle?: string;
   vehicleClass?: string;
   status: 'available' | 'sold';

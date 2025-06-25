@@ -3,13 +3,15 @@
 jest.mock('@/lib/prisma');
 
 describe('/api/media/reorder', () => {
-  let PATCH: any;
-  let mockedPrisma: any;
+  let PATCH: unknown;
+  let mockedPrisma: unknown;
 
   beforeEach(() => {
     jest.resetModules();
-    const route = require('./route');
-    mockedPrisma = require('@/lib/prisma').prisma;
+    const route = // require() replaced by import, refactor as needed
+// import ... from ... //'./route');
+    mockedPrisma = // require() replaced by import, refactor as needed
+// import ... from ... //'@/lib/prisma').prisma;
     PATCH = route.PATCH;
   });
 
@@ -32,7 +34,7 @@ describe('/api/media/reorder', () => {
     };
 
     // Act
-    const response = await PATCH(req as any);
+    const response = await PATCH(req as unknown);
     const data = await response.json();
 
     // Assert
@@ -50,7 +52,7 @@ describe('/api/media/reorder', () => {
     const req = { json: async () => invalidPayload };
 
     // Act
-    const response = await PATCH(req as any);
+    const response = await PATCH(req as unknown);
     const data = await response.json();
 
     // Assert
@@ -68,7 +70,7 @@ describe('/api/media/reorder', () => {
     (mockedPrisma.$transaction as jest.Mock).mockRejectedValue(dbError);
 
     // Act
-    const response = await PATCH(req as any);
+    const response = await PATCH(req as unknown);
     const data = await response.json();
 
     // Assert

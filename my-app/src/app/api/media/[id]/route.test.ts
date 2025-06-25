@@ -5,16 +5,19 @@ jest.mock('@/lib/s3');
 jest.mock('@/lib/prisma');
 
 describe('/api/media/[id]', () => {
-  let DELETE: any;
-  let mockedS3Helpers: any;
-  let mockedPrisma: any;
+  let DELETE: unknown;
+  let mockedS3Helpers: unknown;
+  let mockedPrisma: unknown;
 
   beforeEach(() => {
     jest.resetModules();
     // Dynamically require modules after resetting
-    const route = require('./route');
-    mockedS3Helpers = require('@/lib/s3');
-    mockedPrisma = require('@/lib/prisma').prisma;
+    const route = // require() replaced by import, refactor as needed
+// import ... from ... //'./route');
+    mockedS3Helpers = // require() replaced by import, refactor as needed
+// import ... from ... //'@/lib/s3');
+    mockedPrisma = // require() replaced by import, refactor as needed
+// import ... from ... //'@/lib/prisma').prisma;
     DELETE = route.DELETE;
   });
 
@@ -41,7 +44,7 @@ describe('/api/media/[id]', () => {
     });
 
     // Act
-    const response = await DELETE(req as any, { params: { id: mediaId } });
+    const response = await DELETE(req as unknown, { params: { id: mediaId } });
     const data = await response.json();
 
     // Assert
@@ -62,7 +65,7 @@ describe('/api/media/[id]', () => {
     });
 
     // Act
-    const response = await DELETE(req as any, { params: { id: mediaId } });
+    const response = await DELETE(req as unknown, { params: { id: mediaId } });
     const data = await response.json();
 
     // Assert
@@ -87,7 +90,7 @@ describe('/api/media/[id]', () => {
     });
 
     // Act
-    const response = await DELETE(req as any, { params: { id: mediaId } });
+    const response = await DELETE(req as unknown, { params: { id: mediaId } });
     const data = await response.json();
 
     // Assert
