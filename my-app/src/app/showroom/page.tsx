@@ -6,13 +6,20 @@ export const revalidate = 300;
 
 async function getShowroomData() {
   try {
+    console.log('[Showroom Debug] Fetching showroom data...');
     // Try to get fresh data from Redis
     const data = await redisService.getShowroomData();
     
+    console.log('[Showroom Debug] Raw Redis response:', JSON.stringify(data, null, 2));
+    
     // If we have an error in the response, treat it as a failure
     if (data.error) {
+      console.log('[Showroom Debug] Error in Redis response:', data.error);
       throw new Error(data.error);
     }
+    
+    console.log('[Showroom Debug] Vehicles count:', data.vehicles?.length || 0);
+    console.log('[Showroom Debug] First vehicle:', data.vehicles?.[0] ? JSON.stringify(data.vehicles[0]) : 'None');
     
     return {
       vehicles: data.vehicles || [],
@@ -20,7 +27,7 @@ async function getShowroomData() {
       fromCache: data.fromCache || false,
     };
   } catch (error) {
-    console.error('Error in getShowroomData:', error);
+    console.error('[Showroom Debug] Error in getShowroomData:', error);
     
     // Return empty data if there's an error
     return {

@@ -75,8 +75,12 @@ const MediaSlideshow = ({ items, currentSlide, onSlideChange, isPlaying, onPlayb
         <div className="text-white">
           {currentItem?.vehicle && (
             <>
-              <h3 className="text-xl font-bold">{`${currentItem.vehicle.year} ${currentItem.vehicle.make} ${currentItem.vehicle.model}`}</h3>
-              <p className="text-sm opacity-80">{`$${currentItem.vehicle.price.toLocaleString()} | ${currentItem.vehicle.mileage.toLocaleString()} miles`}</p>
+              <h3 className="text-xl font-bold">{`${currentItem.vehicle.year || ''} ${currentItem.vehicle.make || ''} ${currentItem.vehicle.model || ''}`.trim()}</h3>
+              <p className="text-sm opacity-80">
+                {currentItem.vehicle.price !== undefined && `$${currentItem.vehicle.price.toLocaleString()}`}
+                {currentItem.vehicle.price !== undefined && currentItem.vehicle.mileage !== undefined && ' | '}
+                {currentItem.vehicle.mileage !== undefined && `${currentItem.vehicle.mileage.toLocaleString()} miles`}
+              </p>
             </>
           )}
         </div>

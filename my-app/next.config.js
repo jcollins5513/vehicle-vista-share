@@ -18,6 +18,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'vehicle-vista-media.s3.us-east-2.amazonaws.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'example.com',
+      },
     ],
   },
   // Disable tracing to fix EPERM error
