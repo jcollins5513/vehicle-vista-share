@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { redisService } from "@/lib/services/redisService";
 
 export async function GET(
   request: NextRequest,
@@ -15,15 +15,8 @@ export async function GET(
       );
     }
 
-    // Fetch the vehicle with its media
-    const vehicle = await prisma.vehicle.findUnique({
-      where: { id: vehicleId },
-      include: {
-        media: {
-          orderBy: { order: "asc" },
-        },
-      },
-    });
+    // Fetch the vehicle with its media from Redis
+    const vehicle = await redisService.getVehicle(vehicleId);
 
     if (!vehicle) {
       return NextResponse.json(
@@ -33,10 +26,7 @@ export async function GET(
     }
 
     // Fetch any manual media that might be relevant (not associated with a vehicle)
-    const manualMedia = await prisma.media.findMany({
-      where: { vehicleId: null },
-      orderBy: { order: "asc" },
-    });
+    const manualMedia = await redisService.getUnattachedMedia();
 
     // Filter out stock photos from vehicle media
     const filteredVehicleMedia = vehicle.media.filter((media: { url: string }) => {

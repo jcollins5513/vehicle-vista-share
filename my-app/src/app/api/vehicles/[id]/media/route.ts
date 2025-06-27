@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { MediaType } from "@/types/media";
+import { redisService } from "@/lib/services/redisService";
 
 export const runtime = "nodejs";
-
-const prisma = new PrismaClient();
 
 export async function GET(
   req: NextRequest,
@@ -14,19 +12,14 @@ export async function GET(
     const vehicleId = params.id;
     
     // Verify the vehicle exists
-    const vehicle = await prisma.vehicle.findUnique({
-      where: { id: vehicleId },
-    });
-    
+    const vehicle = await redisService.getVehicle(vehicleId);
+
     if (!vehicle) {
       return new NextResponse("Vehicle not found", { status: 404 });
     }
-    
+
     // Get all media for this vehicle
-    const media = await prisma.media.findMany({
-      where: { vehicleId },
-      orderBy: { createdAt: 'asc' },
-    });
+    const media = await redisService.getVehicleMedia(vehicleId);
     
     return NextResponse.json(media);
   } catch (err) {
@@ -47,15 +40,9 @@ export async function POST(
       return new NextResponse("Missing url or type", { status: 400 });
     }
 
-    const media = await prisma.media.create({
-      data: {
-        url,
-        type,
-        vehicleId,
-      },
-    });
-
-    return NextResponse.json(media);
+    // In a Redis-only setup we would store media metadata here.
+    // For now, return Not Implemented to indicate the feature is disabled.
+    return new NextResponse("Not Implemented", { status: 501 });
   } catch (err) {
     console.error("POST /vehicles/:id/media", err);
     return new NextResponse("Internal Server Error", { status: 500 });

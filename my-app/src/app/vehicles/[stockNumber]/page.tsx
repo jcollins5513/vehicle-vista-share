@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+import { redisService } from '@/lib/services/redisService';
 import MediaGallery from '@/components/MediaGallery';
 
 interface VehicleDetailPageProps {
@@ -9,16 +9,8 @@ interface VehicleDetailPageProps {
 }
 
 async function getVehicle(stockNumber: string) {
-  const vehicle = await prisma.vehicle.findUnique({
-    where: { stockNumber },
-    include: {
-      media: {
-        orderBy: {
-          order: 'asc',
-        },
-      },
-    },
-  });
+  const vehicles = await redisService.getVehicles();
+  const vehicle = vehicles.find(v => v.stockNumber === stockNumber) || null;
   return vehicle;
 }
 

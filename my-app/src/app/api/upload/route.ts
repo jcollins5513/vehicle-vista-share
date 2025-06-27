@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadBufferToS3 } from "@/lib/s3";
-import { prisma } from "@/lib/prisma";
 import { MediaType } from "@/types/media";
+import { redisService } from "@/lib/services/redisService";
 
 // Explicitly opt into Node runtime so we can use Buffer & AWS SDK.
 export const runtime = "nodejs";
@@ -53,33 +53,23 @@ export async function POST(req: NextRequest) {
       type: file.type.startsWith("image/") ? MediaType.IMAGE : MediaType.VIDEO,
     };
     
-    // Only connect to a vehicle if vehicleId is provided and valid
+    // In a Redis-only setup we simply return the uploaded file metadata
     if (vehicleId) {
-      try {
-        // Check if vehicle exists first
-        const vehicle = await prisma.vehicle.findUnique({
-          where: { id: vehicleId },
-          select: { id: true }
-        });
-        
-        if (vehicle) {
-          Object.assign(mediaData, {
-            vehicle: { connect: { id: vehicleId } }
-          });
-        } else {
-          console.warn(`Vehicle with ID ${vehicleId} not found, creating media without vehicle association`);
-        }
-      } catch (error) {
-        console.error(`Error checking vehicle existence: ${error}`);
-        // Continue without vehicle association
-      }
+      console.warn(`Vehicle with ID ${vehicleId} ignored in Redis-only upload`);
     }
-    
-    const newMedia = await prisma.media.create({
-      data: mediaData,
+
+    await redisService.cacheMedia({
+      id: key,
+      url,
+      s3Key: key,
+      type: file.type.startsWith("image/") ? MediaType.IMAGE : MediaType.VIDEO,
+      vehicleId: vehicleId || undefined,
+      order: 0,
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
 
-    return NextResponse.json(newMedia);
+    return NextResponse.json({ url, key });
   } catch (err) {
     console.error("/api/upload error", err);
     // Return more detailed error message for debugging

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { redisService } from "@/lib/services/redisService";
 
 interface ReorderRequest {
   id: string;
@@ -14,16 +14,8 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    const updatePromises = body.map((item) =>
-      prisma.media.update({
-        where: { id: item.id },
-        data: { order: item.order },
-      })
-    );
-
-    await prisma.$transaction(updatePromises);
-
-    return NextResponse.json({ success: true }, { status: 200 });
+    // Reordering media is not yet implemented with Redis
+    return new NextResponse("Not Implemented", { status: 501 });
   } catch (error) {
     console.error("Failed to reorder media:", error);
     return NextResponse.json(
