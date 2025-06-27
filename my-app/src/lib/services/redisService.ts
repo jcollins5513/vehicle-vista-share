@@ -22,6 +22,7 @@ const MEDIA_KEY = (id: string) => `media:${id}`;
 const VEHICLE_MEDIA_KEY = (vehicleId: string) => `vehicle:${vehicleId}:media`;
 const UNATTACHED_MEDIA_KEY = 'media:unattached';
 const SHOWROOM_CACHE_KEY = 'showroom:data';
+const INVENTORY_CACHE_KEY = 'dealership:inventory';
 
 // TTL in seconds (1 hour)
 const DEFAULT_TTL = 60 * 60;
@@ -182,12 +183,12 @@ export const redisService = {
   },
 
   // Get showroom data with Redis caching
-  async getShowroomData(useCache = true): Promise<{ 
-    vehicles: Vehicle[]; 
-    customMedia: Media[]; 
-    cachedAt: number; 
-    fromCache: boolean; 
-    error?: string 
+  async getShowroomData(useCache = true): Promise<{
+    vehicles: Vehicle[];
+    customMedia: Media[];
+    cachedAt: number;
+    fromCache: boolean;
+    error?: string
   }> {
     const cacheKey = SHOWROOM_CACHE_KEY;
     
@@ -257,6 +258,21 @@ export const redisService = {
         error: error instanceof Error ? error.message : 'Failed to load showroom data',
       };
     }
+  },
+
+  /**
+   * Retrieve the raw inventory data scraped from the dealership website.
+   */
+  async getInventoryData(): Promise<{ vehicles: any[]; lastUpdated?: string }> {
+    const data = await redisClient.jsonGet<{ vehicles?: any[]; lastUpdated?: string }>(INVENTORY_CACHE_KEY);
+    if (!data) {
+      return { vehicles: [] };
+    }
+
+    return {
+      vehicles: Array.isArray(data.vehicles) ? data.vehicles : [],
+      lastUpdated: data.lastUpdated,
+    };
   },
 };
 
