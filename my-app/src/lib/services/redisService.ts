@@ -238,7 +238,7 @@ export const redisService = {
 
       try {
         // Cache the result with TTL using jsonSet for proper serialization
-        await redisClient.jsonSet(cacheKey, result, DEFAULT_TTL);
+        await redisClient.jsonSet(cacheKey, result, { ex: DEFAULT_TTL });
       } catch (cacheError) {
         console.error('Failed to cache showroom data:', cacheError);
         // Don't fail the request if caching fails

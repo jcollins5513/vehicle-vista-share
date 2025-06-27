@@ -142,6 +142,12 @@ function createRedisClient(): RedisClient {
       const value = await originalGet<string>(key);
       if (value === null) return null;
       
+      // If value is already an object, return it directly
+      if (typeof value === 'object') {
+        return value as T;
+      }
+      
+      // Otherwise, try to parse it as JSON
       try {
         return JSON.parse(value) as T;
       } catch (e) {
