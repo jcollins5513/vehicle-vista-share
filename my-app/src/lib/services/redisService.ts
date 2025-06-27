@@ -50,6 +50,7 @@ export const redisService = {
     const media = await this.getVehicleMedia(id);
     
     // Create a new object without the media property to satisfy TypeScript
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { media: _ignored, ...vehicleWithoutMedia } =
       vehicle as Vehicle & { media?: unknown };
     

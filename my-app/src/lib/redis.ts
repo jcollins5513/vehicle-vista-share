@@ -22,7 +22,8 @@ interface RedisClient extends Omit<UpstashRedis, 'get' | 'set' | 'hset' | 'hgeta
   
   // Sorted set methods
   zadd(key: string, score: number, member: string): Promise<number>;
-  zrange<T = string>(key: string, start: number, stop: number, withScores?: boolean): Promise<T[]>;
+  zrange<T = string>(key: string, start: number, stop: number, withScores?: boolean | 'WITHSCORES'): Promise<T[]>;
+
   zrem(key: string, ...members: string[]): Promise<number>;
   
   // Allow dynamic properties for other Redis commands
@@ -50,9 +51,9 @@ if (!REDIS_CONFIG.url || !REDIS_CONFIG.token) {
 }
 
 // Create the Redis client instance
-function createRedisClient(): RedisClient {
+export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
   // Create base client
-  const client = new UpstashRedis({
+  const client = mockClient || new UpstashRedis({
     url: REDIS_CONFIG.url!,
     token: REDIS_CONFIG.token!,
     retry: {
@@ -79,15 +80,15 @@ function createRedisClient(): RedisClient {
   const originalGet = client.get.bind(client);
   const originalSet = client.set.bind(client);
   const originalHset = client.hset?.bind(client) ||
-    ((...args: unknown[]) => client.command('hset', ...args));
+    ((...args: any[]) => (client.command as any)('hset', ...args));
   const originalHgetall = client.hgetall?.bind(client) || 
-    (async (key: string) => client.command('hgetall', key));
+    (async (key: string) => (client.command as any)('hgetall', key));
   const originalZadd = client.zadd?.bind(client) ||
-    ((...args: unknown[]) => client.command('zadd', ...args));
+    ((...args: any[]) => (client.command as any)('zadd', ...args));
   const originalZrange = client.zrange?.bind(client) ||
-    ((...args: unknown[]) => client.command('zrange', ...args));
+    ((...args: any[]) => (client.command as any)('zrange', ...args));
   const originalZrem = client.zrem?.bind(client) ||
-    ((...args: unknown[]) => client.command('zrem', ...args));
+    ((...args: any[]) => (client.command as any)('zrem', ...args));
 
   // Override get with JSON parsing
   client.get = async function<T = string>(key: string): Promise<T | null> {
@@ -201,7 +202,7 @@ function createRedisClient(): RedisClient {
     member: string
   ): Promise<number> {
     return withErrorHandling(async () => {
-      return originalZadd(key, { score, member });
+      return originalZadd(key, score, member);
     });
   };
 
@@ -216,7 +217,11 @@ function createRedisClient(): RedisClient {
       if (withScores) {
         args.push('WITHSCORES');
       }
-      return originalZrange(...args);
+      if (withScores) {
+        return originalZrange(key, start, stop, 'WITHSCORES');
+      } else {
+        return originalZrange(key, start, stop);
+      }
     });
   };
 

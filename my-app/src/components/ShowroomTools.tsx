@@ -59,6 +59,7 @@ const ShowroomTools = ({ selectedVehicle, onVehicleSelect, onGenerateLink, vehic
       {/* Showroom Tools Header */}
       <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-4">
         <h3 className="text-white font-bold text-lg mb-4 flex items-center">
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image className="w-5 h-5 mr-2" aria-hidden="true" />
           Showroom Tools
         </h3>
@@ -90,6 +91,7 @@ const ShowroomTools = ({ selectedVehicle, onVehicleSelect, onGenerateLink, vehic
       {/* Media Selection */}
       <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-4">
         <h4 className="text-white font-semibold mb-3 flex items-center">
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image className="w-4 h-4 mr-2" aria-hidden="true" />
           Media Selection
         </h4>
@@ -100,7 +102,8 @@ const ShowroomTools = ({ selectedVehicle, onVehicleSelect, onGenerateLink, vehic
               onClick={onShowMediaGallery}
               className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded flex items-center justify-center text-sm"
             >
-              <Image className="w-4 h-4 mr-2" />
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
+              <Image className="w-4 h-4 mr-2" aria-hidden="true" />
               Manage Media Gallery
             </button>
           )}

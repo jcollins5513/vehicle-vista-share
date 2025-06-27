@@ -21,7 +21,7 @@ describe('Redis Client', () => {
   const testKey = 'test:key';
   const testHashKey = 'test:hash';
   const testSetKey = 'test:set';
-  const testZsetKey = 'test:zset';
+
 
   beforeEach(() => {
     // Reset all mocks
