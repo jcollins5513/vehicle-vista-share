@@ -60,7 +60,7 @@ const MockMediaItem = ({
 
 // Mock the actual MediaGallery component
 jest.mock('../MediaGallery', () => {
-  return function MockMediaGallery({ media, onReorder }: MediaGalleryProps) {
+  return function MockMediaGallery({ media, onReorder: _onReorder }: MediaGalleryProps) {
     return (
       <div data-testid="media-gallery">
         {/* Main image display */}

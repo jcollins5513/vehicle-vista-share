@@ -6,10 +6,6 @@ import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 // Type definitions for test request/response
-type MockRequest = NextRequest & {
-  formData: () => Promise<FormData>;
-};
-
 type MockResponse = NextResponse & {
   json: () => Promise<unknown>;
   text: () => Promise<string>;

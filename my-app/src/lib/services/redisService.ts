@@ -167,8 +167,9 @@ export const redisService = {
     const mediaData = mediaToRedis(media);
     
     // Set the media data with TTL
-    await redisClient.set(key, JSON.stringify(mediaData), ttl);
-    await redisClient.expire(key, ttl);
+    await redisClient.set(key, JSON.stringify(mediaData), {
+      ex: ttl // Set TTL in seconds using the ex option (lowercase)
+    });
     
     // If media is not attached to a vehicle, add to unattached set
     if (!media.vehicleId) {
@@ -177,9 +178,6 @@ export const redisService = {
       // If media is attached to a vehicle, add to vehicle's media set
       await redisClient.sadd(VEHICLE_MEDIA_KEY(media.vehicleId), media.id);
     }
-    
-    // Set TTL
-    await redisClient.expire(key, ttl);
   },
 
   async getVehicleMedia(vehicleId: string): Promise<Media[]> {

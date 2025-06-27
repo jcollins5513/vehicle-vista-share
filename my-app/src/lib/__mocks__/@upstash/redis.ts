@@ -21,7 +21,9 @@ export class Redis {
 // Create a singleton instance for tests to use
 export const mockRedis = new Redis();
 
-export default {
+const mockUpstashRedis = {
   Redis: jest.fn(() => mockRedis),
   mockRedis,
 };
+
+export default mockUpstashRedis;
