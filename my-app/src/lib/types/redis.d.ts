@@ -20,7 +20,11 @@ export interface RedisOptions {
 export interface RedisClient {
   // String operations with generic type support
   get<T = string>(key: string): Promise<T | null>;
-  set<T = string>(key: string, value: T, ttl?: number): Promise<'OK'>;
+  set<T = string>(
+    key: string,
+    value: T,
+    ttl?: number | { ex?: number; nx?: boolean; xx?: boolean }
+  ): Promise<'OK'>;
   del(keys: string | string[]): Promise<number>;
   exists(keys: string | string[]): Promise<number>;
   expire(key: string, seconds: number): Promise<number>;
@@ -51,7 +55,11 @@ export interface RedisClient {
   
   // JSON operations
   jsonGet<T = any>(key: string): Promise<T | null>;
-  jsonSet<T = any>(key: string, value: T, ttl?: number): Promise<'OK'>;
+  jsonSet<T = any>(
+    key: string,
+    value: T,
+    ttl?: number | { ex?: number; nx?: boolean; xx?: boolean }
+  ): Promise<'OK'>;
 }
 
 // Upstash Redis module augmentation
@@ -96,7 +104,11 @@ declare module '@upstash/redis' {
 export interface RedisClient {
   // String operations
   get(key: string): Promise<string | null>;
-  set(key: string, value: string, ttl?: number): Promise<'OK'>;
+  set(
+    key: string,
+    value: string,
+    ttl?: number | { ex?: number; nx?: boolean; xx?: boolean }
+  ): Promise<'OK'>;
   del(keys: string | string[]): Promise<number>;
   exists(keys: string | string[]): Promise<number>;
   expire(key: string, seconds: number): Promise<number>;
