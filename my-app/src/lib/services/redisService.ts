@@ -264,6 +264,7 @@ export const redisService = {
    * Retrieve the raw inventory data scraped from the dealership website.
    */
   async getInventoryData(): Promise<{ vehicles: any[]; lastUpdated?: string }> {
+
     try {
       const data = await redisClient.get<{ vehicles?: any[]; lastUpdated?: string }>(
         INVENTORY_CACHE_KEY
@@ -281,6 +282,7 @@ export const redisService = {
       console.error('Error fetching inventory data:', error);
       throw new Error('Failed to get inventory data');
     }
+
   },
 };
 
