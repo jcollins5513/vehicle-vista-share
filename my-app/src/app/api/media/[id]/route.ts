@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { deleteObjectFromS3 } from "@/lib/s3";
+import { redisService } from "@/lib/services/redisService";
 
 export async function DELETE(
   request: Request,
@@ -16,9 +16,7 @@ export async function DELETE(
   }
 
   try {
-    const media = await prisma.media.findUnique({
-      where: { id: mediaId },
-    });
+    const media = await redisService.getMedia(mediaId);
 
     if (!media) {
       return NextResponse.json({ error: "Media not found" }, { status: 404 });
@@ -29,10 +27,7 @@ export async function DELETE(
       await deleteObjectFromS3(media.s3Key);
     }
 
-    // Then delete from database
-    await prisma.media.delete({
-      where: { id: mediaId },
-    });
+    // Removing from Redis cache is not yet implemented
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

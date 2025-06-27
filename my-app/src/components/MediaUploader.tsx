@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useRef, useState } from "react";
-import { Media } from "@prisma/client";
+import type { Media } from "@/types";
 import { AlertCircle, CheckCircle, Upload } from "lucide-react";
 
 interface MediaUploaderProps {

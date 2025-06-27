@@ -1,8 +1,4 @@
-import type { Vehicle as PrismaVehicle, Media as PrismaMedia, MediaType as PrismaMediaType } from '@prisma/client';
-import type { Vehicle, Media } from '@/types';
-
-// Define MediaType if not already defined in @/types
-type MediaType = PrismaMediaType;
+import type { Vehicle, Media, MediaType } from '@/types';
 
 // Helper to ensure a value is a valid Date
 export function ensureDate(date: Date | string | null | undefined): Date {
@@ -28,7 +24,7 @@ export function safeDateParse(date: string | Date | null | undefined): Date | un
 /**
  * Convert Prisma Vehicle model to application Vehicle type
  */
-export function toVehicle(vehicle: PrismaVehicle & { media?: PrismaMedia[] }): Vehicle {
+export function toVehicle(vehicle: Vehicle & { media?: Media[] }): Vehicle {
   // Ensure all required Vehicle properties are present
   const result: Vehicle = {
     ...vehicle,
@@ -71,7 +67,7 @@ export function toVehicle(vehicle: PrismaVehicle & { media?: PrismaMedia[] }): V
 /**
  * Convert Prisma Media model to application Media type
  */
-export function toMedia(media: PrismaMedia): Media {
+export function toMedia(media: Media): Media {
   // Ensure all required Media properties are present
   const result: Media = {
     ...media,
