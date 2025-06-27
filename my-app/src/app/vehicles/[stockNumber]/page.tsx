@@ -2,11 +2,6 @@ import { notFound } from 'next/navigation';
 import { redisService } from '@/lib/services/redisService';
 import MediaGallery from '@/components/MediaGallery';
 
-interface VehicleDetailPageProps {
-  params: {
-    stockNumber: string;
-  };
-}
 
 async function getVehicle(stockNumber: string) {
   const vehicles = await redisService.getVehicles();
@@ -14,7 +9,8 @@ async function getVehicle(stockNumber: string) {
   return vehicle;
 }
 
-export default async function VehicleDetailPage({ params }: VehicleDetailPageProps) {
+export default async function VehicleDetailPage(context: { params: Promise<{ stockNumber: string }> }) {
+  const params = await context.params;
   const vehicle = await getVehicle(params.stockNumber);
 
   if (!vehicle) {
@@ -26,7 +22,7 @@ export default async function VehicleDetailPage({ params }: VehicleDetailPagePro
       <h1 className="text-3xl font-bold mb-4">{`${vehicle.year} ${vehicle.make} ${vehicle.model}`}</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
-          <MediaGallery media={vehicle.media} />
+          <MediaGallery media={vehicle.media || []} />
         </div>
         <div>
           <h2 className="text-2xl font-semibold mb-2">Details</h2>

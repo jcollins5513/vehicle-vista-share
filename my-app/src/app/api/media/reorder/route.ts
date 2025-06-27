@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { redisService } from "@/lib/services/redisService";
 
 interface ReorderRequest {
   id: string;

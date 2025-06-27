@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 // This is a minimal test endpoint to debug file uploads
 export async function POST(request: Request) {
@@ -37,9 +36,9 @@ export async function POST(request: Request) {
     console.log('🔵 File info:', {
       type: typeof file,
       constructor: file?.constructor?.name,
-      size: file?.size,
-      type: file?.type,
-      name: file?.name,
+      size: file instanceof File ? file.size : 'N/A',
+      fileType: file instanceof File ? file.type : 'N/A',
+      name: file instanceof File ? file.name : 'N/A',
     });
     
     // If we got this far, the basic file upload is working
@@ -48,9 +47,9 @@ export async function POST(request: Request) {
       message: 'File received successfully',
       fileInfo: {
         type: typeof file,
-        size: file?.size,
-        type: file?.type,
-        name: file?.name,
+        size: file instanceof File ? file.size : 'N/A',
+        fileType: file instanceof File ? file.type : 'N/A',
+        name: file instanceof File ? file.name : 'N/A',
       }
     });
     
@@ -59,9 +58,9 @@ export async function POST(request: Request) {
     
     // Return detailed error information
     const errorInfo = {
-      name: error?.name,
-      message: error?.message,
-      stack: error?.stack,
+      name: error instanceof Error ? error.name : 'UnknownError',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
       constructor: error?.constructor?.name,
       additionalInfo: {
         isError: error instanceof Error,

@@ -3,8 +3,9 @@ import { redisService } from "@/lib/services/redisService";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const vehicleId = params.id;
 
@@ -29,7 +30,7 @@ export async function GET(
     const manualMedia = await redisService.getUnattachedMedia();
 
     // Filter out stock photos from vehicle media
-    const filteredVehicleMedia = vehicle.media.filter((media: { url: string }) => {
+    const filteredVehicleMedia = vehicle.media?.filter((media: { url: string }) => {
       const url = media.url.toLowerCase();
       return !url.includes('rtt') && !url.includes('chrome') && !url.includes('default');
     });
@@ -37,7 +38,7 @@ export async function GET(
     // Combine vehicle data with filtered media
     const vehicleWithMedia = {
       ...vehicle,
-      media: filteredVehicleMedia,
+      media: filteredVehicleMedia || [],
       manualMedia: manualMedia,
     };
 

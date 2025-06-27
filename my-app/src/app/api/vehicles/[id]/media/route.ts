@@ -6,8 +6,9 @@ export const runtime = "nodejs";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const vehicleId = params.id;
     
@@ -30,10 +31,11 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
-    const vehicleId = params.id;
+    const _vehicleId = params.id;
     const { url, type }: { url: string; type: MediaType } = await req.json();
 
     if (!url || !type) {

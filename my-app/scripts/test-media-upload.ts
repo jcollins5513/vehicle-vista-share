@@ -1,8 +1,8 @@
 // Simple test script to verify media upload/delete
-const fs = require('fs');
-const path = require('path');
-const axios = require('axios');
-const FormDataLib = require('form-data');
+import fs from 'fs';
+import path from 'path';
+import axios, { AxiosError } from 'axios';
+import FormData from 'form-data';
 
 // Configuration
 const API_BASE_URL = 'http://localhost:3000/api';
@@ -14,7 +14,7 @@ async function testMediaUpload() {
     
     // 1. Read the test file
     const fileStream = fs.createReadStream(TEST_IMAGE_PATH);
-    const form = new FormDataLib();
+    const form = new FormData();
     form.append('file', fileStream);
     
     console.log('Uploading file...');
@@ -49,26 +49,34 @@ async function testMediaUpload() {
     try {
       await axios.get(`${API_BASE_URL}/media/${key}`);
       console.error('❌ Error: Media still exists after deletion');
-    } catch (deleteError) {
-      if (deleteError.response && deleteError.response.status === 404) {
-        console.log('✅ Success! Media was deleted.');
-      } else {
-        console.error('❌ Error verifying deletion:', deleteError.message);
-        if (deleteError.response) {
-          console.error('Response data:', deleteError.response.data);
-          console.error('Status code:', deleteError.response.status);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.status === 404) {
+          console.log('✅ Success! Media was deleted.');
+        } else {
+          console.error('❌ Error verifying deletion:', error.message);
+          if (error.response) {
+            console.error('Response data:', error.response.data);
+            console.error('Status code:', error.response.status);
+          }
         }
+      } else if (error instanceof Error) {
+        console.error('❌ An unexpected error occurred:', error.message);
+      } else {
+        console.error('❌ An unknown error occurred during deletion verification.');
       }
     }
   } catch (error) {
-    console.error('❌ Test failed!');
-    if (error.response) {
-      console.error('Response data:', error.response.data);
-      console.error('Status code:', error.response.status);
-    } else if (error.message) {
-      console.error('Error message:', error.message);
+    if (axios.isAxiosError(error)) {
+      console.error('❌ Error during test media upload:', error.message);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Status code:', error.response.status);
+      }
+    } else if (error instanceof Error) {
+      console.error('❌ An unexpected error occurred:', error.message);
     } else {
-      console.error('Unknown error occurred:', error);
+      console.error('❌ An unknown error occurred.');
     }
     process.exit(1);
   }

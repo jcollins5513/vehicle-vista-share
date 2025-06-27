@@ -4,7 +4,8 @@ import type { Vehicle, VehicleWithMedia } from "@/types";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata(context: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const params = await context.params;
   return {
     title: `Customer View - ${params.id}`,
   };
@@ -22,7 +23,8 @@ async function fetchAllVehicles(): Promise<Vehicle[]> {
   return res.json();
 }
 
-export default async function CustomerPage({ params }: { params: { id: string } }) {
+export default async function CustomerPage(context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   // Debug log to help with troubleshooting
   console.log('[CustomerPage] params:', params);
   const vehicleId = params.id;

@@ -6,15 +6,6 @@ import { MediaType } from "@/types/media";
 // 25MB limit for file uploads
 const MAX_UPLOAD_SIZE = 25 * 1024 * 1024; // 25MB in bytes
 
-// Type guard to check if a value is a File
-function isFile(value: unknown): value is File {
-  return value instanceof File || 
-         (typeof value === 'object' && 
-          value !== null && 
-          'arrayBuffer' in value && 
-          'stream' in value);
-}
-
 // Helper function to convert a ReadableStream to a Buffer
 async function streamToBuffer(stream: ReadableStream<Uint8Array>): Promise<Buffer> {
   const chunks: Uint8Array[] = [];
@@ -32,8 +23,6 @@ async function streamToBuffer(stream: ReadableStream<Uint8Array>): Promise<Buffe
 // Explicitly opt into Node runtime so we can use Buffer & AWS SDK.
 export const runtime = "nodejs";
 
-// Max request body size ~ 26 MB (Next.js default is 4 MB for edge runtime, unlimited for node).
-export const maxSize = 25 * 1024 * 1024; // 25 MB
 
 /**
  * POST /api/upload
@@ -106,7 +95,7 @@ export async function POST(req: NextRequest) {
     let buffer: Buffer;
     try {
       // Type assertion for file as File or Blob
-      const fileObj = file as File | Blob;
+      const fileObj: any = file;
       
       if ('arrayBuffer' in fileObj) {
         // For browser-like environments (Next.js edge runtime)

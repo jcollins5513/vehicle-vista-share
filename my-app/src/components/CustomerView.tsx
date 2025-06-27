@@ -1,10 +1,11 @@
 
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, Car, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Car, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
+import MediaSlideshow from './MediaSlideshow';
 import VehicleSelector from './VehicleSelector';
 import type { Vehicle } from '@/types';
 
@@ -43,18 +44,6 @@ const CustomerView: React.FC<CustomerViewProps> = ({ vehicle: providedVehicle, s
     // In real implementation, this would integrate with Google Calendar
     alert('Test drive booking feature will integrate with Google Calendar');
   }, []);
-
-  const handleNextImage = () => {
-    if (selectedVehicle?.images && selectedVehicle.images.length > 0) {
-      setCurrentImageIndex((prev) => (prev + 1) % selectedVehicle.images.length);
-    }
-  };
-
-  const handlePrevImage = () => {
-    if (selectedVehicle?.images && selectedVehicle.images.length > 0) {
-      setCurrentImageIndex((prev) => (prev - 1 + selectedVehicle.images.length) % selectedVehicle.images.length);
-    }
-  };
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { 
@@ -103,123 +92,57 @@ const CustomerView: React.FC<CustomerViewProps> = ({ vehicle: providedVehicle, s
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-white/60">Price:</span>
-              <span className="ml-2 text-green-400 font-bold">
-                ${selectedVehicle.price.toLocaleString()}
-              </span>
-            </div>
-            <div>
-              <span className="text-white/60">Color:</span>
-              <span className="ml-2">{selectedVehicle.color}</span>
+              <p className="text-white font-semibold">${selectedVehicle?.price?.toLocaleString()}</p>
             </div>
             <div>
               <span className="text-white/60">Mileage:</span>
-              <span className="ml-2">{selectedVehicle.mileage} mi</span>
+              <p className="text-white font-semibold">{selectedVehicle?.mileage?.toLocaleString()} miles</p>
             </div>
             <div>
-              <span className="text-white/60">Stock:</span>
-              <span className="ml-2">{selectedVehicle.stockNumber}</span>
+              <span className="text-white/60">Stock #:</span>
+              <p className="text-white font-semibold">{selectedVehicle?.stockNumber}</p>
+            </div>
+            <div>
+              <span className="text-white/60">VIN:</span>
+              <p className="text-white font-semibold">{selectedVehicle?.vin}</p>
+            </div>
+            <div>
+              <span className="text-white/60">Exterior Color:</span>
+              <p className="text-white font-semibold">{selectedVehicle?.color}</p>
+            </div>
+            <div>
+              <span className="text-white/60">Engine:</span>
+              <p className="text-white font-semibold">{selectedVehicle?.engine}</p>
+            </div>
+            <div>
+              <span className="text-white/60">Transmission:</span>
+              <p className="text-white font-semibold">{selectedVehicle?.transmission}</p>
+            </div>
+            <div>
+              <span className="text-white/60">Body Style:</span>
+              <p className="text-white font-semibold">{selectedVehicle?.bodyStyle}</p>
             </div>
           </div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Main Vehicle Display */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Main Vehicle Image Slideshow */}
-          <div className="relative w-full h-64 md:h-96 lg:h-[500px] my-6 rounded-lg overflow-hidden bg-black/30">
-            {selectedVehicle?.images && selectedVehicle.images.length > 0 ? (
-              <>
-                {/* Current Image */}
-                <Image
-                  src={selectedVehicle.images[currentImageIndex]}
-                  alt={`${selectedVehicle?.year || ''} ${selectedVehicle?.make || ''} ${selectedVehicle?.model || ''}`}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 100vw"
-                  className="object-contain"
-                />
-                
-                {/* Gradient Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent" />
-                
-                {/* Navigation Controls */}
-                {selectedVehicle.images.length > 1 && (
-                  <div className="absolute top-1/2 left-4 right-4 flex justify-between items-center transform -translate-y-1/2">
-                    <button 
-                      onClick={handlePrevImage} 
-                      className="bg-black/50 text-white p-2 rounded-full hover:bg-black/80 transition-all"
-                      aria-label="Previous image"
-                    >
-                      <ChevronLeft size={24} />
-                    </button>
-                    <button 
-                      onClick={handleNextImage} 
-                      className="bg-black/50 text-white p-2 rounded-full hover:bg-black/80 transition-all"
-                      aria-label="Next image"
-                    >
-                      <ChevronRight size={24} />
-                    </button>
-                  </div>
-                )}
-                
-                {/* Image Counter */}
-                {selectedVehicle.images.length > 1 && (
-                  <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
-                    {(currentImageIndex as number) + 1} / {selectedVehicle.images.length}
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center text-white">
-                  <Car className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>No images available for this vehicle</p>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Vehicle Specifications */}
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6">
-            <h3 className="text-white text-xl font-bold mb-4 flex items-center">
-              <Car className="w-6 h-6 mr-2" />
-              Performance & Features
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                {selectedVehicle?.engine && (
-                  <div className="text-white">
-                    <span className="text-white/60">Engine:</span>
-                    <span className="ml-2">{selectedVehicle.engine}</span>
-                  </div>
-                )}
-                {selectedVehicle?.transmission && (
-                  <div className="text-white">
-                    <span className="text-white/60">Transmission:</span>
-                    <span className="ml-2">{selectedVehicle.transmission}</span>
-                  </div>
-                )}
-                <div className="text-white">
-                  <span className="text-white/60">Status:</span>
-                  <span className="ml-2 capitalize">{selectedVehicle.status}</span>
-                </div>
-              </div>
-              <div>
-                <h4 className="text-white font-semibold mb-3">Key Features</h4>
-                <ul className="space-y-2">
-                  {selectedVehicle?.features?.map((feature, index) => (
-                    <li key={index} className="text-white/80 text-sm">
-                      • {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </Card>
-        </div>
+      {/* Main Content Section - Image Gallery and Details */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Image Gallery */}
+        <div className="lg:col-span-2">
+          <MediaSlideshow
+            items={(selectedVehicle.images || []).map((image, index) => ({
+              id: `image-${index}`,
+              url: image,
+              type: 'IMAGE',
+              vehicle: selectedVehicle,
+            }))}
+            currentSlide={currentImageIndex}
+            onSlideChange={setCurrentImageIndex}
+            isPlaying={false} // Assuming no auto-play for now
+            onPlaybackToggle={() => {}} // No-op for now
+          />
 
-        {/* Right Sidebar */}
-        <div className="space-y-6">
           {/* Shared Vehicles Thumbnail Carousel */}
           {sharedVehicles.length > 1 && (
             <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-6 mb-6">
@@ -281,7 +204,6 @@ const CustomerView: React.FC<CustomerViewProps> = ({ vehicle: providedVehicle, s
                     setCurrentImageIndex(0);
                   }
                 }}
-                isCustomerView={true}
                 vehicles={allVehicles}
               />
             </div>

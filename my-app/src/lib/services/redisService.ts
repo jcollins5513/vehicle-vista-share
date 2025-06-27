@@ -37,12 +37,11 @@ export const redisService = {
       return null;
     }
     
-    const vehicleDataStr = await redisClient.get(key);
-    if (!vehicleDataStr) {
+    const vehicleData = await redisClient.get(key);
+    if (!vehicleData || typeof vehicleData !== 'object') {
+      console.warn(`[RedisService] Invalid vehicle data for key ${key}:`, vehicleData);
       return null;
     }
-    
-    const vehicleData = JSON.parse(vehicleDataStr);
     
     // Convert Redis hash to Vehicle type
     const vehicle = redisToVehicle(vehicleData);
@@ -151,13 +150,13 @@ export const redisService = {
     }
     
     const mediaData = await redisClient.get(key);
-    if (!mediaData) {
+    if (!mediaData || typeof mediaData !== 'object') {
+      console.warn(`[RedisService] Invalid media data for key ${key}:`, mediaData);
       return null;
     }
     
-    // Parse and convert the media data
-    const parsedData = JSON.parse(mediaData);
-    return redisToMedia(parsedData);
+    // Convert the media data (already parsed by redisClient.get)
+    return redisToMedia(mediaData);
   },
 
   async cacheMedia(media: Media, ttl = DEFAULT_TTL): Promise<void> {
@@ -260,7 +259,7 @@ export const redisService = {
               fromCache: true 
             };
           } else {
-            console.log('[Redis Debug] Cache found but empty or invalid, fetching fresh data');
+            console.log('[Redis Debug] Cache miss or invalid cache data, fetching fresh data');
           }
         } catch (cacheError) {
           console.warn('[Redis Debug] Cache miss or invalid cache data, fetching fresh data:', cacheError);
@@ -297,8 +296,6 @@ export const redisService = {
       }
       
       return result;
-      
-      return result;
     } catch (error) {
       console.error('Error in getShowroomData:', error);
       
@@ -320,6 +317,13 @@ export const redisService = {
     try {
       const data = await redisClient.get(DEALERSHIP_INVENTORY_KEY);
       if (!data) {
+        return { vehicles: [] };
+      }
+
+      // If data is neither an object nor a string, something unexpected happened.
+      // This check is for robustness, though redisClient.get should return object/string/null.
+      if (typeof data !== 'object' && typeof data !== 'string') {
+        console.warn(`[RedisService] Unexpected data type for inventory key ${DEALERSHIP_INVENTORY_KEY}:`, typeof data);
         return { vehicles: [] };
       }
 
