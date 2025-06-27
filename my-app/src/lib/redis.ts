@@ -7,9 +7,13 @@ type RedisClientOptions = { ex?: number; nx?: boolean; xx?: boolean };
 interface RedisClient extends Omit<UpstashRedis, 'get' | 'set' | 'hset' | 'hgetall' | 'zadd' | 'zrange' | 'zrem'> {
   // Core methods with proper typing
   get<T = string>(key: string): Promise<T | null>;
-  set<T>(key: string, value: T, options?: RedisClientOptions): Promise<'OK'>;
+  set<T>(key: string, value: T, options?: RedisClientOptions | number): Promise<'OK'>;
   jsonGet<T = RedisValue>(key: string): Promise<T | null>;
-  jsonSet(key: string, value: RedisValue, options?: RedisClientOptions): Promise<'OK'>;
+  jsonSet(
+    key: string,
+    value: RedisValue,
+    options?: RedisClientOptions | number
+  ): Promise<'OK'>;
   
   // Hash methods
   hset(key: string, field: string, value: string): Promise<number>;
@@ -105,22 +109,29 @@ function createRedisClient(): RedisClient {
 
   // Override set with JSON stringification
   client.set = async function<T>(
-    key: string, 
-    value: T, 
-    options: RedisClientOptions = {}
+    key: string,
+    value: T,
+    options: RedisClientOptions | number = {}
   ): Promise<'OK'> {
     return withErrorHandling(async () => {
+      const opts: RedisClientOptions =
+        typeof options === 'number' ? { ex: options } : options;
+
       // Handle primitive values directly
-      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-        return originalSet(key, value, options);
+      if (
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean'
+      ) {
+        return originalSet(key, value, opts);
       }
-      
+
       // Handle object values with JSON stringification
       if (value !== null && typeof value === 'object') {
         const serializedValue = JSON.stringify(value);
-        return originalSet(key, serializedValue, options);
+        return originalSet(key, serializedValue, opts);
       }
-      
+
       throw new Error(`Unsupported value type for Redis SET: ${typeof value}`);
     });
   };
@@ -142,13 +153,15 @@ function createRedisClient(): RedisClient {
 
   // Add jsonSet convenience method
   client.jsonSet = async function(
-    key: string, 
-    value: RedisValue, 
-    options: RedisClientOptions = {}
+    key: string,
+    value: RedisValue,
+    options: RedisClientOptions | number = {}
   ): Promise<'OK'> {
     return withErrorHandling(async () => {
+      const opts: RedisClientOptions =
+        typeof options === 'number' ? { ex: options } : options;
       const serialized = JSON.stringify(value);
-      return originalSet(key, serialized, options);
+      return originalSet(key, serialized, opts);
     });
   };
 
