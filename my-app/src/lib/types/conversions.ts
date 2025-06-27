@@ -14,7 +14,7 @@ export function ensureDate(date: Date | string | null | undefined): Date {
 export function safeJsonParse<T>(json: string, fallback: T): T {
   try {
     return json ? JSON.parse(json) : fallback;
-  } catch (e) {
+  } catch {
     return fallback;
   }
 }
@@ -62,7 +62,7 @@ export function toVehicle(vehicle: PrismaVehicle & { media?: PrismaMedia[] }): V
 
   // Handle nested media if present
   if (vehicle.media) {
-    (result as any).media = vehicle.media.map(toMedia);
+    result.media = vehicle.media.map(toMedia);
   }
 
   return result;
@@ -83,7 +83,7 @@ export function toMedia(media: PrismaMedia): Media {
     order: media.order || 0,
     // Convert dates to Date objects if they're strings
     createdAt: ensureDate(media.createdAt),
-    updatedAt: ensureDate((media as any).updatedAt || media.createdAt), // Handle potential missing updatedAt
+      updatedAt: ensureDate((media as { updatedAt?: Date }).updatedAt || media.createdAt), // Handle potential missing updatedAt
     // Optional fields with proper typing
     vehicleId: media.vehicleId || undefined,
   };
@@ -161,10 +161,10 @@ export function redisToVehicle(data: Record<string, string>): Omit<Vehicle, 'med
     facebookPostId: data.facebookPostId || undefined,
     lastFacebookPostDate: safeDateParse(data.lastFacebookPostDate),
     carfaxHighlights: safeJsonParse(data.carfaxHighlights, {}),
-    vehicleClass: (data.vehicleClass as any) || 'SUV',
+      vehicleClass: (data.vehicleClass as unknown) as string || 'SUV',
     bodyStyle: data.bodyStyle || undefined,
     lastMarketplacePostDate: safeDateParse(data.lastMarketplacePostDate),
-    status: (data.status as any) || 'available',
+      status: (data.status as unknown) as string || 'available',
   };
 
   return result;

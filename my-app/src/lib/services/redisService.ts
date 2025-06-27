@@ -51,7 +51,8 @@ export const redisService = {
     const media = await this.getVehicleMedia(id);
     
     // Create a new object without the media property to satisfy TypeScript
-    const { media: _, ...vehicleWithoutMedia } = vehicle as any;
+    const { media: _ignored, ...vehicleWithoutMedia } =
+      vehicle as Vehicle & { media?: unknown };
     
     return {
       ...vehicleWithoutMedia,
@@ -72,10 +73,10 @@ export const redisService = {
     await redisClient.set(key, JSON.stringify(vehicleData), ttl);
     
     // Cache associated media if they exist
-    const media = (vehicle as any).media;
+    const media = (vehicle as Vehicle & { media?: Media[] }).media;
     if (media && Array.isArray(media) && media.length > 0) {
       await Promise.all(
-        media.map((m: any) => this.cacheMedia(m, ttl))
+          media.map((m: Media) => this.cacheMedia(m, ttl))
       );
     }
   },
@@ -90,7 +91,7 @@ export const redisService = {
           // Handle case when inventoryData is already an object (not a string)
           if (typeof inventoryData === 'object' && inventoryData !== null) {
             // Type assertion to help TypeScript understand the structure
-            const typedData = inventoryData as { vehicles?: any[] };
+              const typedData = inventoryData as { vehicles?: unknown[] };
             if (Array.isArray(typedData.vehicles) && typedData.vehicles.length > 0) {
               console.log(`[Redis] Found ${typedData.vehicles.length} vehicles in dealership:inventory (object)`);
               return typedData.vehicles;
@@ -317,7 +318,7 @@ export const redisService = {
   /**
    * Retrieve the raw inventory data scraped from the dealership website.
    */
-  async getInventoryData(): Promise<{ vehicles: any[]; lastUpdated?: string }> {
+  async getInventoryData(): Promise<{ vehicles: unknown[]; lastUpdated?: string }> {
     try {
       const data = await redisClient.get(DEALERSHIP_INVENTORY_KEY);
       if (!data) {
@@ -328,7 +329,7 @@ export const redisService = {
       if (typeof data === 'object' && data !== null) {
         console.log('[Redis] Inventory data is already an object');
         // Type assertion to help TypeScript understand the structure
-        const typedData = data as { vehicles?: any[], lastUpdated?: string };
+        const typedData = data as { vehicles?: unknown[], lastUpdated?: string };
         return {
           vehicles: Array.isArray(typedData.vehicles) ? typedData.vehicles : [],
           lastUpdated: typedData.lastUpdated,

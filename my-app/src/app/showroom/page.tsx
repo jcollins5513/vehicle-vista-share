@@ -47,7 +47,7 @@ export default async function ShowroomPage() {
       <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Temporary Unavailable</h1>
-          <p className="mb-4">We're experiencing high traffic. Please try again in a few minutes.</p>
+          <p className="mb-4">We&apos;re experiencing high traffic. Please try again in a few minutes.</p>
           {fromCache && (
             <p className="text-sm text-gray-400">Showing cached data</p>
           )}

@@ -26,11 +26,11 @@ interface RedisClient extends Omit<UpstashRedis, 'get' | 'set' | 'hset' | 'hgeta
   zrem(key: string, ...members: string[]): Promise<number>;
   
   // Allow dynamic properties for other Redis commands
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var redis: RedisClient | undefined;
 }
 
@@ -78,16 +78,16 @@ function createRedisClient(): RedisClient {
   // Save original methods
   const originalGet = client.get.bind(client);
   const originalSet = client.set.bind(client);
-  const originalHset = client.hset?.bind(client) || 
-    ((...args: any[]) => client.command('hset', ...args));
+  const originalHset = client.hset?.bind(client) ||
+    ((...args: unknown[]) => client.command('hset', ...args));
   const originalHgetall = client.hgetall?.bind(client) || 
     (async (key: string) => client.command('hgetall', key));
-  const originalZadd = client.zadd?.bind(client) || 
-    ((...args: any[]) => client.command('zadd', ...args));
-  const originalZrange = client.zrange?.bind(client) || 
-    ((...args: any[]) => client.command('zrange', ...args));
-  const originalZrem = client.zrem?.bind(client) || 
-    ((...args: any[]) => client.command('zrem', ...args));
+  const originalZadd = client.zadd?.bind(client) ||
+    ((...args: unknown[]) => client.command('zadd', ...args));
+  const originalZrange = client.zrange?.bind(client) ||
+    ((...args: unknown[]) => client.command('zrange', ...args));
+  const originalZrem = client.zrem?.bind(client) ||
+    ((...args: unknown[]) => client.command('zrem', ...args));
 
   // Override get with JSON parsing
   client.get = async function<T = string>(key: string): Promise<T | null> {
@@ -98,7 +98,7 @@ function createRedisClient(): RedisClient {
       if (typeof result === 'string') {
         try {
           return JSON.parse(result) as T;
-        } catch (e) {
+        } catch {
           // If not valid JSON, return as string
           return result as unknown as T;
         }
@@ -212,7 +212,7 @@ function createRedisClient(): RedisClient {
     withScores = false
   ): Promise<T[]> {
     return withErrorHandling(async () => {
-      const args: any[] = [key, start, stop];
+      const args: unknown[] = [key, start, stop];
       if (withScores) {
         args.push('WITHSCORES');
       }
