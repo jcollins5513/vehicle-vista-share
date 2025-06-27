@@ -33,7 +33,7 @@ const AppointmentCalendar = () => {
     <Card className="bg-white/10 backdrop-blur-sm border-white/20 p-4">
       <h3 className="text-white font-bold text-lg mb-4 flex items-center">
         <Calendar className="w-5 h-5 mr-2" />
-        Today's Appointments
+          Today&apos;s Appointments
       </h3>
       
       <div className="space-y-3">

@@ -32,6 +32,7 @@ export interface Vehicle {
   status: 'available' | 'sold';
   createdAt: Date;
   updatedAt: Date;
+  media?: Media[];
 }
 
 /**

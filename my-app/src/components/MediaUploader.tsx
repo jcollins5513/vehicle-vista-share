@@ -54,7 +54,7 @@ export default function MediaUploader({
             try {
               const errorJson = JSON.parse(xhr.responseText);
               errorText = errorJson.error || errorText;
-            } catch (_e) {
+              } catch {
               // response is not json
               errorText = xhr.responseText || errorText;
             }

@@ -54,8 +54,8 @@ export interface RedisClient {
   sendCommand<T = unknown>(command: string, args?: (string | number | boolean)[], options?: { returnBuffers?: boolean }): Promise<T>;
   
   // JSON operations
-  jsonGet<T = any>(key: string): Promise<T | null>;
-  jsonSet<T = any>(
+  jsonGet<T = unknown>(key: string): Promise<T | null>;
+  jsonSet<T = unknown>(
     key: string,
     value: T,
     ttl?: number | { ex?: number; nx?: boolean; xx?: boolean }
