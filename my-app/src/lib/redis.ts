@@ -32,14 +32,14 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // Use KV_REST in production, UPSTASH_REDIS in development
 const REDIS_CONFIG = {
-  url: isProduction ? process.env.KV_REST_API_URL : process.env.UPSTASH_REDIS_REST_URL,
-  token: isProduction ? process.env.KV_REST_API_TOKEN : process.env.UPSTASH_REDIS_REST_TOKEN
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN
 };
 
 if (!REDIS_CONFIG.url || !REDIS_CONFIG.token) {
   throw new Error(
-    `Redis configuration missing for ${isProduction ? 'production' : 'development'} environment. ` +
-    `Missing: ${!REDIS_CONFIG.url ? 'URL' : ''} ${!REDIS_CONFIG.token ? 'TOKEN' : ''}`
+    `Redis configuration missing. ` +
+    `Missing: ${!REDIS_CONFIG.url ? 'UPSTASH_REDIS_REST_URL' : ''} ${!REDIS_CONFIG.token ? 'UPSTASH_REDIS_REST_TOKEN' : ''}`
   );
 }
 
