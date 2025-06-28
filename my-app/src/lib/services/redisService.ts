@@ -57,7 +57,7 @@ export const redisService = {
           // Find the vehicle with matching id
           const vehicle = vehicles.find((v: any) => v.id === id || v.stockNumber === id);
           if (!vehicle) {
-            console.log('[getVehicle] No match found for id:', id, 'in', vehicles.map((v: any) => (v && typeof v === 'object' && 'id' in v ? v.id : '[no id]')));
+            console.log('[getVehicle] No match found for id:', id, 'in', (Array.isArray(vehicles) ? (vehicles as any[]) : []).map(v => (v && typeof v === 'object' && 'id' in v ? v.id : '[no id]')));
           } else {
             console.log('[getVehicle] Found vehicle:', vehicle.id);
             return vehicle as Vehicle;
