@@ -68,7 +68,12 @@ export const redisService = {
               )
             );
           } else {
-            console.log('[getVehicle] Found vehicle:', vehicle.id);
+            console.log(
+              '[getVehicle] Found vehicle:',
+              (vehicle && typeof vehicle === 'object' && 'id' in vehicle)
+                ? (vehicle as { id?: string }).id ?? '[no id]'
+                : '[no id]'
+            );
             return vehicle as Vehicle;
           }
         } catch (parseError) {
