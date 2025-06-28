@@ -61,34 +61,34 @@ export const redisService = {
       }
       
       // Fallback to original method
-      const key = VEHICLE_KEY(id);
-      const exists = await redisClient.exists(key);
-      
-      if (!exists) {
-        return null;
-      }
-      
-      const vehicleData = await redisClient.get(key);
-      if (!vehicleData || typeof vehicleData !== 'object') {
-        console.warn(`[RedisService] Invalid vehicle data for key ${key}:`, vehicleData);
-        return null;
-      }
-      
-      // Convert Redis hash to Vehicle type
-      const vehicle = redisToVehicle(vehicleData);
-      
-      // Get associated media
-      const media = await this.getVehicleMedia(id);
-      
-      // Create a new object without the media property to satisfy TypeScript
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { media: _ignored, ...vehicleWithoutMedia } =
-        vehicle as Vehicle & { media?: unknown };
-      
-      return {
-        ...vehicleWithoutMedia,
-        media,
-      } as Vehicle;
+    const key = VEHICLE_KEY(id);
+    const exists = await redisClient.exists(key);
+    
+    if (!exists) {
+      return null;
+    }
+    
+    const vehicleData = await redisClient.get(key);
+    if (!vehicleData || typeof vehicleData !== 'object') {
+      console.warn(`[RedisService] Invalid vehicle data for key ${key}:`, vehicleData);
+      return null;
+    }
+    
+    // Convert Redis hash to Vehicle type
+    const vehicle = redisToVehicle(vehicleData);
+    
+    // Get associated media
+    const media = await this.getVehicleMedia(id);
+    
+    // Create a new object without the media property to satisfy TypeScript
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { media: _ignored, ...vehicleWithoutMedia } =
+      vehicle as Vehicle & { media?: unknown };
+    
+    return {
+      ...vehicleWithoutMedia,
+      media,
+    } as Vehicle;
     } catch (error) {
       console.error('[Redis] Error in getVehicle:', error);
       return null;

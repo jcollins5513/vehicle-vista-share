@@ -38,8 +38,8 @@ export async function GET(
     // Get manual media URLs for this vehicle
     const vehicleManualMedia = (vehicle.media || [])
       .filter((media: { url: string }) => {
-        const url = media.url.toLowerCase();
-        return !url.includes('rtt') && !url.includes('chrome') && !url.includes('default');
+      const url = media.url.toLowerCase();
+      return !url.includes('rtt') && !url.includes('chrome') && !url.includes('default');
       })
       .map((media: { url: string }) => media.url);
 
