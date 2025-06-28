@@ -12,7 +12,9 @@ export async function generateMetadata(context: { params: Promise<{ id: string }
 }
 
 async function fetchVehicle(id: string): Promise<VehicleWithMedia | null> {
-  const res = await fetch(`/api/vehicle/${id}`, { cache: 'no-store' });
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const url = new URL(`/api/vehicle/${id}`, baseUrl).toString();
+  const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) return null;
   return res.json();
 }
