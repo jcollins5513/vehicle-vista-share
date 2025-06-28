@@ -1,4 +1,5 @@
 import { redisService } from '@/lib/services/redisService';
+import { unstable_cache } from 'next/cache';
 import ShowroomView from '@/components/ShowroomView';
 
 // Revalidation time in seconds (5 minutes)
@@ -40,7 +41,8 @@ async function getShowroomData() {
 }
 
 export default async function ShowroomPage() {
-  const { vehicles = [], customMedia = [], fromCache, error } = await getShowroomData();
+  const getCachedShowroomData = unstable_cache(async () => getShowroomData(), ['showroom-data'], { revalidate: revalidate });
+  const { vehicles = [], customMedia = [], fromCache, error } = await getCachedShowroomData();
 
   if (error) {
     return (
