@@ -28,7 +28,7 @@ declare global {
   var redis: RedisClient | undefined;
 }
 
-const isProduction = process.env.NODE_ENV === 'production';
+
 
 // Use KV_REST in production, UPSTASH_REDIS in development
 const REDIS_CONFIG = {
@@ -49,6 +49,7 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
   const client = mockClient || new UpstashRedis({
     url: REDIS_CONFIG.url!,
     token: REDIS_CONFIG.token!,
+    cache: 'force-cache',
     retry: {
       retries: 3,
       backoff: (retryCount) => {
