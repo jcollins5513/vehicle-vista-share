@@ -193,6 +193,8 @@ async function scrapeInventory() {
         const vehicleData = await scrapeVehicle(vehicleUrl, browser);
         if (vehicleData) {
           vehicleData.sourceUrl = vehicleUrl;
+          // Add id field that matches stockNumber for proper Redis storage
+          vehicleData.id = vehicleData.stockNumber;
           vehicles.push(vehicleData);
           console.log('[DEBUG] Vehicle data scraped successfully:', {
             stockNumber: vehicleData.stockNumber,
@@ -247,6 +249,9 @@ async function testSingleVehicle() {
     const vehicleData = await scrapeVehicle(testUrl, browser);
     if (vehicleData) {
       console.log('[DEBUG] Vehicle data scraped successfully');
+      
+      // Add id field that matches stockNumber for proper Redis storage
+      vehicleData.id = vehicleData.stockNumber;
       
       // Update cache with the correct format
       console.log('[DEBUG] Updating Redis cache');

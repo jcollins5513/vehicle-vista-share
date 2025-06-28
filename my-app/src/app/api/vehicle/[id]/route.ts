@@ -29,17 +29,29 @@ export async function GET(
     // Fetch any manual media that might be relevant (not associated with a vehicle)
     const manualMedia = await redisService.getUnattachedMedia();
 
-    // Filter out stock photos from vehicle media
-    const filteredVehicleMedia = vehicle.media?.filter((media: { url: string }) => {
-      const url = media.url.toLowerCase();
-      return !url.includes('rtt') && !url.includes('chrome') && !url.includes('default');
+    // Filter out stock photos from vehicle images
+    const filteredVehicleImages = (vehicle.images || []).filter((url: string) => {
+      const lowerUrl = url.toLowerCase();
+      return !lowerUrl.includes('rtt') && !lowerUrl.includes('chrome') && !lowerUrl.includes('default');
     });
 
-    // Combine vehicle data with filtered media
+    // Get manual media URLs for this vehicle
+    const vehicleManualMedia = (vehicle.media || [])
+      .filter((media: { url: string }) => {
+        const url = media.url.toLowerCase();
+        return !url.includes('rtt') && !url.includes('chrome') && !url.includes('default');
+      })
+      .map((media: { url: string }) => media.url);
+
+    // Combine vehicle images with manual media
+    const allImages = [...filteredVehicleImages, ...vehicleManualMedia];
+
+    // Create the response object with the correct structure
     const vehicleWithMedia = {
       ...vehicle,
-      media: filteredVehicleMedia || [],
-      manualMedia: manualMedia,
+      id: vehicle.id || vehicleId,
+      images: allImages,
+      manualMedia: manualMedia.map(media => ({ url: media.url })),
     };
 
     return NextResponse.json(vehicleWithMedia);

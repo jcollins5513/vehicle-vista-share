@@ -30,34 +30,69 @@ const DEFAULT_TTL = 60 * 60;
 export const redisService = {
   // Vehicle operations
   async getVehicle(id: string): Promise<Vehicle | null> {
-    const key = VEHICLE_KEY(id);
-    const exists = await redisClient.exists(key);
-    
-    if (!exists) {
+    try {
+      // First try to get from dealership:inventory key
+      const inventoryData = await redisClient.get(DEALERSHIP_INVENTORY_KEY);
+      
+      if (inventoryData) {
+        try {
+          let vehicles: unknown[] = [];
+          
+          // Handle case when inventoryData is already an object (not a string)
+          if (typeof inventoryData === 'object' && inventoryData !== null) {
+            const typedData = inventoryData as { vehicles?: unknown[] };
+            vehicles = Array.isArray(typedData.vehicles) ? typedData.vehicles : [];
+          } 
+          // Handle case when inventoryData is a string that needs parsing
+          else if (typeof inventoryData === 'string') {
+            const parsedData = JSON.parse(inventoryData);
+            vehicles = Array.isArray(parsedData.vehicles) ? parsedData.vehicles : [];
+          }
+          
+          // Find the vehicle with matching id
+          const vehicle = vehicles.find((v: any) => v.id === id || v.stockNumber === id);
+          if (vehicle) {
+            console.log(`[Redis] Found vehicle ${id} in dealership:inventory`);
+            return vehicle as Vehicle;
+          }
+        } catch (parseError) {
+          console.error('[Redis] Error parsing dealership:inventory data in getVehicle:', parseError);
+        }
+      }
+      
+      // Fallback to original method
+      const key = VEHICLE_KEY(id);
+      const exists = await redisClient.exists(key);
+      
+      if (!exists) {
+        return null;
+      }
+      
+      const vehicleData = await redisClient.get(key);
+      if (!vehicleData || typeof vehicleData !== 'object') {
+        console.warn(`[RedisService] Invalid vehicle data for key ${key}:`, vehicleData);
+        return null;
+      }
+      
+      // Convert Redis hash to Vehicle type
+      const vehicle = redisToVehicle(vehicleData);
+      
+      // Get associated media
+      const media = await this.getVehicleMedia(id);
+      
+      // Create a new object without the media property to satisfy TypeScript
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { media: _ignored, ...vehicleWithoutMedia } =
+        vehicle as Vehicle & { media?: unknown };
+      
+      return {
+        ...vehicleWithoutMedia,
+        media,
+      } as Vehicle;
+    } catch (error) {
+      console.error('[Redis] Error in getVehicle:', error);
       return null;
     }
-    
-    const vehicleData = await redisClient.get(key);
-    if (!vehicleData || typeof vehicleData !== 'object') {
-      console.warn(`[RedisService] Invalid vehicle data for key ${key}:`, vehicleData);
-      return null;
-    }
-    
-    // Convert Redis hash to Vehicle type
-    const vehicle = redisToVehicle(vehicleData);
-    
-    // Get associated media
-    const media = await this.getVehicleMedia(id);
-    
-    // Create a new object without the media property to satisfy TypeScript
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { media: _ignored, ...vehicleWithoutMedia } =
-      vehicle as Vehicle & { media?: unknown };
-    
-    return {
-      ...vehicleWithoutMedia,
-      media,
-    } as Vehicle;
   },
 
   async cacheVehicle(vehicle: Vehicle, ttl = DEFAULT_TTL): Promise<void> {

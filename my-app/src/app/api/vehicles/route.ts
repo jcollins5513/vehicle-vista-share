@@ -11,7 +11,13 @@ export async function GET() {
       console.log('[API] No vehicles found in cache');
     }
     
-    return NextResponse.json(vehicles);
+    // Ensure all vehicles have an 'id' field that matches their 'stockNumber'
+    const vehiclesWithId = vehicles.map(vehicle => ({
+      ...vehicle,
+      id: vehicle.id || vehicle.stockNumber, // Use stockNumber as id if id is missing
+    }));
+    
+    return NextResponse.json(vehiclesWithId);
   } catch (err) {
     console.error('[API] vehicles GET error', err);
     return new NextResponse('Internal Server Error', { status: 500 });
