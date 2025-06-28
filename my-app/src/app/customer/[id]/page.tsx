@@ -13,16 +13,14 @@ export async function generateMetadata(context: { params: Promise<{ id: string }
 
 async function fetchVehicle(id: string): Promise<VehicleWithMedia | null> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-  const url = new URL(`/api/vehicle/${id}`, baseUrl).toString();
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetch(`${baseUrl}/api/vehicle/${id}`, { cache: 'no-store' });
   if (!res.ok) return null;
   return res.json();
 }
 
 async function fetchAllVehicles(): Promise<Vehicle[]> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-  const url = new URL(`/api/vehicles`, baseUrl).toString();
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetch(`${baseUrl}/api/vehicles`, { cache: 'no-store' });
   if (!res.ok) return [];
   return res.json();
 }
