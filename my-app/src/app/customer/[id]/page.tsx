@@ -20,7 +20,9 @@ async function fetchVehicle(id: string): Promise<VehicleWithMedia | null> {
 }
 
 async function fetchAllVehicles(): Promise<Vehicle[]> {
-  const res = await fetch(`/api/vehicles`, { cache: 'no-store' });
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const url = new URL(`/api/vehicles`, baseUrl).toString();
+  const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) return [];
   return res.json();
 }
