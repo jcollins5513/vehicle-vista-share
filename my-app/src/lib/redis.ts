@@ -5,33 +5,26 @@ type RedisClientOptions = { ex?: number; nx?: boolean; xx?: boolean };
 
 // Extend the Upstash Redis client with our custom methods
 interface RedisClient extends Omit<UpstashRedis, 'get' | 'set' | 'hset' | 'hgetall' | 'zadd' | 'zrange' | 'zrem'> {
-  // Core methods with proper typing
   get<T = string>(key: string): Promise<T | null>;
   set<T>(key: string, value: T, options?: RedisClientOptions | number): Promise<'OK'>;
-  jsonGet<T = RedisValue>(key: string): Promise<T | null>;
+  jsonGet(key: string): Promise<RedisValue | null>;
   jsonSet(
     key: string,
     value: RedisValue,
     options?: RedisClientOptions | number
   ): Promise<'OK'>;
-  
-  // Hash methods
   hset(key: string, field: string, value: string): Promise<number>;
   hset(key: string, obj: Record<string, string>): Promise<number>;
   hgetall(key: string): Promise<Record<string, string> | null>;
-  
-  // Sorted set methods
   zadd(key: string, score: number, member: string): Promise<number>;
   zrange<T = string>(key: string, start: number, stop: number, withScores?: boolean | 'WITHSCORES'): Promise<T[]>;
-
   zrem(key: string, ...members: string[]): Promise<number>;
-  
   // Allow dynamic properties for other Redis commands
   [key: string]: unknown;
 }
 
+// Declare global variable
 declare global {
-   
   var redis: RedisClient | undefined;
 }
 
@@ -64,7 +57,7 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
         return delay;
       }
     }
-  }) as unknown as RedisClient;
+  });
 
   // Helper function to handle Redis commands with error handling
   const withErrorHandling = async <T>(fn: () => Promise<T>): Promise<T> => {
@@ -79,19 +72,14 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
   // Save original methods
   const originalGet = client.get.bind(client);
   const originalSet = client.set.bind(client);
-  const originalHset = client.hset?.bind(client) ||
-    ((...args: any[]) => (client.command as any)('hset', ...args));
-  const originalHgetall = client.hgetall?.bind(client) || 
-    (async (key: string) => (client.command as any)('hgetall', key));
-  const originalZadd = client.zadd?.bind(client) ||
-    ((...args: any[]) => (client.command as any)('zadd', ...args));
-  const originalZrange = client.zrange?.bind(client) ||
-    ((...args: any[]) => (client.command as any)('zrange', ...args));
-  const originalZrem = client.zrem?.bind(client) ||
-    ((...args: any[]) => (client.command as any)('zrem', ...args));
+  const originalHset = client.hset.bind(client);
+  const originalHgetall = client.hgetall.bind(client);
+  const originalZadd = client.zadd.bind(client);
+  const originalZrange = client.zrange.bind(client);
+  const originalZrem = client.zrem.bind(client);
 
   // Override get with JSON parsing
-  client.get = async function<T = string>(key: string): Promise<T | null> {
+  (client as unknown as RedisClient).get = async function<T = string>(key: string): Promise<T | null> {
     return withErrorHandling(async () => {
       const result = await originalGet(key);
       if (result === null) return null;
@@ -109,14 +97,14 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
   };
 
   // Override set with JSON stringification
-  client.set = async function<T>(
+  (client as unknown as RedisClient).set = async function<T>(
     key: string,
     value: T,
-    options: RedisClientOptions | number = {}
+    options?: RedisClientOptions | number
   ): Promise<'OK'> {
     return withErrorHandling(async () => {
       const opts: RedisClientOptions =
-        typeof options === 'number' ? { ex: options } : options;
+        typeof options === 'number' ? { ex: options } : options || {};
 
       // Handle primitive values directly
       if (
@@ -124,7 +112,7 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
         typeof value === 'number' ||
         typeof value === 'boolean'
       ) {
-        return originalSet(key, value, opts);
+        return originalSet(key, String(value), opts);
       }
 
       // Handle object values with JSON stringification
@@ -138,19 +126,19 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
   };
 
   // Add jsonGet convenience method
-  client.jsonGet = async function<T = RedisValue>(key: string): Promise<T | null> {
+  (client as unknown as RedisClient).jsonGet = async function(key: string): Promise<RedisValue | null> {
     return withErrorHandling(async () => {
-      const value = await originalGet<string>(key);
+      const value = await originalGet(key);
       if (value === null) return null;
       
       // If value is already an object, return it directly
       if (typeof value === 'object') {
-        return value as T;
+        return value;
       }
       
       // Otherwise, try to parse it as JSON
       try {
-        return JSON.parse(value) as T;
+        return JSON.parse(value);
       } catch (e) {
         console.error(`Error parsing JSON for key ${key}:`, e);
         return null;
@@ -159,21 +147,21 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
   };
 
   // Add jsonSet convenience method
-  client.jsonSet = async function(
+  (client as unknown as RedisClient).jsonSet = async function(
     key: string,
     value: RedisValue,
-    options: RedisClientOptions | number = {}
+    options?: RedisClientOptions | number
   ): Promise<'OK'> {
     return withErrorHandling(async () => {
       const opts: RedisClientOptions =
-        typeof options === 'number' ? { ex: options } : options;
-      const serialized = JSON.stringify(value);
-      return originalSet(key, serialized, opts);
+        typeof options === 'number' ? { ex: options } : options || {};
+
+      return (client as unknown as UpstashRedis).set(key, JSON.stringify(value), opts);
     });
   };
 
   // Implement hash methods
-  client.hset = async function(
+  (client as unknown as RedisClient).hset = async function(
     key: string, 
     fieldOrObj: string | Record<string, string>, 
     value?: string
@@ -188,7 +176,7 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
     });
   };
 
-  client.hgetall = async function(key: string): Promise<Record<string, string> | null> {
+  (client as unknown as RedisClient).hgetall = async function(key: string): Promise<Record<string, string> | null> {
     return withErrorHandling(async () => {
       const result = await originalHgetall(key);
       return result as Record<string, string>;
@@ -196,7 +184,7 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
   };
 
   // Implement sorted set methods
-  client.zadd = async function(
+  (client as unknown as RedisClient).zadd = async function(
     key: string, 
     score: number, 
     member: string
@@ -206,11 +194,11 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
     });
   };
 
-  client.zrange = async function<T = string>(
+  (client as unknown as RedisClient).zrange = async function<T = string>(
     key: string, 
     start: number, 
     stop: number, 
-    withScores = false
+    withScores?: boolean | 'WITHSCORES'
   ): Promise<T[]> {
     return withErrorHandling(async () => {
       const args: unknown[] = [key, start, stop];
@@ -218,14 +206,16 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
         args.push('WITHSCORES');
       }
       if (withScores) {
-        return originalZrange(key, start, stop, 'WITHSCORES');
+        const result = await originalZrange(key, start, stop, 'WITHSCORES');
+        return result as T[];
       } else {
-        return originalZrange(key, start, stop);
+        const result = await originalZrange(key, start, stop);
+        return result as T[];
       }
     });
   };
 
-  client.zrem = async function(
+  (client as unknown as RedisClient).zrem = async function(
     key: string, 
     ...members: string[]
   ): Promise<number> {
@@ -234,7 +224,7 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
     });
   };
 
-  return client;
+  return client as unknown as RedisClient;
 }
 
 // Create or reuse Redis client

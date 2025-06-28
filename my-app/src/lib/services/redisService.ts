@@ -94,7 +94,7 @@ export const redisService = {
               const typedData = inventoryData as { vehicles?: unknown[] };
             if (Array.isArray(typedData.vehicles) && typedData.vehicles.length > 0) {
               console.log(`[Redis] Found ${typedData.vehicles.length} vehicles in dealership:inventory (object)`);
-              return typedData.vehicles;
+              return typedData.vehicles as Vehicle[];
             }
           } 
           // Handle case when inventoryData is a string that needs parsing
@@ -241,23 +241,21 @@ export const redisService = {
       // Try to get from cache if enabled
       if (useCache) {
         try {
-          const cachedData = await redisClient.jsonGet<{
+          const cachedData: {
             vehicles: Vehicle[];
             customMedia: Media[];
             cachedAt: number;
-          }>(cacheKey);
-          
-          if (cachedData && 
-              Array.isArray(cachedData.vehicles) && 
-              Array.isArray(cachedData.customMedia) &&
-              typeof cachedData.cachedAt === 'number' &&
-              cachedData.vehicles.length > 0) { // Only use cache if it has vehicles
-            console.log('[Redis Debug] Using cached showroom data with', cachedData.vehicles.length, 'vehicles');
-            return { 
-              vehicles: cachedData.vehicles, 
-              customMedia: cachedData.customMedia, 
-              cachedAt: cachedData.cachedAt, 
-              fromCache: true 
+          } | null = (await redisClient.jsonGet(cacheKey)) as {
+            vehicles: Vehicle[];
+            customMedia: Media[];
+            cachedAt: number;
+          } | null;
+
+          if (cachedData) {
+            console.log('[Redis Debug] Found showroom data in cache');
+            return {
+              ...cachedData,
+              fromCache: true,
             };
           } else {
             console.log('[Redis Debug] Cache miss or invalid cache data, fetching fresh data');

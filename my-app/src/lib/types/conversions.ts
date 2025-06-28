@@ -160,7 +160,7 @@ export function redisToVehicle(data: Record<string, string>): Omit<Vehicle, 'med
       vehicleClass: (data.vehicleClass as unknown) as string || 'SUV',
     bodyStyle: data.bodyStyle || undefined,
     lastMarketplacePostDate: safeDateParse(data.lastMarketplacePostDate),
-      status: (data.status as unknown) as string || 'available',
+      status: (data.status === 'available' || data.status === 'sold' ? data.status : 'available'),
   };
 
   return result;
