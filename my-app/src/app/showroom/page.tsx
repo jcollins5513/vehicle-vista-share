@@ -1,6 +1,6 @@
 import { redisService } from "@/lib/services/redisService";
 import { unstable_cache } from "next/cache";
-import QuantumShowroom from "@/components/QuantumShowroom";
+import DiscordShowroom from "@/components/DiscordShowroom";
 
 // Revalidation time in seconds (5 minutes)
 export const revalidate = 300;
