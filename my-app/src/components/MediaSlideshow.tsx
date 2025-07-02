@@ -1,7 +1,7 @@
-import Image from 'next/image';
-import React, { useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
-import type { SlideshowItem } from '@/types';
+import Image from "next/image";
+import React, { useEffect } from "react";
+import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
+import type { SlideshowItem } from "@/types";
 
 interface MediaSlideshowProps {
   items: SlideshowItem[];
@@ -11,7 +11,13 @@ interface MediaSlideshowProps {
   onPlaybackToggle: () => void;
 }
 
-const MediaSlideshow = ({ items, currentSlide, onSlideChange, isPlaying, onPlaybackToggle }: MediaSlideshowProps) => {
+const MediaSlideshow = ({
+  items,
+  currentSlide,
+  onSlideChange,
+  isPlaying,
+  onPlaybackToggle,
+}: MediaSlideshowProps) => {
   useEffect(() => {
     if (!isPlaying || items.length <= 1) return;
 
@@ -32,8 +38,8 @@ const MediaSlideshow = ({ items, currentSlide, onSlideChange, isPlaying, onPlayb
 
   if (items.length === 0) {
     return (
-      <div className="relative w-full aspect-video bg-slate-800 rounded-lg flex items-center justify-center">
-        <p className="text-white">No media available.</p>
+      <div className="relative w-full aspect-video cosmic-slideshow rounded-3xl flex items-center justify-center">
+        <p className="text-white text-lg font-medium">No media available.</p>
       </div>
     );
   }
@@ -41,61 +47,83 @@ const MediaSlideshow = ({ items, currentSlide, onSlideChange, isPlaying, onPlayb
   const currentItem = items[currentSlide];
 
   return (
-    <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
+    <div className="relative w-full aspect-video cosmic-slideshow rounded-3xl overflow-hidden shadow-2xl hover-lift pulse-glow">
       {/* Main Image */}
       {currentItem && (
         <Image
           key={currentItem.id}
           src={currentItem.url}
-          alt={currentItem.vehicle?.model || 'Custom Media'}
+          alt={currentItem.vehicle?.model || "Custom Media"}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          style={{ objectFit: 'contain' }}
+          style={{ objectFit: "contain" }}
           className="transition-opacity duration-500 ease-in-out"
           priority
         />
       )}
 
       {/* Gradient Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-purple-900/30 to-transparent" />
 
       {/* Controls */}
-      <div className="absolute top-1/2 left-4 right-4 flex justify-between items-center transform -translate-y-1/2">
-        <button onClick={handlePrev} className="bg-black/50 text-white p-2 rounded-full hover:bg-black/80 transition-all" aria-label="Previous slide">
-          <ChevronLeft size={24} />
+      <div className="absolute top-1/2 left-6 right-6 flex justify-between items-center transform -translate-y-1/2">
+        <button
+          onClick={handlePrev}
+          className="cosmic-button-enhanced text-white p-4 rounded-full shadow-xl hover:scale-110 transition-transform"
+          aria-label="Previous slide"
+        >
+          <ChevronLeft size={28} />
         </button>
-        <button onClick={handleNext} className="bg-black/50 text-white p-2 rounded-full hover:bg-black/80 transition-all" aria-label="Next slide">
-          <ChevronRight size={24} />
+        <button
+          onClick={handleNext}
+          className="cosmic-button-enhanced text-white p-4 rounded-full shadow-xl hover:scale-110 transition-transform"
+          aria-label="Next slide"
+        >
+          <ChevronRight size={28} />
         </button>
       </div>
 
       {/* Bottom Info Bar */}
-      <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
+      <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
         {/* Vehicle Info */}
-        <div className="text-white">
+        <div className="glass-card-dark rounded-2xl p-4 max-w-md">
           {currentItem?.vehicle && (
             <>
-              <h3 className="text-xl font-bold">{`${currentItem.vehicle.year || ''} ${currentItem.vehicle.make || ''} ${currentItem.vehicle.model || ''}`.trim()}</h3>
-              <p className="text-sm opacity-80">
-                {currentItem.vehicle.price !== undefined && `$${currentItem.vehicle.price.toLocaleString()}`}
-                {currentItem.vehicle.price !== undefined && currentItem.vehicle.mileage !== undefined && ' | '}
-                {currentItem.vehicle.mileage !== undefined && `${currentItem.vehicle.mileage.toLocaleString()} miles`}
+              <h3 className="text-2xl font-bold text-white mb-2 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+                {`${currentItem.vehicle.year || ""} ${currentItem.vehicle.make || ""} ${currentItem.vehicle.model || ""}`.trim()}
+              </h3>
+              <p className="text-lg text-white/90 font-medium">
+                {currentItem.vehicle.price !== undefined &&
+                  `$${currentItem.vehicle.price.toLocaleString()}`}
+                {currentItem.vehicle.price !== undefined &&
+                  currentItem.vehicle.mileage !== undefined &&
+                  " | "}
+                {currentItem.vehicle.mileage !== undefined &&
+                  `${currentItem.vehicle.mileage.toLocaleString()} miles`}
               </p>
             </>
           )}
         </div>
 
         {/* Playback and Dots */}
-        <div className="flex items-center space-x-4">
-          <button onClick={onPlaybackToggle} className="text-white" aria-label={isPlaying ? 'Pause slideshow' : 'Play slideshow'}>
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+        <div className="flex items-center space-x-6">
+          <button
+            onClick={onPlaybackToggle}
+            className="cosmic-button-enhanced p-4 rounded-full text-white shadow-xl hover:scale-110 transition-all floating"
+            aria-label={isPlaying ? "Pause slideshow" : "Play slideshow"}
+          >
+            {isPlaying ? <Pause size={24} /> : <Play size={24} />}
           </button>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             {items.map((slide, index) => (
               <button
                 key={slide.id}
                 onClick={() => onSlideChange(index)}
-                className={`w-3 h-3 rounded-full transition-all ${index === currentSlide ? 'w-6 bg-white' : 'w-3 bg-white/40'}`}
+                className={`rounded-full transition-all duration-300 ${
+                  index === currentSlide
+                    ? "w-8 h-4 bg-gradient-to-r from-purple-400 to-pink-400"
+                    : "w-4 h-4 bg-white/50 hover:bg-white/70"
+                }`}
                 aria-label={`Go to slide ${index + 1}`}
                 title={`Go to slide ${index + 1}`}
               />
