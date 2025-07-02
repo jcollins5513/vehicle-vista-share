@@ -193,15 +193,30 @@ const AIAssistant = ({
     "Hello! I'm ARIA, your AI automotive assistant. How can I help you today?",
   );
   const [audioLevel, setAudioLevel] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+  const [audioBarStyles, setAudioBarStyles] = useState<React.CSSProperties[]>([]);
 
   useEffect(() => {
-    if (isActive) {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isActive && isClient) {
       const interval = setInterval(() => {
-        setAudioLevel(Math.random() * 100);
+        const newAudioLevel = Math.random() * 100;
+        setAudioLevel(newAudioLevel);
+
+        // Generate dynamic styles for each bar on the client side
+        const newStyles = Array.from({ length: 5 }).map((_, i) => ({
+          height: `${(newAudioLevel * (i + 1)) / 100 + 4}px`,
+          animationDelay: `${Math.random() * 0.5}s`, // Random delay
+          animationDuration: `${Math.random() * 1 + 0.5}s`, // Random duration
+        }));
+        setAudioBarStyles(newStyles);
       }, 100);
       return () => clearInterval(interval);
     }
-  }, [isActive]);
+  }, [isActive, isClient]);
 
   const messages = [
     "This vehicle features advanced safety systems and premium leather interior.",
@@ -243,15 +258,13 @@ const AIAssistant = ({
               )}
 
               {/* Audio Visualization */}
-              {isActive && (
-                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
+              {isActive && isClient && (
+                <div className="flex items-end space-x-1 h-16">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <div
                       key={`audio-bar-${i}`}
                       className="w-1 bg-cyan-400 rounded-full transition-all duration-150"
-                      style={{
-                        height: `${(audioLevel * (i + 1)) / 100 + 4}px`,
-                      }}
+                      style={audioBarStyles[i]}
                     />
                   ))}
                 </div>
