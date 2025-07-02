@@ -47,7 +47,7 @@ const MediaSlideshow = ({
   const currentItem = items[currentSlide];
 
   return (
-    <div className="relative w-full aspect-video cosmic-slideshow rounded-3xl overflow-hidden shadow-2xl">
+    <div className="relative w-full aspect-video cosmic-slideshow rounded-3xl overflow-hidden shadow-2xl hover-lift pulse-glow">
       {/* Main Image */}
       {currentItem && (
         <Image
@@ -69,14 +69,14 @@ const MediaSlideshow = ({
       <div className="absolute top-1/2 left-6 right-6 flex justify-between items-center transform -translate-y-1/2">
         <button
           onClick={handlePrev}
-          className="cosmic-button text-white p-3 rounded-full shadow-lg"
+          className="cosmic-button-enhanced text-white p-4 rounded-full shadow-xl hover:scale-110 transition-transform"
           aria-label="Previous slide"
         >
           <ChevronLeft size={28} />
         </button>
         <button
           onClick={handleNext}
-          className="cosmic-button text-white p-3 rounded-full shadow-lg"
+          className="cosmic-button-enhanced text-white p-4 rounded-full shadow-xl hover:scale-110 transition-transform"
           aria-label="Next slide"
         >
           <ChevronRight size={28} />
@@ -109,7 +109,7 @@ const MediaSlideshow = ({
         <div className="flex items-center space-x-6">
           <button
             onClick={onPlaybackToggle}
-            className="cosmic-button p-3 rounded-full text-white shadow-lg"
+            className="cosmic-button-enhanced p-4 rounded-full text-white shadow-xl hover:scale-110 transition-all floating"
             aria-label={isPlaying ? "Pause slideshow" : "Play slideshow"}
           >
             {isPlaying ? <Pause size={24} /> : <Play size={24} />}

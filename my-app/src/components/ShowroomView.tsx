@@ -150,18 +150,18 @@ const ShowroomView = ({ vehicles, customMedia = [] }: ShowroomViewProps) => {
       <div className="min-h-full p-4">
         {/* Top Header */}
         <div className="flex justify-between items-start mb-8">
-          <div className="glass-card rounded-2xl p-6 shadow-lg">
-            <h1 className="text-white text-3xl font-bold mb-2 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+          <div className="glass-card rounded-2xl p-6 shadow-lg hover-lift floating">
+            <h1 className="text-white text-3xl font-bold mb-2 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent text-glow">
               Bentley Supercenter
             </h1>
             <p className="text-white/90 text-lg">Premium Showroom Display</p>
           </div>
 
           {/* Date and Time */}
-          <div className="glass-card rounded-2xl p-6 text-right shadow-lg">
+          <div className="glass-card rounded-2xl p-6 text-right shadow-lg hover-lift floating-delayed">
             <div className="flex items-center justify-end text-white mb-2">
-              <Clock className="w-6 h-6 mr-3 text-purple-200" />
-              <span className="text-xl font-mono font-bold">
+              <Clock className="w-6 h-6 mr-3 text-purple-200 floating-slow" />
+              <span className="text-xl font-mono font-bold pulse-glow">
                 {isClient ? formatTime(currentTime) : "--:--:--"}
               </span>
             </div>
