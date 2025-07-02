@@ -640,12 +640,12 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
         </div>
 
         {/* Main Showcase */}
-        <div className="flex-1 flex gap-8 p-8">
+        <div className="flex-1 flex gap-6 p-6">
           {/* Holographic Vehicle Display */}
           <div className="flex-1">
-            <Card className="cosmic-slideshow rounded-3xl p-8 h-full hover-lift pulse-glow relative overflow-hidden">
+            <Card className="cosmic-slideshow rounded-3xl p-6 h-full hover-lift pulse-glow relative overflow-hidden">
               {/* Quantum Vehicle Image */}
-              <div className="relative h-96 mb-8 rounded-2xl overflow-hidden group">
+              <div className="relative h-[60vh] mb-6 rounded-2xl overflow-hidden group">
                 {featuredVehicle?.images && featuredVehicle.images[0] && (
                   <img
                     src={featuredVehicle.images[0]}
@@ -662,37 +662,114 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
                   }
                 />
 
-                {/* Floating Vehicle Info */}
-                <div className="absolute bottom-6 left-6 right-6">
-                  <div className="glass-card-dark rounded-2xl p-6 backdrop-blur-xl">
-                    <h2 className="text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">
-                      {featuredVehicle?.year} {featuredVehicle?.make}{" "}
-                      {featuredVehicle?.model}
-                    </h2>
-                    <div className="flex items-center space-x-6 text-lg">
-                      <span className="text-emerald-400 font-bold text-2xl neon-glow">
-                        ${featuredVehicle?.price?.toLocaleString()}
-                      </span>
-                      <span className="text-white/70">•</span>
-                      <span className="text-cyan-300">
-                        {featuredVehicle?.mileage?.toLocaleString()} miles
-                      </span>
-                      <span className="text-white/70">•</span>
-                      <span className="text-purple-300">
-                        {featuredVehicle?.color}
+                {/* Neural Interface HUD */}
+                <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
+                  <div className="glass-card-dark rounded-xl p-3 backdrop-blur-xl">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full pulse-glow" />
+                      <span className="text-green-300 text-xs font-mono">
+                        NEURAL_LINK_ACTIVE
                       </span>
                     </div>
+                  </div>
+                  <div className="glass-card-dark rounded-xl p-3 backdrop-blur-xl">
+                    <div className="text-cyan-300 text-xs font-mono">
+                      SCAN: 97.4% COMPLETE
+                    </div>
+                  </div>
+                </div>
 
-                    {/* Quantum Action Buttons */}
-                    <div className="flex space-x-4 mt-4">
-                      <button className="cosmic-button-enhanced px-6 py-3 rounded-xl text-white font-medium shimmer">
-                        🚗 Schedule Test Drive
+                {/* Holographic Data Points */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute top-1/4 left-1/4 w-3 h-3 bg-cyan-400 rounded-full pulse-glow shadow-lg shadow-cyan-400/50" />
+                  <div className="absolute top-1/3 right-1/3 w-2 h-2 bg-purple-400 rounded-full pulse-glow shadow-lg shadow-purple-400/50" />
+                  <div className="absolute bottom-1/3 left-1/2 w-3 h-3 bg-emerald-400 rounded-full pulse-glow shadow-lg shadow-emerald-400/50" />
+
+                  {/* Connecting Lines */}
+                  <svg className="absolute inset-0 w-full h-full opacity-30">
+                    <line
+                      x1="25%"
+                      y1="25%"
+                      x2="66%"
+                      y2="33%"
+                      stroke="url(#gradient1)"
+                      strokeWidth="1"
+                      strokeDasharray="5,5"
+                      className="animate-pulse"
+                    />
+                    <line
+                      x1="66%"
+                      y1="33%"
+                      x2="50%"
+                      y2="66%"
+                      stroke="url(#gradient2)"
+                      strokeWidth="1"
+                      strokeDasharray="5,5"
+                      className="animate-pulse"
+                    />
+                    <defs>
+                      <linearGradient id="gradient1">
+                        <stop offset="0%" stopColor="#06b6d4" />
+                        <stop offset="100%" stopColor="#8b5cf6" />
+                      </linearGradient>
+                      <linearGradient id="gradient2">
+                        <stop offset="0%" stopColor="#8b5cf6" />
+                        <stop offset="100%" stopColor="#10b981" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+
+                {/* Floating Vehicle Info */}
+                <div className="absolute bottom-6 left-6 right-6">
+                  <div className="glass-card-dark rounded-2xl p-6 backdrop-blur-xl border border-white/10">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h2 className="text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">
+                          {featuredVehicle?.year} {featuredVehicle?.make}{" "}
+                          {featuredVehicle?.model}
+                        </h2>
+                        <div className="flex items-center space-x-6 text-lg">
+                          <span className="text-emerald-400 font-bold text-2xl neon-glow">
+                            ${featuredVehicle?.price?.toLocaleString()}
+                          </span>
+                          <span className="text-white/70">•</span>
+                          <span className="text-cyan-300">
+                            {featuredVehicle?.mileage?.toLocaleString()} miles
+                          </span>
+                          <span className="text-white/70">•</span>
+                          <span className="text-purple-300">
+                            {featuredVehicle?.color}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button className="glass-card-dark p-2 rounded-lg hover:bg-white/10 transition-colors">
+                          <Star className="w-5 h-5 text-yellow-400" />
+                        </button>
+                        <button className="glass-card-dark p-2 rounded-lg hover:bg-white/10 transition-colors">
+                          <Share2 className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Enhanced Action Grid */}
+                    <div className="grid grid-cols-2 gap-3 mt-4">
+                      <button className="cosmic-button-enhanced px-4 py-3 rounded-xl text-white font-medium shimmer flex items-center justify-center space-x-2">
+                        <span>🚗</span>
+                        <span>Test Drive</span>
                       </button>
-                      <button className="glass-card-dark px-6 py-3 rounded-xl text-white border border-white/20 hover:border-cyan-400 transition-colors">
-                        🔄 View 360°
+                      <button className="glass-card-dark px-4 py-3 rounded-xl text-white border border-white/20 hover:border-cyan-400 transition-colors flex items-center justify-center space-x-2">
+                        <span>🔄</span>
+                        <span>360° View</span>
                       </button>
-                      <button className="glass-card-dark px-6 py-3 rounded-xl text-white border border-white/20 hover:border-purple-400 transition-colors">
-                        📱 AR Experience
+                      <button className="glass-card-dark px-4 py-3 rounded-xl text-white border border-white/20 hover:border-purple-400 transition-colors flex items-center justify-center space-x-2">
+                        <span>📱</span>
+                        <span>AR Mode</span>
+                      </button>
+                      <button className="glass-card-dark px-4 py-3 rounded-xl text-white border border-white/20 hover:border-emerald-400 transition-colors flex items-center justify-center space-x-2">
+                        <span>💰</span>
+                        <span>Finance</span>
                       </button>
                     </div>
                   </div>
@@ -714,7 +791,7 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
           </div>
 
           {/* Advanced Sidebar */}
-          <div className="w-96 space-y-6">
+          <div className="w-80 space-y-4">
             {/* Live Social Feed */}
             <Card className="glass-card rounded-2xl p-6">
               <h3 className="text-white text-xl font-bold mb-4 flex items-center">
@@ -759,41 +836,90 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
               </div>
             </Card>
 
-            {/* Vehicle Gallery with 3D Cards */}
-            <Card className="glass-card rounded-2xl p-6">
-              <h3 className="text-white text-xl font-bold mb-4">
-                Quantum Inventory
+            {/* Neural Vehicle Selector */}
+            <Card className="glass-card rounded-2xl p-4">
+              <h3 className="text-white text-lg font-bold mb-3 flex items-center">
+                <Sparkles className="w-5 h-5 mr-2 text-cyan-400" />
+                Neural Selector
               </h3>
-              <div className="space-y-4 max-h-64 overflow-y-auto custom-scrollbar">
-                {vehicles.slice(0, 4).map((vehicle, index) => (
+              <div className="space-y-3 max-h-56 overflow-y-auto custom-scrollbar">
+                {vehicles.slice(0, 6).map((vehicle, index) => (
                   <div
                     key={`vehicle-card-${vehicle.id || `${vehicle.year}-${vehicle.make}-${vehicle.model}-${index}`}`}
                     onClick={() => setSelectedVehicle(vehicle)}
-                    className={`vehicle-card-3d cursor-pointer p-4 rounded-xl ${
+                    className={`vehicle-card-3d cursor-pointer p-3 rounded-xl transition-all duration-300 hover:scale-[1.02] ${
                       selectedVehicle?.id === vehicle.id
-                        ? "glass-card ring-2 ring-cyan-400"
-                        : "glass-card-dark"
+                        ? "glass-card ring-2 ring-cyan-400 shadow-lg shadow-cyan-400/20"
+                        : "glass-card-dark hover:bg-white/5"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
                       {vehicle.images && vehicle.images[0] && (
-                        <img
-                          src={vehicle.images[0]}
-                          alt={vehicle.model}
-                          className="w-12 h-12 rounded-lg object-cover"
-                        />
+                        <div className="relative">
+                          <img
+                            src={vehicle.images[0]}
+                            alt={vehicle.model}
+                            className="w-10 h-10 rounded-lg object-cover"
+                          />
+                          {selectedVehicle?.id === vehicle.id && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full pulse-glow" />
+                          )}
+                        </div>
                       )}
-                      <div className="flex-1">
-                        <div className="text-white font-semibold text-sm">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white font-medium text-xs truncate">
                           {vehicle.year} {vehicle.make} {vehicle.model}
                         </div>
-                        <div className="text-emerald-400 text-sm">
+                        <div className="text-emerald-400 text-xs font-semibold">
                           ${vehicle.price?.toLocaleString()}
                         </div>
                       </div>
+                      {selectedVehicle?.id === vehicle.id && (
+                        <div className="text-cyan-400">
+                          <Eye className="w-4 h-4" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
+              </div>
+            </Card>
+
+            {/* Quantum Market Intelligence */}
+            <Card className="glass-card rounded-2xl p-4">
+              <h3 className="text-white text-lg font-bold mb-3 flex items-center">
+                <TrendingUp className="w-5 h-5 mr-2 text-emerald-400" />
+                Market Intel
+              </h3>
+              <div className="space-y-3">
+                <div className="glass-card-dark p-3 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white/70 text-xs">Market Value</span>
+                    <span className="text-emerald-400 text-xs font-semibold">
+                      ↗ 12%
+                    </span>
+                  </div>
+                  <div className="text-white font-bold text-lg">
+                    $
+                    {featuredVehicle?.price
+                      ? Math.round(
+                          featuredVehicle.price * 1.12,
+                        ).toLocaleString()
+                      : "N/A"}
+                  </div>
+                </div>
+                <div className="glass-card-dark p-3 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white/70 text-xs">Demand Score</span>
+                    <span className="text-cyan-400 text-xs">High</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex-1 bg-white/10 rounded-full h-2">
+                      <div className="bg-gradient-to-r from-cyan-400 to-emerald-400 h-2 rounded-full w-4/5" />
+                    </div>
+                    <span className="text-white text-xs">85%</span>
+                  </div>
+                </div>
               </div>
             </Card>
           </div>
