@@ -546,6 +546,9 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
   const [gestureMode, setGestureMode] = useState(true);
   const [voiceMode, setVoiceMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [neuralAnalysis, setNeuralAnalysis] = useState(true);
+  const [immersiveMode, setImmersiveMode] = useState(false);
 
   const handleGesture = useCallback(
     (gesture: string) => {
@@ -615,26 +618,53 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
           </div>
 
           {/* Advanced Control Panel */}
-          <div className="flex space-x-4">
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setImmersiveMode(!immersiveMode)}
+              className={`cosmic-button-enhanced p-3 rounded-xl text-white hover:scale-110 transition-transform ${immersiveMode ? "ring-2 ring-emerald-400" : ""}`}
+              title="Immersive Mode"
+            >
+              <Camera size={20} />
+            </button>
+
+            <button
+              onClick={() => setComparisonMode(!comparisonMode)}
+              className={`cosmic-button-enhanced p-3 rounded-xl text-white hover:scale-110 transition-transform ${comparisonMode ? "ring-2 ring-yellow-400" : ""}`}
+              title="Compare Mode"
+            >
+              <Users size={20} />
+            </button>
+
+            <button
+              onClick={() => setNeuralAnalysis(!neuralAnalysis)}
+              className={`cosmic-button-enhanced p-3 rounded-xl text-white hover:scale-110 transition-transform ${neuralAnalysis ? "ring-2 ring-purple-400" : ""}`}
+              title="Neural Analysis"
+            >
+              <Sparkles size={20} />
+            </button>
+
             <button
               onClick={() => setGestureMode(!gestureMode)}
-              className={`cosmic-button-enhanced p-4 rounded-xl text-white hover:scale-110 transition-transform ${gestureMode ? "ring-2 ring-cyan-400" : ""}`}
+              className={`cosmic-button-enhanced p-3 rounded-xl text-white hover:scale-110 transition-transform ${gestureMode ? "ring-2 ring-cyan-400" : ""}`}
+              title="Gesture Control"
             >
-              <Wand2 size={24} />
+              <Wand2 size={20} />
             </button>
 
             <button
               onClick={() => setVoiceMode(!voiceMode)}
-              className={`cosmic-button-enhanced p-4 rounded-xl text-white hover:scale-110 transition-transform ${voiceMode ? "ring-2 ring-purple-400" : ""}`}
+              className={`cosmic-button-enhanced p-3 rounded-xl text-white hover:scale-110 transition-transform ${voiceMode ? "ring-2 ring-blue-400" : ""}`}
+              title="Voice Mode"
             >
-              {voiceMode ? <Mic size={24} /> : <MicOff size={24} />}
+              {voiceMode ? <Mic size={20} /> : <MicOff size={20} />}
             </button>
 
             <button
               onClick={() => setIsAIActive(!isAIActive)}
-              className={`cosmic-button-enhanced p-4 rounded-xl text-white hover:scale-110 transition-transform ${isAIActive ? "ring-2 ring-green-400" : ""}`}
+              className={`cosmic-button-enhanced p-3 rounded-xl text-white hover:scale-110 transition-transform ${isAIActive ? "ring-2 ring-green-400" : ""}`}
+              title="AI Assistant"
             >
-              <Brain size={24} />
+              <Brain size={20} />
             </button>
           </div>
         </div>
@@ -782,10 +812,43 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
                     className="w-full h-1 bg-gradient-to-r from-transparent via-purple-400 to-transparent opacity-50 animate-pulse hologram-scan"
                     style={{ animationDelay: "1s" }}
                   />
-                  <div className="absolute top-4 right-4 text-cyan-400 text-xs font-mono opacity-70">
-                    QUANTUM_SCAN_ACTIVE
-                  </div>
+                  <div
+                    className="w-full h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent opacity-30 animate-pulse hologram-scan"
+                    style={{ animationDelay: "2s" }}
+                  />
+
+                  {/* Neural Pattern Recognition */}
+                  {neuralAnalysis && (
+                    <div className="absolute inset-0">
+                      <div className="absolute top-1/4 left-1/4 w-20 h-20 border border-cyan-400/30 rounded-full animate-ping" />
+                      <div
+                        className="absolute top-1/2 right-1/4 w-16 h-16 border border-purple-400/30 rounded-full animate-ping"
+                        style={{ animationDelay: "1s" }}
+                      />
+                      <div
+                        className="absolute bottom-1/3 left-1/2 w-12 h-12 border border-emerald-400/30 rounded-full animate-ping"
+                        style={{ animationDelay: "2s" }}
+                      />
+                    </div>
+                  )}
                 </div>
+
+                {/* Immersive Mode Controls */}
+                {immersiveMode && (
+                  <div className="absolute top-1/2 left-4 transform -translate-y-1/2">
+                    <div className="glass-card-dark rounded-xl p-4 space-y-3">
+                      <button className="w-full cosmic-button-enhanced p-2 rounded-lg text-white text-xs">
+                        Interior View
+                      </button>
+                      <button className="w-full glass-card-dark p-2 rounded-lg text-white text-xs border border-white/20">
+                        Engine Bay
+                      </button>
+                      <button className="w-full glass-card-dark p-2 rounded-lg text-white text-xs border border-white/20">
+                        Trunk Space
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </Card>
           </div>
