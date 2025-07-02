@@ -18,7 +18,7 @@ class RedisError extends Error {
 // Key patterns
 const VEHICLE_KEY = (id: string) => `vehicle:${id}`;
 const VEHICLES_KEY = 'vehicles:all'; // Original key for sorted set of vehicle IDs
-const DEALERSHIP_INVENTORY_KEY = 'dealership:inventory'; // Primary key for inventory data
+const DEALERSHIP_INVENTORY_KEY = 'vista:inventory'; // Primary key for inventory data
 const MEDIA_KEY = (id: string) => `media:${id}`;
 const VEHICLE_MEDIA_KEY = (vehicleId: string) => `vehicle:${vehicleId}:media`;
 const UNATTACHED_MEDIA_KEY = 'media:unattached';
@@ -31,7 +31,7 @@ export const redisService = {
   // Vehicle operations
   async getVehicle(id: string): Promise<Vehicle | null> {
     try {
-      // First try to get from dealership:inventory key
+      // First try to get from vista:inventory key
       const inventoryData = await redisClient.get(DEALERSHIP_INVENTORY_KEY);
       console.log('[getVehicle] Looking for id:', id);
       console.log('[getVehicle] Type of inventoryData:', typeof inventoryData);
@@ -77,7 +77,7 @@ export const redisService = {
             return vehicle as Vehicle;
           }
         } catch (parseError) {
-          console.error('[Redis] Error parsing dealership:inventory data in getVehicle:', parseError);
+          console.error('[Redis] Error parsing vista:inventory data in getVehicle:', parseError);
         }
       }
       // Fallback to original method
@@ -133,7 +133,7 @@ export const redisService = {
 
   async getVehicles(): Promise<Vehicle[]> {
     try {
-      // First try to get vehicles from dealership:inventory key
+      // First try to get vehicles from vista:inventory key
       const inventoryData = await redisClient.get(DEALERSHIP_INVENTORY_KEY);
       
       if (inventoryData) {
@@ -143,7 +143,7 @@ export const redisService = {
             // Type assertion to help TypeScript understand the structure
               const typedData = inventoryData as { vehicles?: unknown[] };
             if (Array.isArray(typedData.vehicles) && typedData.vehicles.length > 0) {
-              console.log(`[Redis] Found ${typedData.vehicles.length} vehicles in dealership:inventory (object)`);
+              console.log(`[Redis] Found ${typedData.vehicles.length} vehicles in vista:inventory (object)`);
               return typedData.vehicles as Vehicle[];
             }
           } 
@@ -151,7 +151,7 @@ export const redisService = {
           else if (typeof inventoryData === 'string') {
             const parsedData = JSON.parse(inventoryData);
             if (parsedData && Array.isArray(parsedData.vehicles) && parsedData.vehicles.length > 0) {
-              console.log(`[Redis] Found ${parsedData.vehicles.length} vehicles in dealership:inventory (parsed)`);
+              console.log(`[Redis] Found ${parsedData.vehicles.length} vehicles in vista:inventory (parsed)`);
               return parsedData.vehicles;
             }
           }
@@ -162,12 +162,12 @@ export const redisService = {
               Object.keys(inventoryData || {}) : 
               'non-object');
         } catch (parseError) {
-          console.error('[Redis] Error parsing dealership:inventory data:', parseError);
+          console.error('[Redis] Error parsing vista:inventory data:', parseError);
         }
       }
       
-      // Fallback to original method if dealership:inventory doesn't exist or is empty
-      console.log('[Redis] No vehicles found in dealership:inventory, falling back to vehicles:all');
+      // Fallback to original method if vista:inventory doesn't exist or is empty
+      console.log('[Redis] No vehicles found in vista:inventory, falling back to vehicles:all');
       
       // Get all vehicle IDs in order with scores
       const vehicleData = await redisClient.zrange(VEHICLES_KEY, 0, -1, true);

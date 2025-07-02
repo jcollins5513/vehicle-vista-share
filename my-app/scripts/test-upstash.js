@@ -20,9 +20,9 @@ async function main() {
     const pong = await client.ping();
     console.log('Redis connection successful:', pong);
     
-    // Test dealership:inventory key
-    console.log('\nChecking dealership:inventory key...');
-    const inventory = await client.get('dealership:inventory');
+    // Test vista:inventory key
+    console.log('\nChecking vista:inventory key...');
+    const inventory = await client.get('vista:inventory');
     if (inventory) {
       console.log('Inventory found!');
       console.log('Number of vehicles:', Array.isArray(inventory.vehicles) ? inventory.vehicles.length : 'Not an array');
@@ -56,7 +56,7 @@ async function main() {
         lastUpdated: new Date().toISOString()
       };
       
-      await redis.set('dealership:inventory', testData);
+      await redis.set('vista:inventory', testData);
       console.log('Test inventory data created successfully!');
     }
   } catch (error) {

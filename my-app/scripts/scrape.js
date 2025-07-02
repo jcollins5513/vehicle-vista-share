@@ -4,7 +4,7 @@ const { Redis } = require('@upstash/redis');
 const puppeteer = require('puppeteer');
 const cron = require('node-cron');
 
-const CACHE_KEY = 'dealership:inventory';
+const CACHE_KEY = 'vista:inventory';
 const CACHE_TTL = parseInt(process.env.SCRAPE_INTERVAL_HOURS || '24') * 60 * 60;
 const BASE_URL = 'https://www.bentleysupercenter.com/VehicleSearchResults';
 const ITEMS_PER_PAGE = 24;
