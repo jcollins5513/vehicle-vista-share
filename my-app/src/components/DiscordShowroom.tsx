@@ -464,65 +464,6 @@ const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
           </div>
         </div>
       </div>
-
-      {/* Right Panel - Online Users */}
-      <div className="w-60 bg-[#2f3136] border-l border-black/20">
-        <div className="p-4">
-          <h3 className="text-white font-bold mb-4 flex items-center">
-            <Users className="w-5 h-5 mr-2" />
-            Online Now — {Math.floor(Math.random() * 50) + 20}
-          </h3>
-
-          {/* Staff */}
-          <div className="mb-4">
-            <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
-              Sales Team
-            </div>
-            <div className="space-y-2">
-              {["Sarah Johnson", "Mike Rodriguez", "Emily Chen"].map((name) => (
-                <div key={name} className="flex items-center space-x-3">
-                  <div className="relative">
-                    <div className="w-8 h-8 bg-[#5865f2] rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">
-                        {name[0]}
-                      </span>
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#3ba55c] border-2 border-[#2f3136] rounded-full" />
-                  </div>
-                  <div>
-                    <div className="text-white text-sm">{name}</div>
-                    <div className="text-gray-400 text-xs">
-                      Sales Specialist
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Customers */}
-          <div>
-            <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
-              Customers — {Math.floor(Math.random() * 30) + 10}
-            </div>
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <div className="relative">
-                    <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">U</span>
-                    </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-[#3ba55c] border border-[#2f3136] rounded-full" />
-                  </div>
-                  <span className="text-gray-300 text-sm">
-                    Customer {index + 1}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
