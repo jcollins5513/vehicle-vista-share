@@ -143,7 +143,7 @@ export default async function ShowroomPage() {
           Showing cached data - updates may be delayed
         </div>
       )}
-      <QuantumShowroom vehicles={finalVehicles} customMedia={customMedia} />
+      <DiscordShowroom vehicles={finalVehicles} customMedia={customMedia} />
     </>
   );
 }
