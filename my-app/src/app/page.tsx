@@ -107,10 +107,20 @@ const Index = () => {
               and customer sharing tools.
             </p>
             <Button
-              onClick={() => router.push("/showroom")}
-              className="w-full cosmic-button-enhanced text-white font-semibold py-4 text-lg rounded-2xl"
+              onClick={() => {
+                // Add entrance animation
+                document.body.style.transform = "scale(0.9)";
+                document.body.style.opacity = "0.7";
+                document.body.style.transition = "all 0.5s ease-in-out";
+
+                setTimeout(() => {
+                  router.push("/showroom");
+                }, 500);
+              }}
+              className="w-full cosmic-button-enhanced text-white font-semibold py-4 text-lg rounded-2xl relative overflow-hidden group"
             >
-              Enter Showroom ✨
+              <span className="relative z-10">Enter Showroom ✨</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-purple-400/20 transform translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
             </Button>
           </Card>
 
