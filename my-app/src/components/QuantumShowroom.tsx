@@ -247,7 +247,7 @@ const AIAssistant = ({
                 <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <div
-                      key={i}
+                      key={`audio-bar-${i}`}
                       className="w-1 bg-cyan-400 rounded-full transition-all duration-150"
                       style={{
                         height: `${(audioLevel * (i + 1)) / 100 + 4}px`,
@@ -432,7 +432,7 @@ const SocialFeed = () => {
     <div className="space-y-3">
       {posts.map((post, index) => (
         <div
-          key={index}
+          key={`post-${post.user}-${post.time}-${index}`}
           className={`glass-card-dark p-3 rounded-xl hover-glow bounce-in`}
           style={{ animationDelay: `${index * 0.1}s` }}
         >
@@ -519,7 +519,7 @@ const GestureController = ({
         <div className="space-y-2">
           {gestures.map((gesture) => (
             <div
-              key={gesture.name}
+              key={`gesture-${gesture.name}`}
               className={`flex items-center space-x-2 p-2 rounded-lg transition-all ${
                 activeGesture === gesture.name
                   ? "bg-purple-500/30 scale-105"
@@ -767,7 +767,7 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
               <div className="space-y-4 max-h-64 overflow-y-auto custom-scrollbar">
                 {vehicles.slice(0, 4).map((vehicle, index) => (
                   <div
-                    key={vehicle.id}
+                    key={`vehicle-card-${vehicle.id}`}
                     onClick={() => setSelectedVehicle(vehicle)}
                     className={`vehicle-card-3d cursor-pointer p-4 rounded-xl ${
                       selectedVehicle?.id === vehicle.id
@@ -804,7 +804,7 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
       <div className="fixed bottom-4 left-4 flex space-x-1 z-40">
         {Array.from({ length: 30 }).map((_, i) => (
           <div
-            key={i}
+            key={`sound-bar-${i}`}
             className="w-1 bg-gradient-to-t from-cyan-400 via-purple-400 to-pink-400 rounded-full animate-pulse opacity-60"
             style={{
               height: `${Math.random() * 60 + 10}px`,
