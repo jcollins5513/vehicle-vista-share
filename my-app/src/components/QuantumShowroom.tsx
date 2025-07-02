@@ -767,7 +767,7 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
               <div className="space-y-4 max-h-64 overflow-y-auto custom-scrollbar">
                 {vehicles.slice(0, 4).map((vehicle, index) => (
                   <div
-                    key={`vehicle-card-${vehicle.id}`}
+                    key={`vehicle-card-${vehicle.id || `${vehicle.year}-${vehicle.make}-${vehicle.model}-${index}`}`}
                     onClick={() => setSelectedVehicle(vehicle)}
                     className={`vehicle-card-3d cursor-pointer p-4 rounded-xl ${
                       selectedVehicle?.id === vehicle.id
