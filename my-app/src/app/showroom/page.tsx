@@ -77,19 +77,64 @@ export default async function ShowroomPage() {
     );
   }
 
-  if (vehicles.length === 0 && customMedia.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">No Vehicles Available</h1>
-          <p>Please check back later for updates.</p>
-          {fromCache && (
-            <p className="text-sm text-gray-400 mt-2">Showing cached data</p>
-          )}
-        </div>
-      </div>
-    );
-  }
+  // If no vehicles, use demo data for showroom experience
+  const finalVehicles =
+    vehicles.length > 0
+      ? vehicles
+      : [
+          {
+            id: "demo-1",
+            year: 2024,
+            make: "Bentley",
+            model: "Continental GT",
+            price: 230000,
+            mileage: 1200,
+            color: "Glacier White",
+            images: [
+              "https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=800&h=600&fit=crop&crop=center",
+              "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop&crop=center",
+            ],
+          },
+          {
+            id: "demo-2",
+            year: 2024,
+            make: "Bentley",
+            model: "Bentayga",
+            price: 185000,
+            mileage: 850,
+            color: "Onyx Black",
+            images: [
+              "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&h=600&fit=crop&crop=center",
+              "https://images.unsplash.com/photo-1549399536-ac8f2327de46?w=800&h=600&fit=crop&crop=center",
+            ],
+          },
+          {
+            id: "demo-3",
+            year: 2023,
+            make: "Bentley",
+            model: "Flying Spur",
+            price: 215000,
+            mileage: 2100,
+            color: "Beluga",
+            images: [
+              "https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=800&h=600&fit=crop&crop=center",
+              "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop&crop=center",
+            ],
+          },
+          {
+            id: "demo-4",
+            year: 2024,
+            make: "Bentley",
+            model: "Mulsanne",
+            price: 310000,
+            mileage: 500,
+            color: "Silver Tempest",
+            images: [
+              "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&h=600&fit=crop&crop=center",
+              "https://images.unsplash.com/photo-1549399536-ac8f2327de46?w=800&h=600&fit=crop&crop=center",
+            ],
+          },
+        ];
 
   return (
     <>
@@ -98,7 +143,7 @@ export default async function ShowroomPage() {
           Showing cached data - updates may be delayed
         </div>
       )}
-      <QuantumShowroom vehicles={vehicles} customMedia={customMedia} />
+      <QuantumShowroom vehicles={finalVehicles} customMedia={customMedia} />
     </>
   );
 }
