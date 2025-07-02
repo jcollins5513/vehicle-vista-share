@@ -5,6 +5,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --purple-gradient: linear-gradient(135deg, #623d93 0%, #e1b3d1 100%);
+  --secondary-gradient: linear-gradient(151deg, #9ca1ce 13.28%, #2e346a 90.36%);
 }
 
 @theme inline {
@@ -25,4 +27,57 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+/* Futuristic Purple Gradient Background */
+.cosmic-gradient {
+  background:
+    linear-gradient(135deg, #623d93 0%, #e1b3d1 100%),
+    linear-gradient(151deg, #9ca1ce 13.28%, #2e346a 90.36%);
+  background-blend-mode: overlay;
+}
+
+/* Glass Morphism Effects */
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.glass-card-dark {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Futuristic Button Styles */
+.cosmic-button {
+  background: linear-gradient(
+    135deg,
+    rgba(98, 61, 147, 0.8) 0%,
+    rgba(225, 179, 209, 0.8) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.cosmic-button:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(98, 61, 147, 1) 0%,
+    rgba(225, 179, 209, 1) 100%
+  );
+  box-shadow: 0 4px 20px rgba(98, 61, 147, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Enhanced Slideshow Container */
+.cosmic-slideshow {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
