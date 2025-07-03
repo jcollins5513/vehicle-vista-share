@@ -196,7 +196,7 @@ const DiscordTopBar = () => {
         {/* Title */}
         <div className="flex items-center space-x-4">
           <h1 className="text-white text-xl font-bold">
-            LUXURY VEHICLE SHOWCASE
+            <div></div>
           </h1>
           <div className="text-gray-400 text-sm">
             Win premium test drives, discover exclusive deals, and more through
