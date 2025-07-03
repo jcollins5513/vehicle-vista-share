@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import AIFloatingChatbot from "@/components/AIFloatingChatbot";
+import Link from "next/link";
 import type { VehicleWithMedia, Media } from "@/types";
 
 interface DiscordShowroomProps {
