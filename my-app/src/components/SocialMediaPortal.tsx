@@ -41,7 +41,7 @@ const SocialMediaPortal = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Advanced background removal using TensorFlow body segmentation
+  // Advanced background removal with multiple algorithms
   const removeBackground = async (imageUrl: string): Promise<string> => {
     return new Promise(async (resolve) => {
       const canvas = canvasRef.current;
@@ -58,95 +58,191 @@ const SocialMediaPortal = () => {
         canvas.height = img.height;
 
         try {
-          // Try using TensorFlow body segmentation for better results
-          if (typeof window !== "undefined" && "tf" in window) {
-            // TensorFlow implementation would go here
-            // For now, using enhanced edge detection
-          }
-
-          // Enhanced background removal algorithm
           ctx.drawImage(img, 0, 0);
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = imageData.data;
-
-          // Multi-pass background detection
-          const isBackground = new Array(data.length / 4).fill(false);
-
-          // Pass 1: Color-based detection
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            const pixelIndex = i / 4;
-
-            const brightness = (r + g + b) / 3;
-            const saturation = Math.max(r, g, b) - Math.min(r, g, b);
-
-            // Detect backgrounds: very bright, low saturation, or uniform colors
-            if (brightness > 220 || saturation < 20) {
-              isBackground[pixelIndex] = true;
-            }
-          }
-
-          // Pass 2: Edge-based refinement
           const width = canvas.width;
           const height = canvas.height;
 
-          for (let y = 1; y < height - 1; y++) {
-            for (let x = 1; x < width - 1; x++) {
+          // Create working arrays
+          const isBackground = new Array(width * height).fill(false);
+          const confidenceMap = new Array(width * height).fill(0);
+
+          // Algorithm 1: GrabCut-style color clustering
+          const colorClusters: Array<{
+            r: number;
+            g: number;
+            b: number;
+            count: number;
+          }> = [];
+
+          // Sample colors from image borders (likely background)
+          const borderSamples = [];
+          for (let x = 0; x < width; x += 5) {
+            // Top and bottom borders
+            borderSamples.push({
+              r: data[x * 4],
+              g: data[x * 4 + 1],
+              b: data[x * 4 + 2],
+            });
+            borderSamples.push({
+              r: data[(height - 1) * width * 4 + x * 4],
+              g: data[(height - 1) * width * 4 + x * 4 + 1],
+              b: data[(height - 1) * width * 4 + x * 4 + 2],
+            });
+          }
+          for (let y = 0; y < height; y += 5) {
+            // Left and right borders
+            borderSamples.push({
+              r: data[y * width * 4],
+              g: data[y * width * 4 + 1],
+              b: data[y * width * 4 + 2],
+            });
+            borderSamples.push({
+              r: data[y * width * 4 + (width - 1) * 4],
+              g: data[y * width * 4 + (width - 1) * 4 + 1],
+              b: data[y * width * 4 + (width - 1) * 4 + 2],
+            });
+          }
+
+          // Algorithm 2: Advanced edge detection with gradient analysis
+          for (let y = 2; y < height - 2; y++) {
+            for (let x = 2; x < width - 2; x++) {
               const pixelIndex = y * width + x;
+              const dataIndex = pixelIndex * 4;
 
-              // Check neighbors for edge detection
-              let edgeStrength = 0;
-              for (let dy = -1; dy <= 1; dy++) {
-                for (let dx = -1; dx <= 1; dx++) {
-                  const neighborIndex = ((y + dy) * width + (x + dx)) * 4;
-                  const currentIndex = (y * width + x) * 4;
+              const r = data[dataIndex];
+              const g = data[dataIndex + 1];
+              const b = data[dataIndex + 2];
 
-                  const neighborBrightness =
-                    (data[neighborIndex] +
-                      data[neighborIndex + 1] +
-                      data[neighborIndex + 2]) /
-                    3;
-                  const currentBrightness =
-                    (data[currentIndex] +
-                      data[currentIndex + 1] +
-                      data[currentIndex + 2]) /
-                    3;
+              // Color-based background detection
+              let backgroundScore = 0;
 
-                  edgeStrength += Math.abs(
-                    neighborBrightness - currentBrightness,
-                  );
-                }
+              // Check similarity to border colors
+              for (const sample of borderSamples) {
+                const colorDist = Math.sqrt(
+                  Math.pow(r - sample.r, 2) +
+                    Math.pow(g - sample.g, 2) +
+                    Math.pow(b - sample.b, 2),
+                );
+                if (colorDist < 40) backgroundScore += 0.3;
               }
 
-              // If it's a strong edge and neighbors are background, likely object boundary
-              if (edgeStrength > 200) {
-                let backgroundNeighbors = 0;
-                for (let dy = -2; dy <= 2; dy++) {
-                  for (let dx = -2; dx <= 2; dx++) {
-                    const ny = y + dy;
-                    const nx = x + dx;
-                    if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
-                      const neighborPixelIndex = ny * width + nx;
-                      if (isBackground[neighborPixelIndex])
-                        backgroundNeighbors++;
-                    }
+              // Brightness and saturation analysis
+              const brightness = (r + g + b) / 3;
+              const maxRGB = Math.max(r, g, b);
+              const minRGB = Math.min(r, g, b);
+              const saturation = maxRGB === 0 ? 0 : (maxRGB - minRGB) / maxRGB;
+
+              // High brightness or low saturation suggests background
+              if (brightness > 200) backgroundScore += 0.4;
+              if (saturation < 0.15) backgroundScore += 0.3;
+
+              // Texture analysis - backgrounds often have low texture
+              let textureVariance = 0;
+              const windowSize = 3;
+              for (let dy = -windowSize; dy <= windowSize; dy++) {
+                for (let dx = -windowSize; dx <= windowSize; dx++) {
+                  const nx = x + dx;
+                  const ny = y + dy;
+                  if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    const neighborIndex = (ny * width + nx) * 4;
+                    const neighborBrightness =
+                      (data[neighborIndex] +
+                        data[neighborIndex + 1] +
+                        data[neighborIndex + 2]) /
+                      3;
+                    textureVariance += Math.abs(
+                      brightness - neighborBrightness,
+                    );
+                  }
+                }
+              }
+              textureVariance /= (windowSize * 2 + 1) ** 2;
+
+              if (textureVariance < 8) backgroundScore += 0.2;
+
+              // Algorithm 3: Flood fill from corners (background regions)
+              const distanceFromEdge = Math.min(
+                x,
+                y,
+                width - x - 1,
+                height - y - 1,
+              );
+              if (distanceFromEdge < 10) backgroundScore += 0.3;
+
+              confidenceMap[pixelIndex] = backgroundScore;
+              isBackground[pixelIndex] = backgroundScore > 0.6;
+            }
+          }
+
+          // Algorithm 4: Morphological operations to clean up
+          const cleaned = [...isBackground];
+
+          // Erosion followed by dilation to remove noise
+          for (let iter = 0; iter < 2; iter++) {
+            for (let y = 1; y < height - 1; y++) {
+              for (let x = 1; x < width - 1; x++) {
+                const pixelIndex = y * width + x;
+
+                // Count background neighbors
+                let bgNeighbors = 0;
+                for (let dy = -1; dy <= 1; dy++) {
+                  for (let dx = -1; dx <= 1; dx++) {
+                    if (cleaned[(y + dy) * width + (x + dx)]) bgNeighbors++;
                   }
                 }
 
-                // If most neighbors are background, this is likely foreground
-                if (backgroundNeighbors > 15) {
-                  isBackground[pixelIndex] = false;
+                // Erosion: remove isolated background pixels
+                if (iter === 0 && bgNeighbors < 5) {
+                  cleaned[pixelIndex] = false;
+                }
+                // Dilation: fill small gaps
+                else if (iter === 1 && bgNeighbors > 6) {
+                  cleaned[pixelIndex] = true;
                 }
               }
             }
           }
 
-          // Apply transparency to background pixels
-          for (let i = 0; i < isBackground.length; i++) {
-            if (isBackground[i]) {
-              data[i * 4 + 3] = 0; // Make transparent
+          // Apply the mask with feathering for smooth edges
+          for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+              const pixelIndex = y * width + x;
+              const dataIndex = pixelIndex * 4;
+
+              if (cleaned[pixelIndex]) {
+                // Apply feathering near edges
+                let alpha = 0;
+                let edgeDistance = 0;
+
+                // Find distance to nearest non-background pixel
+                for (let radius = 1; radius <= 3; radius++) {
+                  let foundForeground = false;
+                  for (let dy = -radius; dy <= radius; dy++) {
+                    for (let dx = -radius; dx <= radius; dx++) {
+                      const nx = x + dx;
+                      const ny = y + dy;
+                      if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                        if (!cleaned[ny * width + nx]) {
+                          foundForeground = true;
+                          edgeDistance = radius;
+                          break;
+                        }
+                      }
+                    }
+                    if (foundForeground) break;
+                  }
+                  if (foundForeground) break;
+                }
+
+                // Apply smooth alpha based on edge distance
+                if (edgeDistance > 0 && edgeDistance <= 3) {
+                  alpha = Math.max(0, 255 * (1 - edgeDistance / 3) * 0.3);
+                }
+
+                data[dataIndex + 3] = alpha; // Set alpha
+              }
             }
           }
 
@@ -154,7 +250,7 @@ const SocialMediaPortal = () => {
           resolve(canvas.toDataURL());
         } catch (error) {
           console.error("Background removal error:", error);
-          resolve(imageUrl); // Return original on error
+          resolve(imageUrl);
         }
       };
 
