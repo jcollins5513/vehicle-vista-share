@@ -59,23 +59,31 @@ const DiscordSidebar = () => {
       {/* Navigation */}
       <div className="flex-1 px-2 py-4">
         <div className="space-y-1">
-          {sections.map((section) => (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              className={`w-full flex items-center px-3 py-2 rounded-md text-left transition-colors ${
-                activeSection === section.id
-                  ? "bg-[#5865f2] text-white"
-                  : "text-gray-300 hover:bg-[#404449] hover:text-white"
-              }`}
-            >
-              <section.icon className="w-5 h-5 mr-3" />
-              <span className="text-sm font-medium">{section.name}</span>
-              {section.id === "new-arrivals" && (
-                <div className="ml-auto w-2 h-2 bg-[#ed4245] rounded-full" />
-              )}
-            </button>
-          ))}
+          {sections.map((section) => {
+            const Component = section.id === "appointments" ? Link : "button";
+            const props =
+              section.id === "appointments"
+                ? { href: "/social-portal" }
+                : { onClick: () => setActiveSection(section.id) };
+
+            return (
+              <Component
+                key={section.id}
+                {...props}
+                className={`w-full flex items-center px-3 py-2 rounded-md text-left transition-colors ${
+                  activeSection === section.id
+                    ? "bg-[#5865f2] text-white"
+                    : "text-gray-300 hover:bg-[#404449] hover:text-white"
+                }`}
+              >
+                <section.icon className="w-5 h-5 mr-3" />
+                <span className="text-sm font-medium">{section.name}</span>
+                {section.id === "new-arrivals" && (
+                  <div className="ml-auto w-2 h-2 bg-[#ed4245] rounded-full" />
+                )}
+              </Component>
+            );
+          })}
         </div>
       </div>
     </div>
