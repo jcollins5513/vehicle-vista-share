@@ -418,6 +418,9 @@ const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
           </div>
         </div>
       </div>
+
+      {/* AI Floating Chatbot */}
+      <AIFloatingChatbot selectedVehicle={featuredVehicle} />
     </div>
   );
 };
