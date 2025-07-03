@@ -22,6 +22,11 @@ import {
   Filter,
   Grid3X3,
   List,
+  Share2,
+  Instagram,
+  Facebook,
+  Twitter,
+  Camera,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import AIFloatingChatbot from "@/components/AIFloatingChatbot";
