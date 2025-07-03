@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { getShowroomDataAction } from "@/app/actions"; // Removed .ts extension
 import {
+  Zap,
   Car,
   Share2,
   Heart,
@@ -15,7 +16,6 @@ import {
   Sparkles,
   Award,
   Star,
-  Lightning,
   ChevronRight,
   Copy,
   Check,
@@ -25,7 +25,6 @@ import {
   MessageSquare,
   MapPin,
   TrendingUp,
-  Zap,
   Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -109,7 +108,7 @@ export default function CustomerShowroomPage() {
     const link = `${window.location.origin}/customer/${vehicle.id}`;
     try {
       await navigator.clipboard.writeText(link);
-      setCopiedLink(vehicle.id);
+      setCopiedLink(vehicle.id as unknown as number); // Type assertion to number
       setTimeout(() => setCopiedLink(null), 2000);
     } catch (err) {
       // Fallback for older browsers
@@ -119,7 +118,7 @@ export default function CustomerShowroomPage() {
       textArea.select();
       document.execCommand("copy");
       document.body.removeChild(textArea);
-      setCopiedLink(vehicle.id);
+      setCopiedLink(vehicle.id as unknown as number); // Type assertion to match the type
       setTimeout(() => setCopiedLink(null), 2000);
     }
   };
@@ -214,7 +213,7 @@ export default function CustomerShowroomPage() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-xl flex items-center justify-center">
-                <img
+                <Image
                   src="/Bentley-logo-groups.svg"
                   alt="Bentley Logo"
                   className="w-8 h-8 object-contain filter brightness-0 invert"
@@ -332,15 +331,15 @@ export default function CustomerShowroomPage() {
                   <div className="absolute top-3 right-3 flex space-x-2">
                     <Button
                       size="icon"
-                      onClick={() => toggleFavorite(vehicle.id)}
+                      onClick={() => toggleFavorite(Number(vehicle.id))}
                       className={`w-8 h-8 rounded-full border-0 transition-all ${
-                        favorites.has(vehicle.id)
+                        favorites.has(Number(vehicle.id))
                           ? "bg-red-500/80 hover:bg-red-600"
                           : "bg-black/50 hover:bg-black/70"
                       }`}
                     >
                       <Heart
-                        className={`w-4 h-4 ${favorites.has(vehicle.id) ? "fill-current" : ""}`}
+                        className={`w-4 h-4 ${favorites.has(Number(vehicle.id)) ? "fill-current" : ""}`}
                       />
                     </Button>
                     <Button
@@ -348,7 +347,7 @@ export default function CustomerShowroomPage() {
                       onClick={() => copyShareLink(vehicle)}
                       className="w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 border-0"
                     >
-                      {copiedLink === vehicle.id ? (
+                      {copiedLink === Number(vehicle.id) ? (
                         <Check className="w-4 h-4 text-green-400" />
                       ) : (
                         <Share2 className="w-4 h-4" />
@@ -359,7 +358,7 @@ export default function CustomerShowroomPage() {
                   {/* Special Offers Badge */}
                   <div className="absolute top-3 left-3">
                     <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
-                      <Lightning className="w-3 h-3 inline mr-1" />
+                      <Zap className="w-3 h-3 inline mr-1" />
                       SPECIAL OFFER
                     </div>
                   </div>
@@ -460,15 +459,15 @@ export default function CustomerShowroomPage() {
                       <div className="flex items-center space-x-3">
                         <Button
                           size="icon"
-                          onClick={() => toggleFavorite(vehicle.id)}
+                          onClick={() => toggleFavorite(Number(vehicle.id))}
                           className={`w-8 h-8 rounded-full border-0 ${
-                            favorites.has(vehicle.id)
+                            favorites.has(Number(vehicle.id))
                               ? "bg-red-500/80 hover:bg-red-600"
                               : "bg-white/10 hover:bg-white/20"
                           }`}
                         >
                           <Heart
-                            className={`w-4 h-4 ${favorites.has(vehicle.id) ? "fill-current" : ""}`}
+                            className={`w-4 h-4 ${favorites.has(Number(vehicle.id)) ? "fill-current" : ""}`}
                           />
                         </Button>
                         <Button
@@ -476,7 +475,7 @@ export default function CustomerShowroomPage() {
                           onClick={() => copyShareLink(vehicle)}
                           className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border-0"
                         >
-                          {copiedLink === vehicle.id ? (
+                          {copiedLink === Number(vehicle.id) ? (
                             <Check className="w-4 h-4 text-green-400" />
                           ) : (
                             <Share2 className="w-4 h-4" />
@@ -536,7 +535,7 @@ export default function CustomerShowroomPage() {
                         className="border-white/30 text-white hover:bg-white/10"
                       >
                         <Copy className="w-4 h-4 mr-2" />
-                        {copiedLink === vehicle.id ? "Copied!" : "Share Link"}
+                        {copiedLink === Number(vehicle.id) ? "Copied!" : "Share Link"}
                       </Button>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import {
   Play,
   Pause,
@@ -8,6 +9,7 @@ import {
   VolumeX,
   Maximize,
   Eye,
+  Image as ImageIcon,
   Star,
   Navigation,
   Zap,
@@ -237,7 +239,7 @@ const AIAssistant = ({
       }, 8000);
       return () => clearInterval(interval);
     }
-  }, [isActive]);
+  }, [isActive, messages]);
 
   return (
     <div
@@ -369,7 +371,7 @@ const EnvironmentController = () => {
       }));
     }, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [weatherEffects]);
 
   return (
     <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-40">
@@ -506,7 +508,7 @@ const GestureController = ({
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [onGesture]);
+  }, [gestures, onGesture]);
 
   return (
     <div className="fixed top-1/2 left-8 transform -translate-y-1/2 z-40">
