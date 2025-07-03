@@ -197,10 +197,38 @@ const VehicleQuestCard = ({
         </p>
 
         {/* Quest Action Button */}
-        <button className="w-full bg-[#5865f2] hover:bg-[#4752c4] text-white font-medium py-3 px-4 rounded transition-colors flex items-center justify-center space-x-2">
+        <button className="w-full bg-[#5865f2] hover:bg-[#4752c4] text-white font-medium py-3 px-4 rounded transition-colors flex items-center justify-center space-x-2 mb-3">
           <span>Start Virtual Tour</span>
           <ArrowRight className="w-4 h-4" />
         </button>
+
+        {/* Social Media Sharing */}
+        <div className="flex items-center justify-between">
+          <span className="text-gray-400 text-xs font-medium">Share:</span>
+          <div className="flex space-x-2">
+            <button
+              onClick={(e) => shareVehicle("twitter", e)}
+              className="p-2 bg-[#40444b] hover:bg-[#1da1f2] rounded transition-colors group"
+              title="Share on Twitter"
+            >
+              <Twitter className="w-3 h-3 text-gray-400 group-hover:text-white" />
+            </button>
+            <button
+              onClick={(e) => shareVehicle("facebook", e)}
+              className="p-2 bg-[#40444b] hover:bg-[#1877f2] rounded transition-colors group"
+              title="Share on Facebook"
+            >
+              <Facebook className="w-3 h-3 text-gray-400 group-hover:text-white" />
+            </button>
+            <button
+              onClick={(e) => shareVehicle("instagram", e)}
+              className="p-2 bg-[#40444b] hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 rounded transition-colors group"
+              title="Create Instagram Post"
+            >
+              <Camera className="w-3 h-3 text-gray-400 group-hover:text-white" />
+            </button>
+          </div>
+        </div>
 
         {/* Stats */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-600">
