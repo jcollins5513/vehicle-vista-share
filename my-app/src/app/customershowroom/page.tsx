@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { getShowroomDataAction } from "@/app/actions";
+import { getShowroomDataAction } from "@/app/actions/showroom"; // Fixed import path
 import {
   Car, 
   Share2,
@@ -13,7 +13,6 @@ import {
   List,
   Search,
   Sparkles,
-  Lightning,
   Award,
   Star,
   ChevronRight,
@@ -24,9 +23,9 @@ import {
   Phone,
   MessageSquare,
   MapPin,
-  Clock,
-  Zap,
   TrendingUp,
+  Zap,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
