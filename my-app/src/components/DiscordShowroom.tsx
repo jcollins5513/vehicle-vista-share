@@ -48,9 +48,12 @@ const DiscordSidebar = () => {
   return (
     <div className="w-60 bg-[#2f3136] h-full flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-black/20">
-        <h2 className="text-white font-bold text-lg">Bentley Supercenter</h2>
-        <p className="text-gray-400 text-sm">Premium Automotive Experience</p>
+      <div className="px-4 py-3 pb-9 border-b border-black/20">
+        <img
+          src="https://cdn.builder.io/api/v1/image/assets%2F0f7830926b04438e96198e445d7c6df8%2Fd945695f3c88472c9e8bfb7dd5aa59a5"
+          alt="Logo"
+          className="w-full mt-5 aspect-[2.7] object-cover object-center min-h-5 min-w-5 overflow-hidden"
+        />
       </div>
 
       {/* Navigation */}
