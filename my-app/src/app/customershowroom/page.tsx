@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { getShowroomDataAction } from "@/app/actions/showroom"; // Fixed import path
+import { getShowroomDataAction } from "@/app/actions"; // Removed .ts extension
 import {
-  Car, 
+  Car,
   Share2,
   Heart,
   Eye,
