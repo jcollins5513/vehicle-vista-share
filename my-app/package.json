@@ -46,6 +46,8 @@
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@sparticuz/chromium": "^137.0.1",
+    "@tensorflow-models/body-segmentation": "^1.0.2",
+    "@tensorflow/tfjs": "^4.22.0",
     "@types/ioredis": "^4.28.10",
     "@upstash/redis": "^1.35.0",
     "class-variance-authority": "^0.7.1",
