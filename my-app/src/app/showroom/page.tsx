@@ -1,8 +1,7 @@
 import { redisService } from "@/lib/services/redisService";
 import { unstable_cache } from "next/cache";
-import QuantumShowroom from "@/components/QuantumShowroom";
-import { Vehicle } from "@/types";
 
+import DiscordShowroom from "@/components/DiscordShowroom";
 // Revalidation time in seconds (5 minutes)
 export const revalidate = 300;
 
@@ -144,7 +143,9 @@ export default async function ShowroomPage() {
           Showing cached data - updates may be delayed
         </div>
       )}
-      <QuantumShowroom vehicles={finalVehicles as Vehicle[]} customMedia={customMedia} />
+
+      <DiscordShowroom vehicles={finalVehicles} customMedia={customMedia} />
+
     </>
   );
 }
