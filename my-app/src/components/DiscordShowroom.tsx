@@ -115,6 +115,24 @@ const VehicleQuestCard = ({
     setRandomInterested(Math.floor(Math.random() * 20) + 5);
   }, []);
 
+  const shareVehicle = (platform: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const vehicleText = `Check out this ${vehicle.year} ${vehicle.make} ${vehicle.model} for $${vehicle.price?.toLocaleString()}! 🚗✨`;
+    const url = `${window.location.origin}/customer/${vehicle.id}`;
+
+    const shareUrls = {
+      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(vehicleText)}&url=${encodeURIComponent(url)}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      instagram: "/social-portal", // Navigate to social portal for image processing
+    };
+
+    if (platform === "instagram") {
+      window.open(shareUrls[platform], "_blank");
+    } else {
+      window.open(shareUrls[platform as keyof typeof shareUrls], "_blank");
+    }
+  };
+
   return (
     <div
       className="bg-[#2f3136] rounded-lg overflow-hidden hover:bg-[#36393f] transition-colors cursor-pointer"
