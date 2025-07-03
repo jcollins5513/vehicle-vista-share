@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import {
   Play,
   Pause,
@@ -8,6 +9,7 @@ import {
   VolumeX,
   Maximize,
   Eye,
+  Image as ImageIcon,
   Star,
   Navigation,
   Zap,
@@ -237,7 +239,7 @@ const AIAssistant = ({
       }, 8000);
       return () => clearInterval(interval);
     }
-  }, [isActive]);
+  }, [isActive, messages]);
 
   return (
     <div
@@ -369,7 +371,7 @@ const EnvironmentController = () => {
       }));
     }, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [weatherEffects]);
 
   return (
     <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-40">
@@ -506,7 +508,7 @@ const GestureController = ({
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [onGesture]);
+  }, [gestures, onGesture]);
 
   return (
     <div className="fixed top-1/2 left-8 transform -translate-y-1/2 z-40">
@@ -690,7 +692,7 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
               {/* Quantum Vehicle Image */}
               <div className="relative h-[60vh] mb-6 rounded-2xl overflow-hidden group">
                 {featuredVehicle?.images && featuredVehicle.images[0] && (
-                  <img
+                  <Image
                     src={featuredVehicle.images[0]}
                     alt={`${featuredVehicle.year} ${featuredVehicle.make} ${featuredVehicle.model}`}
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000 cinematic-zoom"
@@ -932,10 +934,12 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
                     <div className="flex items-center space-x-3">
                       {vehicle.images && vehicle.images[0] && (
                         <div className="relative">
-                          <img
+                          <Image
                             src={vehicle.images[0]}
                             alt={vehicle.model}
                             className="w-10 h-10 rounded-lg object-cover"
+                            width={40}
+                            height={40}
                           />
                           {selectedVehicle?.id === vehicle.id && (
                             <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full pulse-glow" />

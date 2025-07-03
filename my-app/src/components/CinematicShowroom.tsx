@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import type { VehicleWithMedia, Media, SlideshowItem } from "@/types";
+import Image from "next/image";
 
 interface CinematicShowroomProps {
   vehicles: VehicleWithMedia[];
@@ -73,7 +74,7 @@ const VehicleCard3D = ({ vehicle, index, isActive, onClick }: any) => {
             {/* Vehicle Image */}
             <div className="relative h-32 mb-4 rounded-xl overflow-hidden">
               {vehicle.images && vehicle.images[0] && (
-                <img
+                <Image
                   src={vehicle.images[0]}
                   alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                   className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
@@ -295,7 +296,7 @@ const CinematicShowroom = ({
               {/* Hero Vehicle Image */}
               <div className="relative h-96 mb-8 rounded-2xl overflow-hidden group">
                 {featuredVehicle?.images && featuredVehicle.images[0] && (
-                  <img
+                  <Image
                     src={featuredVehicle.images[0]}
                     alt={`${featuredVehicle.year} ${featuredVehicle.make} ${featuredVehicle.model}`}
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000"
@@ -402,8 +403,8 @@ const CinematicShowroom = ({
                     ))}
                   </div>
                   <p className="text-white/80 text-sm">
-                    "Absolutely amazing experience! The team was professional
-                    and the car exceeded my expectations."
+                    &quot;Absolutely amazing experience! The team was professional
+                    and the car exceeded my expectations.&quot;
                   </p>
                   <p className="text-cyan-300 text-xs mt-2">- Sarah M.</p>
                 </div>
