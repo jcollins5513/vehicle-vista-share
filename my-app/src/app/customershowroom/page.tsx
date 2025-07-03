@@ -1,9 +1,8 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { getShowroomDataAction } from "@/app/actions";
 import {
-  Car,
+  Car, 
   Share2,
   Heart,
   Eye,
