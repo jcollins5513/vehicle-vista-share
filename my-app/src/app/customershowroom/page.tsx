@@ -15,6 +15,7 @@ import {
   Sparkles,
   Award,
   Star,
+  Lightning,
   ChevronRight,
   Copy,
   Check,

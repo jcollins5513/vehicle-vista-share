@@ -402,8 +402,8 @@ const CinematicShowroom = ({
                     ))}
                   </div>
                   <p className="text-white/80 text-sm">
-                    "Absolutely amazing experience! The team was professional
-                    and the car exceeded my expectations."
+                    &quot;Absolutely amazing experience! The team was professional
+                    and the car exceeded my expectations.&quot;
                   </p>
                   <p className="text-cyan-300 text-xs mt-2">- Sarah M.</p>
                 </div>

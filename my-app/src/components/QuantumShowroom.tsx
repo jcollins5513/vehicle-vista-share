@@ -690,7 +690,7 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
               {/* Quantum Vehicle Image */}
               <div className="relative h-[60vh] mb-6 rounded-2xl overflow-hidden group">
                 {featuredVehicle?.images && featuredVehicle.images[0] && (
-                  <img
+                  <Image
                     src={featuredVehicle.images[0]}
                     alt={`${featuredVehicle.year} ${featuredVehicle.make} ${featuredVehicle.model}`}
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-1000 cinematic-zoom"
@@ -932,10 +932,12 @@ const QuantumShowroom = ({ vehicles, customMedia }: QuantumShowroomProps) => {
                     <div className="flex items-center space-x-3">
                       {vehicle.images && vehicle.images[0] && (
                         <div className="relative">
-                          <img
+                          <Image
                             src={vehicle.images[0]}
                             alt={vehicle.model}
                             className="w-10 h-10 rounded-lg object-cover"
+                            width={40}
+                            height={40}
                           />
                           {selectedVehicle?.id === vehicle.id && (
                             <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full pulse-glow" />
