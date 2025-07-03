@@ -37,12 +37,10 @@ const DiscordSidebar = () => {
 
   const sections = [
     { id: "showroom", name: "Showroom", icon: Car, active: true },
-    { id: "inventory", name: "All Inventory", icon: Grid3X3 },
+    { id: "inventory", name: "Customer Showroom ", icon: Grid3X3 },
     { id: "featured", name: "Featured", icon: Star },
-    { id: "new-arrivals", name: "New Arrivals", icon: Zap },
-    { id: "luxury", name: "Luxury Collection", icon: Award },
-    { id: "appointments", name: "Appointments", icon: Calendar },
-    { id: "test-drives", name: "Test Drives", icon: Navigation },
+    { id: "new-arrivals", name: "Manager Special", icon: Zap },
+    { id: "appointments", name: "Social Media Portal", icon: Calendar },
   ];
 
   return (
