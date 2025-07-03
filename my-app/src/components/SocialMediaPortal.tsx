@@ -525,10 +525,16 @@ const SocialMediaPortal = () => {
               <div className="flex items-center justify-center h-48">
                 <div className="text-center">
                   <RefreshCw className="w-12 h-12 text-cyan-400 animate-spin mx-auto mb-4" />
-                  <p className="text-gray-300">Processing image...</p>
-                  <p className="text-gray-500 text-sm">
-                    Removing background and adding logo
-                  </p>
+                  <p className="text-gray-300">AI Processing image...</p>
+                  <div className="mt-2 space-y-1">
+                    <div className="bg-[#40444b] rounded-full h-2">
+                      <div className="bg-gradient-to-r from-cyan-400 to-purple-400 h-2 rounded-full w-2/3 animate-pulse"></div>
+                    </div>
+                    <p className="text-gray-500 text-xs">
+                      Advanced algorithms: Color clustering • Edge detection •
+                      Morphological cleanup
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
