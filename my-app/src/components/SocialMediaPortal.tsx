@@ -450,6 +450,58 @@ const SocialMediaPortal = () => {
               />
             </div>
 
+            {/* Quick Test Samples */}
+            <div className="mt-6">
+              <h3 className="font-semibold mb-3 text-sm text-gray-400">
+                Quick Test (Sample Images):
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    const sampleUrl =
+                      "https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=800&h=600&fit=crop&crop=center";
+                    setSelectedImage(sampleUrl);
+                    handleImageUpload({ target: { files: null } } as any);
+                    setIsProcessing(true);
+                    setTimeout(async () => {
+                      const processed = await removeBackground(sampleUrl);
+                      const withLogo = await addLogoBehind(processed);
+                      setProcessedImages({
+                        original: sampleUrl,
+                        processed,
+                        withLogo,
+                      });
+                      setIsProcessing(false);
+                    }, 500);
+                  }}
+                  className="bg-[#40444b] hover:bg-[#36393f] text-white p-2 rounded text-xs transition-colors"
+                >
+                  🚗 Car Sample
+                </button>
+                <button
+                  onClick={() => {
+                    const sampleUrl =
+                      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop&crop=center";
+                    setSelectedImage(sampleUrl);
+                    setIsProcessing(true);
+                    setTimeout(async () => {
+                      const processed = await removeBackground(sampleUrl);
+                      const withLogo = await addLogoBehind(processed);
+                      setProcessedImages({
+                        original: sampleUrl,
+                        processed,
+                        withLogo,
+                      });
+                      setIsProcessing(false);
+                    }, 500);
+                  }}
+                  className="bg-[#40444b] hover:bg-[#36393f] text-white p-2 rounded text-xs transition-colors"
+                >
+                  🏎️ Sports Car
+                </button>
+              </div>
+            </div>
+
             {selectedImage && (
               <div className="mt-6">
                 <h3 className="font-semibold mb-3">Original Image</h3>
