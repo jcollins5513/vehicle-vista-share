@@ -75,54 +75,6 @@ const DiscordSidebar = () => {
             </button>
           ))}
         </div>
-
-        {/* Categories */}
-        <div className="mt-6">
-          <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider px-3 mb-2">
-            Categories
-          </h3>
-          <div className="space-y-1">
-            {["Sedan", "SUV", "Coupe", "Convertible"].map((category) => (
-              <button
-                key={category}
-                className="w-full text-left px-3 py-1 text-gray-400 hover:text-white text-sm"
-              >
-                # {category.toLowerCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Price Ranges */}
-        <div className="mt-6">
-          <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider px-3 mb-2">
-            Price Range
-          </h3>
-          <div className="space-y-1">
-            {["Under $200K", "$200K - $300K", "$300K+"].map((range) => (
-              <button
-                key={range}
-                className="w-full text-left px-3 py-1 text-gray-400 hover:text-white text-sm"
-              >
-                # {range.toLowerCase().replace(/\s/g, "-")}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* User Status */}
-      <div className="px-4 py-3 bg-[#232428] border-t border-black/20">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-[#5865f2] rounded-full flex items-center justify-center">
-            <span className="text-white text-sm font-bold">JC</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-white text-sm font-medium">Justin Collins</div>
-            <div className="text-gray-400 text-xs">Premium Customer</div>
-          </div>
-          <Settings className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
-        </div>
       </div>
     </div>
   );
