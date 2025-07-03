@@ -174,9 +174,7 @@ const VehicleQuestCard = ({
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-600">
           <div className="flex items-center space-x-1">
             <Eye className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-400 text-xs">
-              {Math.floor(Math.random() * 500) + 100} views
-            </span>
+            <span className="text-gray-400 text-xs">{randomViews} views</span>
           </div>
           <div className="flex items-center space-x-1">
             <Star className="w-4 h-4 text-yellow-400" />
