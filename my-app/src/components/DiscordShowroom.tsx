@@ -183,7 +183,7 @@ const VehicleQuestCard = ({
           <div className="flex items-center space-x-1">
             <Users className="w-4 h-4 text-gray-400" />
             <span className="text-gray-400 text-xs">
-              {Math.floor(Math.random() * 20) + 5} interested
+              {randomInterested} interested
             </span>
           </div>
         </div>
