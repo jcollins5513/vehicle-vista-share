@@ -90,9 +90,16 @@ const VehicleQuestCard = ({
   index: number;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [randomViews, setRandomViews] = useState(0);
+  const [randomInterested, setRandomInterested] = useState(0);
 
   const badges = ["NEW", "FEATURED", "LIMITED"];
   const badge = badges[index % badges.length];
+
+  useEffect(() => {
+    setRandomViews(Math.floor(Math.random() * 500) + 100);
+    setRandomInterested(Math.floor(Math.random() * 20) + 5);
+  }, []);
 
   return (
     <div
