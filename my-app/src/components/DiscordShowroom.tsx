@@ -29,13 +29,17 @@ import {
   Camera,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import AIFloatingChatbot from "@/components/AIFloatingChatbot";
 import Link from "next/link";
 import type { VehicleWithMedia, Media } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-
 
 interface DiscordShowroomProps {
   vehicles: VehicleWithMedia[];
@@ -46,12 +50,28 @@ interface DiscordShowroomProps {
 const DiscordSidebar = () => {
   const [activeSection, setActiveSection] = useState("showroom");
 
-  const sections = [
-    { id: "showroom", name: "Showroom", icon: Car, active: true },
-    { id: "inventory", name: "Customer Showroom ", icon: Grid3X3 },
+  const sections: Array<{
+    id: string;
+    name: string;
+    icon: any;
+    active?: boolean;
+    href?: string;
+  }> = [
+    { id: "showroom", name: "Display Player", icon: Car, active: true },
+    {
+      id: "inventory",
+      name: "Customer Showroom",
+      icon: Grid3X3,
+      href: "/customershowroom",
+    },
     { id: "featured", name: "Featured", icon: Star },
     { id: "new-arrivals", name: "Manager Special", icon: Zap },
-    { id: "appointments", name: "Social Media Portal", icon: Calendar },
+    {
+      id: "appointments",
+      name: "Social Media Portal",
+      icon: Calendar,
+      href: "/social-portal",
+    },
   ];
 
   return (
@@ -69,11 +89,11 @@ const DiscordSidebar = () => {
       <div className="flex-1 px-2 py-4">
         <div className="space-y-1">
           {sections.map((section) => {
-            if (section.id === "appointments") {
+            if (section.href) {
               return (
                 <Link
                   key={section.id}
-                  href="/social-portal"
+                  href={section.href}
                   className={`w-full flex items-center px-3 py-2 rounded-md text-left transition-colors ${
                     activeSection === section.id
                       ? "bg-[#5865f2] text-white"
@@ -407,7 +427,8 @@ const FeaturedShowcase = ({ vehicle }: { vehicle: VehicleWithMedia }) => {
 
 // Main Discord Showroom Component
 const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
-  const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithMedia | null>(null);
+  const [selectedVehicle, setSelectedVehicle] =
+    useState<VehicleWithMedia | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -518,10 +539,13 @@ const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
               >
                 <div className="space-y-4 p-6">
                   <DialogTitle className="text-2xl font-bold">
-                    {selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}
+                    {selectedVehicle.year} {selectedVehicle.make}{" "}
+                    {selectedVehicle.model}
                   </DialogTitle>
                   <DialogDescription className="text-sm text-gray-400 space-y-1">
-                    <p>Mileage: {selectedVehicle.mileage?.toLocaleString()} miles</p>
+                    <p>
+                      Mileage: {selectedVehicle.mileage?.toLocaleString()} miles
+                    </p>
                     <p>Color: {selectedVehicle.color}</p>
                   </DialogDescription>
                   <div className="relative">
@@ -531,7 +555,9 @@ const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
                       className="w-full h-64 object-cover rounded-lg"
                     />
                   </div>
-                  <p className="text-xl">${selectedVehicle.price?.toLocaleString()}</p>
+                  <p className="text-xl">
+                    ${selectedVehicle.price?.toLocaleString()}
+                  </p>
                 </div>
               </motion.div>
             </DialogContent>

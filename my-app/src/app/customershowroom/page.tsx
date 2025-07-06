@@ -42,6 +42,9 @@ export default function CustomerShowroomPage() {
   const [sortBy, setSortBy] = useState<"price" | "year" | "make">("year");
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [copiedLink, setCopiedLink] = useState<number | null>(null);
+  const [highlightedVehicleId, setHighlightedVehicleId] = useState<
+    string | null
+  >(null);
   const [selectedFilters, setSelectedFilters] = useState({
     make: "",
     priceRange: "",
@@ -66,6 +69,20 @@ export default function CustomerShowroomPage() {
     };
 
     fetchData();
+
+    // Check URL parameters for highlighted vehicle
+    const urlParams = new URLSearchParams(window.location.search);
+    const vehicleId = urlParams.get("highlight");
+    if (vehicleId) {
+      setHighlightedVehicleId(vehicleId);
+      // Scroll to highlighted vehicle after data loads
+      setTimeout(() => {
+        const element = document.getElementById(`vehicle-${vehicleId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 1000);
+    }
   }, []);
 
   const filteredVehicles = vehicles
@@ -105,7 +122,7 @@ export default function CustomerShowroomPage() {
   };
 
   const copyShareLink = async (vehicle: VehicleWithMedia) => {
-    const link = `${window.location.origin}/customer/${vehicle.id}`;
+    const link = `${window.location.origin}/customershowroom?highlight=${vehicle.id}`;
     try {
       await navigator.clipboard.writeText(link);
       setCopiedLink(vehicle.id as unknown as number); // Type assertion to number
@@ -309,7 +326,12 @@ export default function CustomerShowroomPage() {
             {filteredVehicles.map((vehicle, index) => (
               <Card
                 key={vehicle.id}
-                className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-500 group hover-lift"
+                id={`vehicle-${vehicle.id}`}
+                className={`bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-500 group hover-lift ${
+                  highlightedVehicleId === vehicle.id
+                    ? "ring-4 ring-yellow-400 ring-opacity-75 border-yellow-400/50 bg-gradient-to-br from-yellow-400/20 to-yellow-600/10"
+                    : ""
+                }`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="relative">
@@ -433,7 +455,12 @@ export default function CustomerShowroomPage() {
             {filteredVehicles.map((vehicle, index) => (
               <Card
                 key={vehicle.id}
-                className="bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-xl border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-500 animate-slide-up"
+                id={`vehicle-${vehicle.id}`}
+                className={`bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-xl border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-500 animate-slide-up ${
+                  highlightedVehicleId === vehicle.id
+                    ? "ring-4 ring-yellow-400 ring-opacity-75 border-yellow-400/50 bg-gradient-to-r from-yellow-400/20 to-yellow-600/10"
+                    : ""
+                }`}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-center p-6">
@@ -535,7 +562,9 @@ export default function CustomerShowroomPage() {
                         className="border-white/30 text-white hover:bg-white/10"
                       >
                         <Copy className="w-4 h-4 mr-2" />
-                        {copiedLink === Number(vehicle.id) ? "Copied!" : "Share Link"}
+                        {copiedLink === Number(vehicle.id)
+                          ? "Copied!"
+                          : "Share Link"}
                       </Button>
                     </div>
                   </div>
