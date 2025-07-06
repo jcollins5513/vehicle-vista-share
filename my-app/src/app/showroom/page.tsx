@@ -2,6 +2,7 @@ import { redisService } from "@/lib/services/redisService";
 import { unstable_cache } from "next/cache";
 
 import DiscordShowroom from "@/components/DiscordShowroom";
+
 // Revalidation time in seconds (5 minutes)
 export const revalidate = 300;
 
@@ -145,7 +146,6 @@ export default async function ShowroomPage() {
       )}
 
       <DiscordShowroom vehicles={finalVehicles} customMedia={customMedia} />
-
     </>
   );
 }

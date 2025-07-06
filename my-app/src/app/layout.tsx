@@ -17,10 +17,11 @@ export default function RootLayout({
   }
   return (
     <html lang="en">
-      <body
-        className={"antialiased"}
-      >
+      <body suppressHydrationWarning className="antialiased relative">
         {children}
+        <div id="modal-root" className="absolute inset-0 pointer-events-none">
+          {/* Modal content will be rendered here */}
+        </div>
       </body>
     </html>
   );

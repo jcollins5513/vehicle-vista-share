@@ -29,9 +29,13 @@ import {
   Camera,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import AIFloatingChatbot from "@/components/AIFloatingChatbot";
 import Link from "next/link";
 import type { VehicleWithMedia, Media } from "@/types";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 interface DiscordShowroomProps {
   vehicles: VehicleWithMedia[];
@@ -65,29 +69,40 @@ const DiscordSidebar = () => {
       <div className="flex-1 px-2 py-4">
         <div className="space-y-1">
           {sections.map((section) => {
-            const Component = section.id === "appointments" ? Link : "button";
-            const props =
-              section.id === "appointments"
-                ? { href: "/social-portal" }
-                : { onClick: () => setActiveSection(section.id) };
-
-            return (
-              <Component
-                key={section.id}
-                {...props}
-                className={`w-full flex items-center px-3 py-2 rounded-md text-left transition-colors ${
-                  activeSection === section.id
-                    ? "bg-[#5865f2] text-white"
-                    : "text-gray-300 hover:bg-[#404449] hover:text-white"
-                }`}
-              >
-                <section.icon className="w-5 h-5 mr-3" />
-                <span className="text-sm font-medium">{section.name}</span>
-                {section.id === "new-arrivals" && (
-                  <div className="ml-auto w-2 h-2 bg-[#ed4245] rounded-full" />
-                )}
-              </Component>
-            );
+            if (section.id === "appointments") {
+              return (
+                <Link
+                  key={section.id}
+                  href="/social-portal"
+                  className={`w-full flex items-center px-3 py-2 rounded-md text-left transition-colors ${
+                    activeSection === section.id
+                      ? "bg-[#5865f2] text-white"
+                      : "text-gray-300 hover:bg-[#404449] hover:text-white"
+                  }`}
+                >
+                  <section.icon className="w-5 h-5 mr-3" />
+                  <span className="text-sm font-medium">{section.name}</span>
+                </Link>
+              );
+            } else {
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => setActiveSection(section.id)}
+                  className={`w-full flex items-center px-3 py-2 rounded-md text-left transition-colors ${
+                    activeSection === section.id
+                      ? "bg-[#5865f2] text-white"
+                      : "text-gray-300 hover:bg-[#404449] hover:text-white"
+                  }`}
+                >
+                  <section.icon className="w-5 h-5 mr-3" />
+                  <span className="text-sm font-medium">{section.name}</span>
+                  {section.id === "new-arrivals" && (
+                    <div className="ml-auto w-2 h-2 bg-[#ed4245] rounded-full" />
+                  )}
+                </button>
+              );
+            }
           })}
         </div>
       </div>
@@ -96,12 +111,15 @@ const DiscordSidebar = () => {
 };
 
 // Discord-style Vehicle Quest Card
+// Discord-style Vehicle Quest Card
 const VehicleQuestCard = ({
   vehicle,
   index,
+  onClick,
 }: {
   vehicle: VehicleWithMedia;
   index: number;
+  onClick: (vehicle: VehicleWithMedia) => void;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [randomViews, setRandomViews] = useState(0);
@@ -134,10 +152,12 @@ const VehicleQuestCard = ({
   };
 
   return (
-    <div
-      className="bg-[#2f3136] rounded-lg overflow-hidden hover:bg-[#36393f] transition-colors cursor-pointer"
+    <motion.div
+      layoutId={`card-container-${vehicle.id}`}
+      className="bg-[#2f3136] border border-black/20 rounded-lg overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg hover:border-[#5865f2] transform hover:-translate-y-1 cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onClick(vehicle)}
     >
       {/* Vehicle Image */}
       <div className="relative aspect-video">
@@ -222,10 +242,10 @@ const VehicleQuestCard = ({
             </button>
             <button
               onClick={(e) => shareVehicle("instagram", e)}
-              className="p-2 bg-[#40444b] hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 rounded transition-colors group"
-              title="Create Instagram Post"
+              className="p-2 bg-[#40444b] hover:bg-[#c13584] rounded transition-colors group"
+              title="Share on Instagram"
             >
-              <Camera className="w-3 h-3 text-gray-400 group-hover:text-white" />
+              <Instagram className="w-3 h-3 text-gray-400 group-hover:text-white" />
             </button>
           </div>
         </div>
@@ -248,7 +268,7 @@ const VehicleQuestCard = ({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -387,7 +407,7 @@ const FeaturedShowcase = ({ vehicle }: { vehicle: VehicleWithMedia }) => {
 
 // Main Discord Showroom Component
 const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
-  const [selectedVehicle, setSelectedVehicle] = useState(vehicles[0]);
+  const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithMedia | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -423,6 +443,7 @@ const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
                   }
                   vehicle={vehicle}
                   index={index}
+                  onClick={setSelectedVehicle}
                 />
               ))}
             </div>
@@ -486,6 +507,37 @@ const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
 
       {/* AI Floating Chatbot */}
       <AIFloatingChatbot selectedVehicle={featuredVehicle} />
+
+      <AnimatePresence>
+        {selectedVehicle && (
+          <Dialog open={true} onOpenChange={() => setSelectedVehicle(null)}>
+            <DialogContent className="bg-transparent border-none p-0">
+              <motion.div
+                layoutId={`card-container-${selectedVehicle.id}`}
+                className="bg-[#36393f] border border-black/20 text-white rounded-lg overflow-hidden"
+              >
+                <div className="space-y-4 p-6">
+                  <DialogTitle className="text-2xl font-bold">
+                    {selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-gray-400 space-y-1">
+                    <p>Mileage: {selectedVehicle.mileage?.toLocaleString()} miles</p>
+                    <p>Color: {selectedVehicle.color}</p>
+                  </DialogDescription>
+                  <div className="relative">
+                    <img
+                      src={selectedVehicle.images[0]}
+                      alt={`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`}
+                      className="w-full h-64 object-cover rounded-lg"
+                    />
+                  </div>
+                  <p className="text-xl">${selectedVehicle.price?.toLocaleString()}</p>
+                </div>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
