@@ -29,13 +29,18 @@ import {
   Camera,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import AIFloatingChatbot from "@/components/AIFloatingChatbot";
+import MediaPlayer from "@/components/MediaPlayer";
 import Link from "next/link";
 import type { VehicleWithMedia, Media } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-
 
 interface DiscordShowroomProps {
   vehicles: VehicleWithMedia[];
@@ -407,7 +412,8 @@ const FeaturedShowcase = ({ vehicle }: { vehicle: VehicleWithMedia }) => {
 
 // Main Discord Showroom Component
 const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
-  const [selectedVehicle, setSelectedVehicle] = useState<VehicleWithMedia | null>(null);
+  const [selectedVehicle, setSelectedVehicle] =
+    useState<VehicleWithMedia | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -518,10 +524,13 @@ const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
               >
                 <div className="space-y-4 p-6">
                   <DialogTitle className="text-2xl font-bold">
-                    {selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}
+                    {selectedVehicle.year} {selectedVehicle.make}{" "}
+                    {selectedVehicle.model}
                   </DialogTitle>
                   <DialogDescription className="text-sm text-gray-400 space-y-1">
-                    <p>Mileage: {selectedVehicle.mileage?.toLocaleString()} miles</p>
+                    <p>
+                      Mileage: {selectedVehicle.mileage?.toLocaleString()} miles
+                    </p>
                     <p>Color: {selectedVehicle.color}</p>
                   </DialogDescription>
                   <div className="relative">
@@ -531,7 +540,9 @@ const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
                       className="w-full h-64 object-cover rounded-lg"
                     />
                   </div>
-                  <p className="text-xl">${selectedVehicle.price?.toLocaleString()}</p>
+                  <p className="text-xl">
+                    ${selectedVehicle.price?.toLocaleString()}
+                  </p>
                 </div>
               </motion.div>
             </DialogContent>
