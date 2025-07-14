@@ -34,6 +34,7 @@ This document outlines the high-level roadmap for the Vehicle Vista Share projec
 - [x] Write tests for MediaGallery component tests using React Testing Library.
 - [x] Fix Prisma and UI flashing issues in CustomerPage
 - [x] Write frontend component tests using React Testing Library.
+- [x] Implement dynamic, auto-cycling inventory carousel with random positioning and detailed vehicle cards.
 
 ### Section 5: Customer Share Feature
 - [x] Implement basic customer shareable link functionality
