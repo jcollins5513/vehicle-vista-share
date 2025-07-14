@@ -3,39 +3,26 @@
 import React, { useState, useEffect } from "react";
 import {
   Play,
-  Pause,
-  Volume2,
   Star,
   Users,
-  Settings,
   Search,
-  MessageSquare,
-  Trophy,
   Calendar,
   Eye,
   ArrowRight,
   Car,
   Zap,
-  Award,
-  Navigation,
-  Clock,
   Filter,
   Grid3X3,
-  List,
-  Share2,
   Instagram,
   Facebook,
   Twitter,
-  Camera,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import AIFloatingChatbot from "@/components/AIFloatingChatbot";
 import MediaPlayer from "@/components/MediaPlayer";
 import Link from "next/link";
