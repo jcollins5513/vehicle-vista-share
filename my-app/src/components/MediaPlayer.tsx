@@ -147,7 +147,7 @@ const MediaPlayer = ({
         throw new Error("Upload failed");
       }
 
-      const result = await response.json();
+      await response.json();
       setUploadProgress(100);
       toast.success("Media uploaded successfully!");
 
