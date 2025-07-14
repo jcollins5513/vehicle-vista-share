@@ -1,7 +1,7 @@
 import { redisService } from "@/lib/services/redisService";
 import { unstable_cache } from "next/cache";
 
-import DiscordShowroom from "@/components/DiscordShowroom";
+import InventoryCarousel from "@/components/InventoryCarousel";
 
 // Revalidation time in seconds (5 minutes)
 export const revalidate = 300;
@@ -35,9 +35,11 @@ async function getShowroomData() {
       fromCache: data.fromCache || false,
     };
   } catch (error) {
-    console.error("[Showroom Debug] Error in getShowroomData:", error);
-
-    // Return empty data if there's an error
+    console.error('**********************************************');
+    console.error('*** FAILED TO FETCH VEHICLES FROM REDIS ***');
+    console.error('**********************************************');
+    console.error('Error details:', error);
+    console.error('This is likely due to a server startup or file permission issue. Please check the server logs.');
     return {
       vehicles: [],
       customMedia: [],
@@ -48,6 +50,8 @@ async function getShowroomData() {
   }
 }
 
+
+
 export default async function ShowroomPage() {
   const getCachedShowroomData = unstable_cache(
     async () => getShowroomData(),
@@ -56,86 +60,21 @@ export default async function ShowroomPage() {
   );
   const {
     vehicles = [],
-    customMedia = [],
     fromCache,
-    error,
   } = await getCachedShowroomData();
 
-  if (error) {
+
+
+  if (!vehicles || vehicles.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Temporary Unavailable</h1>
-          <p className="mb-4">
-            We&apos;re experiencing high traffic. Please try again in a few
-            minutes.
-          </p>
-          {fromCache && (
-            <p className="text-sm text-gray-400">Showing cached data</p>
-          )}
-        </div>
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
+        <h1 className="text-3xl font-bold text-red-500">Failed to Load Vehicle Data</h1>
+        <p className="mt-4 text-lg">Could not connect to the vehicle inventory database.</p>
+        <p className="mt-2 text-md text-gray-400">Please ensure the backend server is running and accessible.</p>
+        <p className="mt-1 text-sm text-gray-500">Check the server console for detailed error logs.</p>
       </div>
     );
   }
-
-  // If no vehicles, use demo data for showroom experience
-  const finalVehicles =
-    vehicles.length > 0
-      ? vehicles
-      : [
-          {
-            id: "demo-1",
-            year: 2024,
-            make: "Bentley",
-            model: "Continental GT",
-            price: 230000,
-            mileage: 1200,
-            color: "Glacier White",
-            images: [
-              "https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=800&h=600&fit=crop&crop=center",
-              "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop&crop=center",
-            ],
-          },
-          {
-            id: "demo-2",
-            year: 2024,
-            make: "Bentley",
-            model: "Bentayga",
-            price: 185000,
-            mileage: 850,
-            color: "Onyx Black",
-            images: [
-              "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&h=600&fit=crop&crop=center",
-              "https://images.unsplash.com/photo-1549399536-ac8f2327de46?w=800&h=600&fit=crop&crop=center",
-            ],
-          },
-          {
-            id: "demo-3",
-            year: 2023,
-            make: "Bentley",
-            model: "Flying Spur",
-            price: 215000,
-            mileage: 2100,
-            color: "Beluga",
-            images: [
-              "https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=800&h=600&fit=crop&crop=center",
-              "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop&crop=center",
-            ],
-          },
-          {
-            id: "demo-4",
-            year: 2024,
-            make: "Bentley",
-            model: "Mulsanne",
-            price: 310000,
-            mileage: 500,
-            color: "Silver Tempest",
-            images: [
-              "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&h=600&fit=crop&crop=center",
-              "https://images.unsplash.com/photo-1549399536-ac8f2327de46?w=800&h=600&fit=crop&crop=center",
-            ],
-          },
-        ];
 
   return (
     <>
@@ -145,7 +84,7 @@ export default async function ShowroomPage() {
         </div>
       )}
 
-      <DiscordShowroom vehicles={finalVehicles} customMedia={customMedia} />
+      <InventoryCarousel vehicles={vehicles} />
     </>
   );
 }

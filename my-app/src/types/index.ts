@@ -21,7 +21,7 @@ export interface Vehicle {
   trim?: string;
   engine?: string;
   transmission?: string;
-  description: string;
+  description?: string;
   sourceUrl?: string;
   facebookPostId?: string;
   lastFacebookPostDate?: Date;
