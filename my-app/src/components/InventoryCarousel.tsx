@@ -38,7 +38,7 @@ export default function InventoryCarousel({ vehicles }: InventoryCarouselProps) 
     <div
       className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden p-4"
       style={{
-        backgroundImage: `url(/showroom-background.png)`,
+        backgroundImage: `url(/showroom-background_Wlogo.png)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
