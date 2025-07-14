@@ -401,17 +401,8 @@ const FeaturedShowcase = ({ vehicle }: { vehicle: VehicleWithMedia }) => {
 const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
   const [selectedVehicle, setSelectedVehicle] =
     useState<VehicleWithMedia | null>(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [mediaUpdateKey, setMediaUpdateKey] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const handleMediaUpdate = () => {
-    // Trigger a re-render by updating the key
-    setMediaUpdateKey((prev) => prev + 1);
     // In a real app, you might want to refetch data here
     window.location.reload();
   };
