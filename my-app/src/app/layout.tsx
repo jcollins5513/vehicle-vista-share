@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -12,8 +13,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   // Development-only logging
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[RootLayout] Rendered on ${typeof window === 'undefined' ? 'SERVER' : 'CLIENT'}`);
+  if (process.env.NODE_ENV === "development") {
+    console.log(
+      `[RootLayout] Rendered on ${typeof window === "undefined" ? "SERVER" : "CLIENT"}`,
+    );
   }
   return (
     <html lang="en">
