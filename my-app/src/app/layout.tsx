@@ -25,6 +25,7 @@ export default function RootLayout({
         <div id="modal-root" className="absolute inset-0 pointer-events-none">
           {/* Modal content will be rendered here */}
         </div>
+        <Toaster />
       </body>
     </html>
   );
