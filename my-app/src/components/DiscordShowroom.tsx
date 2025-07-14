@@ -444,6 +444,15 @@ const DiscordShowroom = ({ vehicles, customMedia }: DiscordShowroomProps) => {
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto bg-[#36393f]">
           <div className="p-6">
+            {/* Media Player */}
+            <div className="mb-6">
+              <MediaPlayer
+                vehicles={vehicles}
+                customMedia={customMedia}
+                onMediaUpdate={handleMediaUpdate}
+              />
+            </div>
+
             {/* Featured Vehicle */}
             {featuredVehicle && <FeaturedShowcase vehicle={featuredVehicle} />}
 
