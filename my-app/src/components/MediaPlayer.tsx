@@ -5,9 +5,6 @@ import {
   Play,
   Pause,
   Upload,
-  X,
-  ChevronLeft,
-  ChevronRight,
   Volume2,
   VolumeX,
   Maximize,
@@ -15,10 +12,7 @@ import {
   SkipForward,
   SkipBack,
   Image as ImageIcon,
-  Video,
-  FileText,
   Trash2,
-  RotateCcw,
   Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
