@@ -2,17 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import ExpandableCard from "./ExpandableCard";
-
-type Vehicle = {
-  id: string;
-  year: number;
-  make: string;
-  model: string;
-  price: number;
-  mileage: number;
-  color: string;
-  images: string[];
-};
+import type { VehicleWithMedia as Vehicle } from "@/types";
 
 export default function ExpandableCardGrid({ vehicles }: { vehicles: Vehicle[] }) {
   console.log('[ExpandableCardGrid] Initial render with vehicles:', vehicles);
@@ -37,10 +27,6 @@ export default function ExpandableCardGrid({ vehicles }: { vehicles: Vehicle[] }
     setActiveVehicle(vehicle);
   };
 
-  const handleClose = () => {
-    console.log('[ExpandableCardGrid] handleClose called');
-    setActiveVehicle(null);
-  };
 
   console.log('[ExpandableCardGrid] Rendering with activeVehicle:', activeVehicle?.id);
 
@@ -62,7 +48,6 @@ export default function ExpandableCardGrid({ vehicles }: { vehicles: Vehicle[] }
               console.log('[ExpandableCardGrid] Card clicked:', vehicle.id);
               handleActivate(vehicle);
             }}
-            onClose={handleClose}
           />
         );
       })}

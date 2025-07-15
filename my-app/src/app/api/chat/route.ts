@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, vehicleData, context } = await request.json();
+    const { message, vehicleData } = await request.json();
 
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
