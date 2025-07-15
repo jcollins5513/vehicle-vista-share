@@ -7,14 +7,6 @@ import {
   redisToMedia,
 } from '@/lib/types/conversions';
 
-// Error class for Redis operations
-class RedisError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'RedisError';
-  }
-}
-
 // Key patterns
 const VEHICLE_KEY = (id: string) => `vehicle:${id}`;
 const VEHICLES_KEY = 'vehicles:all'; // Original key for sorted set of vehicle IDs
@@ -285,8 +277,8 @@ export const redisService = {
     try {
       // 1. Try to get data from the primary cache ('showroom:data')
       if (useCache) {
-        const cachedData = await redisClient.jsonGet(cacheKey);
-        if (cachedData && (Date.now() - (cachedData.cachedAt || 0)) < DEFAULT_TTL * 1000) {
+        const cachedData: any = await redisClient.jsonGet(cacheKey);
+        if (cachedData && typeof cachedData === 'object' && cachedData.cachedAt && (Date.now() - cachedData.cachedAt) < DEFAULT_TTL * 1000) {
           console.log('[Redis] Using fresh cache from showroom:data');
           return { ...cachedData, fromCache: true };
         }
@@ -314,8 +306,8 @@ export const redisService = {
 
       // 3. Fallback: If 'vista:inventory' is also empty, try to use a stale cache if it exists.
       console.warn('[Redis] vista:inventory is empty. Checking for any available stale cache.');
-      const staleCache = await redisClient.jsonGet(cacheKey);
-      if (staleCache && staleCache.vehicles && staleCache.vehicles.length > 0) {
+      const staleCache: any = await redisClient.jsonGet(cacheKey);
+      if (staleCache && typeof staleCache === 'object' && Array.isArray(staleCache.vehicles) && staleCache.vehicles.length > 0) {
         console.log('[Redis] Using stale cache from showroom:data as a last resort.');
         return { ...staleCache, fromCache: true, error: 'Displaying stale data; live feed is down.' };
       }
