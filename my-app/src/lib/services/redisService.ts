@@ -278,78 +278,75 @@ export const redisService = {
     customMedia: Media[];
     cachedAt: number;
     fromCache: boolean;
-    error?: string
+    error?: string;
   }> {
     const cacheKey = SHOWROOM_CACHE_KEY;
-    
+    let cachedData: any = null;
+
     try {
-      // Check if Redis is available
-      if (!redisClient) {
-        throw new RedisError('Redis client not available');
+      // Always try to get the cache first, as it can be used as a fallback.
+      try {
+        cachedData = await redisClient.jsonGet(cacheKey);
+      } catch (e) {
+        console.warn('[Redis Debug] Could not retrieve fallback cache.', e);
       }
 
-      // Try to get from cache if enabled
-      if (useCache) {
-        try {
-          const cachedData: {
-            vehicles: Vehicle[];
-            customMedia: Media[];
-            cachedAt: number;
-          } | null = (await redisClient.jsonGet(cacheKey)) as {
-            vehicles: Vehicle[];
-            customMedia: Media[];
-            cachedAt: number;
-          } | null;
-
-          if (cachedData) {
-            console.log('[Redis Debug] Found showroom data in cache');
-            return {
-              ...cachedData,
-              fromCache: true,
-            };
-          } else {
-            console.log('[Redis Debug] Cache miss or invalid cache data, fetching fresh data');
-          }
-        } catch (cacheError) {
-          console.warn('[Redis Debug] Cache miss or invalid cache data, fetching fresh data:', cacheError);
-          // Continue to fetch fresh data if cache is invalid
-        }
-      } else {
-        console.log('[Redis Debug] Skipping cache as requested, fetching fresh data');
+      // If `useCache` is true, and we have a valid cache, return it immediately.
+      if (useCache && cachedData && (Date.now() - (cachedData.cachedAt || 0)) < DEFAULT_TTL * 1000) {
+        console.log('[Redis Debug] Valid cache found and useCache is true. Returning cached data.');
+        return { ...cachedData, fromCache: true };
       }
 
-      // Get fresh data from Redis
-      console.log('[Redis Debug] Fetching fresh data for showroom');
-      // Directly use getInventoryData to ensure we are pulling from the correct source of truth
-      const vehiclesPromise = this.getInventoryData().then(data => data.vehicles as Vehicle[]);
+      // Fetch fresh data regardless of cache status (unless a valid cache was returned above).
+      console.log('[Redis Debug] Fetching fresh data for showroom.');
+      const freshDataPromise = this.getInventoryData().then(data => data.vehicles as Vehicle[]);
       const mediaPromise = this.getUnattachedMedia();
-      
-      const [vehicles, customMedia] = await Promise.all([vehiclesPromise, mediaPromise]);
-      
-      console.log('[Redis Debug] Vehicles fetched:', vehicles ? vehicles.length : 0, 'vehicles');
-      console.log('[Redis Debug] First vehicle:', vehicles && vehicles.length > 0 ? JSON.stringify(vehicles[0]) : 'None');
-      console.log('[Redis Debug] Media fetched:', customMedia ? customMedia.length : 0, 'items');
-      
-      const result = {
-        vehicles: Array.isArray(vehicles) ? vehicles : [],
-        customMedia: Array.isArray(customMedia) ? customMedia : [],
+      const [freshVehicles, customMedia] = await Promise.all([freshDataPromise, mediaPromise]);
+
+      // If fresh data is valid, use it and update the cache.
+      if (freshVehicles && freshVehicles.length > 0) {
+        console.log('[Redis Debug] Fresh data is valid. Using it. Count:', freshVehicles.length);
+        const result = {
+          vehicles: freshVehicles,
+          customMedia: Array.isArray(customMedia) ? customMedia : [],
+          cachedAt: Date.now(),
+          fromCache: false,
+        };
+
+        try {
+          await redisClient.jsonSet(cacheKey, result, { ex: DEFAULT_TTL });
+        } catch (cacheError) {
+          console.error('[Redis Debug] Failed to cache showroom data:', cacheError);
+        }
+        return result;
+      }
+
+      // If fresh data is empty, fall back to the cache if it exists.
+      console.warn('[Redis Debug] Fresh data is empty. Attempting to use fallback cache.');
+      if (cachedData) {
+        console.log('[Redis Debug] Using fallback cache as primary data source failed.');
+        return { ...cachedData, fromCache: true };
+      }
+
+      // If both fresh and cached data are unavailable, return an error state.
+      console.error('[Redis Debug] Both fresh data and cache are unavailable.');
+      return {
+        vehicles: [],
+        customMedia: [],
         cachedAt: Date.now(),
-        fromCache: false
+        fromCache: false,
+        error: 'Failed to load showroom data from both primary source and cache.',
       };
 
-      try {
-        // Cache the result with TTL using jsonSet for proper serialization
-        await redisClient.jsonSet(cacheKey, result, { ex: DEFAULT_TTL });
-      } catch (cacheError) {
-        console.error('[Redis Debug] Failed to cache showroom data:', cacheError);
-        // Don't fail the request if caching fails
-      }
-      
-      return result;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in getShowroomData:', error);
-      
-      // Return empty data if there's an error
+
+      // If a critical error occurs, still try to return the cached data if available.
+      if (cachedData) {
+        console.log('[Redis Debug] Using fallback cache due to critical error during fetch.');
+        return { ...cachedData, fromCache: true };
+      }
+
       return {
         vehicles: [],
         customMedia: [],
