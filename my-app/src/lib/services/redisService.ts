@@ -320,7 +320,8 @@ export const redisService = {
 
       // Get fresh data from Redis
       console.log('[Redis Debug] Fetching fresh data for showroom');
-      const vehiclesPromise = this.getVehicles();
+      // Directly use getInventoryData to ensure we are pulling from the correct source of truth
+      const vehiclesPromise = this.getInventoryData().then(data => data.vehicles as Vehicle[]);
       const mediaPromise = this.getUnattachedMedia();
       
       const [vehicles, customMedia] = await Promise.all([vehiclesPromise, mediaPromise]);
