@@ -285,6 +285,7 @@ const QRCodeGenerator = ({ vehicles }: QRCodeGeneratorProps) => {
 
 export default QRCodeGenerator;
 
+Storage should be s3 for manually loaded media and REDIS Upstash using dealership:inventory key. there should be a git action to scrape every 24 hours. That needs to be changed to every 48 hours. If we need to add page Postgresql using PRISMA we can. 
 ## Project Overview 
 - **Stack:** Next.js 15 App Router (in `my-app/`), TypeScript, Tailwind (shadcn/ui). Uses Prisma (DB), AWS S3 for media, Upstash Redis for caching.
 
