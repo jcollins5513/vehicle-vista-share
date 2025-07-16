@@ -10,11 +10,11 @@ import {
 // Key patterns
 const VEHICLE_KEY = (id: string) => `vehicle:${id}`;
 const VEHICLES_KEY = 'vehicles:all'; // Original key for sorted set of vehicle IDs
-const DEALERSHIP_INVENTORY_KEY = 'vista:inventory'; // Primary key for inventory data
+const DEALERSHIP_INVENTORY_KEY = 'dealership:inventory'; // Primary key for inventory data
 const MEDIA_KEY = (id: string) => `media:${id}`;
 const VEHICLE_MEDIA_KEY = (vehicleId: string) => `vehicle:${vehicleId}:media`;
 const UNATTACHED_MEDIA_KEY = 'media:unattached';
-const SHOWROOM_CACHE_KEY = 'showroom:data';
+const SHOWROOM_CACHE_KEY = 'vista:inventory';
 
 // TTL in seconds (1 hour)
 const DEFAULT_TTL = 60 * 60;
