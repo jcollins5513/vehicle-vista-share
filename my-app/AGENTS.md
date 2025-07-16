@@ -1,18 +1,18 @@
 
 - **Components**  
 
-Create a new page called components/tools/page.tsx 
-ADD THIS QR CODE code that is after these components TO THE PAGE. THE PRINTED VERSION OF THE QR QODE should remain as is, but what shows up on the tools/page.tsx should be more compact and include the following components: 
+Create a new page C:\Users\justi\projects\vehicle-vista-share\my-app\src\app\tools\page.tsx that should have the following components. 
+ 
 
 C:\Users\justi\projects\vehicle-vista-share\my-app\src\components\AIFloatingChatbot.tsx
 C:\Users\justi\projects\vehicle-vista-share\my-app\src\components\AppointmentCalendar.tsx
 C:\Users\justi\projects\vehicle-vista-share\my-app\src\components\VehicleSelector.tsx
 C:\Users\justi\projects\vehicle-vista-share\my-app\src\components\ShowroomTools.tsx
-C:\Users\justi\projects\vehicle-vista-share\my-app\src\components\MediaUploader.tsx - Allows user to load manual media using Amazone s3 storage. that can be played using import HeroVideoDialog from "@/registry/magicui/hero-video-dialog";
+C:\Users\justi\projects\vehicle-vista-share\my-app\src\components\MediaUploader.tsx - Allows user to load manual media using Amazone s3 storage. that can be 
 
-There should be a customer share implementation that uses VehicleSelector.tsx to select and get link to customer/page.tsx that shows the selected individual vehicle from REDIS dealership:inventory that the user will share with client. The sharing feature sould send the customer a components/customerview/page.tsx
+There should be a customer share implementation that uses VehicleSelector.tsx to select and get link to customer/page.tsx that shows the selected individual vehicle from REDIS dealership:inventory that the user will share with client. The sharing feature sould send the customer a components/customerview/page.tsx that should show that individual inventory and a slideshow of all the photos of that vehicle and use the player from "@/registry/magicui/hero-video-dialog"; to show the slideshow.
 
-
+ADD THIS QR CODE code to the tools page. THE PRINTED VERSION OF THE QR QODE should remain as is, but what shows up on the tools/page.tsx should be more compact and include the forementioned components:
 
 
 'use client';
