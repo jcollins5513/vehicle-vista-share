@@ -113,6 +113,7 @@ export function vehicleToRedis(vehicle: Omit<Vehicle, 'media'>): Record<string, 
     vehicleClass: vehicle.vehicleClass ?? 'SUV',
     bodyStyle: vehicle.bodyStyle ?? '',
     lastMarketplacePostDate: vehicle.lastMarketplacePostDate?.toISOString() ?? '',
+    threeSixtyImageUrl: vehicle.threeSixtyImageUrl ?? '',
   };
 
   // Remove any undefined values
@@ -160,6 +161,7 @@ export function redisToVehicle(data: Record<string, string>): Omit<Vehicle, 'med
       vehicleClass: (data.vehicleClass as unknown) as string || 'SUV',
     bodyStyle: data.bodyStyle || undefined,
     lastMarketplacePostDate: safeDateParse(data.lastMarketplacePostDate),
+    threeSixtyImageUrl: data.threeSixtyImageUrl || null,
       status: (data.status === 'available' || data.status === 'sold' ? data.status : 'available'),
   };
 
