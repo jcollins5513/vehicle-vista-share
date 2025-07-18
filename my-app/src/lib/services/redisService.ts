@@ -7,22 +7,14 @@ import {
   redisToMedia,
 } from '@/lib/types/conversions';
 
-// Error class for Redis operations
-class RedisError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'RedisError';
-  }
-}
-
 // Key patterns
 const VEHICLE_KEY = (id: string) => `vehicle:${id}`;
 const VEHICLES_KEY = 'vehicles:all'; // Original key for sorted set of vehicle IDs
-const DEALERSHIP_INVENTORY_KEY = 'vista:inventory'; // Primary key for inventory data
+const DEALERSHIP_INVENTORY_KEY = 'dealership:inventory'; // Primary key for inventory data
 const MEDIA_KEY = (id: string) => `media:${id}`;
 const VEHICLE_MEDIA_KEY = (vehicleId: string) => `vehicle:${vehicleId}:media`;
 const UNATTACHED_MEDIA_KEY = 'media:unattached';
-const SHOWROOM_CACHE_KEY = 'showroom:data';
+const SHOWROOM_CACHE_KEY = 'vista:inventory';
 
 // TTL in seconds (1 hour)
 const DEFAULT_TTL = 60 * 60;
@@ -278,83 +270,65 @@ export const redisService = {
     customMedia: Media[];
     cachedAt: number;
     fromCache: boolean;
-    error?: string
+    error?: string;
   }> {
     const cacheKey = SHOWROOM_CACHE_KEY;
-    
+
     try {
-      // Check if Redis is available
-      if (!redisClient) {
-        throw new RedisError('Redis client not available');
-      }
-
-      // Try to get from cache if enabled
+      // 1. Try to get data from the primary cache ('showroom:data')
       if (useCache) {
-        try {
-          const cachedData: {
-            vehicles: Vehicle[];
-            customMedia: Media[];
-            cachedAt: number;
-          } | null = (await redisClient.jsonGet(cacheKey)) as {
-            vehicles: Vehicle[];
-            customMedia: Media[];
-            cachedAt: number;
-          } | null;
-
-          if (cachedData) {
-            console.log('[Redis Debug] Found showroom data in cache');
-            return {
-              ...cachedData,
-              fromCache: true,
-            };
-          } else {
-            console.log('[Redis Debug] Cache miss or invalid cache data, fetching fresh data');
-          }
-        } catch (cacheError) {
-          console.warn('[Redis Debug] Cache miss or invalid cache data, fetching fresh data:', cacheError);
-          // Continue to fetch fresh data if cache is invalid
+        const cachedData: any = await redisClient.jsonGet(cacheKey);
+        if (cachedData && typeof cachedData === 'object' && cachedData.cachedAt && (Date.now() - cachedData.cachedAt) < DEFAULT_TTL * 1000) {
+          console.log('[Redis] Using fresh cache from showroom:data');
+          return { ...cachedData, fromCache: true };
         }
-      } else {
-        console.log('[Redis Debug] Skipping cache as requested, fetching fresh data');
       }
 
-      // Get fresh data from Redis
-      console.log('[Redis Debug] Fetching fresh data for showroom');
-      const vehiclesPromise = this.getVehicles();
-      const mediaPromise = this.getUnattachedMedia();
-      
-      const [vehicles, customMedia] = await Promise.all([vehiclesPromise, mediaPromise]);
-      
-      console.log('[Redis Debug] Vehicles fetched:', vehicles ? vehicles.length : 0, 'vehicles');
-      console.log('[Redis Debug] First vehicle:', vehicles && vehicles.length > 0 ? JSON.stringify(vehicles[0]) : 'None');
-      console.log('[Redis Debug] Media fetched:', customMedia ? customMedia.length : 0, 'items');
-      
-      const result = {
-        vehicles: Array.isArray(vehicles) ? vehicles : [],
-        customMedia: Array.isArray(customMedia) ? customMedia : [],
-        cachedAt: Date.now(),
-        fromCache: false
-      };
+      // 2. If cache is stale or not used, try to build from the raw inventory key ('vista:inventory')
+      console.log('[Redis] Cache stale or ignored, fetching from vista:inventory');
+      const inventoryData = await this.getInventoryData();
+      const unattachedMedia = await this.getUnattachedMedia();
 
-      try {
-        // Cache the result with TTL using jsonSet for proper serialization
+      const vehicles = inventoryData.vehicles as Vehicle[];
+
+      if (vehicles && vehicles.length > 0) {
+        console.log(`[Redis] Found ${vehicles.length} vehicles in vista:inventory. Caching to showroom:data.`);
+        const result = {
+          vehicles: vehicles,
+          customMedia: unattachedMedia,
+          cachedAt: Date.now(),
+          fromCache: false,
+        };
+        // Update the primary cache
         await redisClient.jsonSet(cacheKey, result, { ex: DEFAULT_TTL });
-      } catch (cacheError) {
-        console.error('[Redis Debug] Failed to cache showroom data:', cacheError);
-        // Don't fail the request if caching fails
+        return result;
       }
-      
-      return result;
-    } catch (error) {
-      console.error('Error in getShowroomData:', error);
-      
-      // Return empty data if there's an error
+
+      // 3. Fallback: If 'vista:inventory' is also empty, try to use a stale cache if it exists.
+      console.warn('[Redis] vista:inventory is empty. Checking for any available stale cache.');
+      const staleCache: any = await redisClient.jsonGet(cacheKey);
+      if (staleCache && typeof staleCache === 'object' && Array.isArray(staleCache.vehicles) && staleCache.vehicles.length > 0) {
+        console.log('[Redis] Using stale cache from showroom:data as a last resort.');
+        return { ...staleCache, fromCache: true, error: 'Displaying stale data; live feed is down.' };
+      }
+
+      // 4. If all sources fail, return an error state.
+      console.error('[Redis] All data sources are empty.');
       return {
         vehicles: [],
         customMedia: [],
-        cachedAt: Date.now(),
+        cachedAt: 0,
         fromCache: false,
-        error: error instanceof Error ? error.message : 'Failed to load showroom data',
+        error: 'Inventory data is currently unavailable.',
+      };
+    } catch (error: any) {
+      console.error('[Redis] A critical error occurred in getShowroomData:', error);
+      return {
+        vehicles: [],
+        customMedia: [],
+        cachedAt: 0,
+        fromCache: false,
+        error: error.message || 'A critical error occurred while fetching data.',
       };
     }
   },
