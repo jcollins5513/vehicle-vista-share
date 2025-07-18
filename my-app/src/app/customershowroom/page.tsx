@@ -207,6 +207,8 @@ export default function CustomerShowroomPage() {
                 <Image
                   src="/Bentley-logo-groups.svg"
                   alt="Bentley Logo"
+                  width={32}
+                  height={32}
                   className="w-8 h-8 object-contain filter brightness-0 invert"
                 />
               </div>
@@ -526,7 +528,9 @@ export default function CustomerShowroomPage() {
                         className="border-white/30 text-white hover:bg-white/10"
                       >
                         <Copy className="w-4 h-4 mr-2" />
-                        {copiedLink === Number(vehicle.id) ? "Copied!" : "Share Link"}
+                        {copiedLink === Number(vehicle.id)
+                          ? "Copied!"
+                          : "Share Link"}
                       </Button>
                     </div>
                   </div>
