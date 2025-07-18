@@ -33,6 +33,7 @@ export interface Vehicle {
   createdAt: Date;
   updatedAt: Date;
   media?: Media[];
+  threeSixtyImageUrl?: string | null;
 }
 
 /**

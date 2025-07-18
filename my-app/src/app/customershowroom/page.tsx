@@ -504,10 +504,10 @@ export default function CustomerShowroomPage() {
                       </div>
                     </div>
 
-                    <div className="flex space-x-3">
+                    <div className="flex flex-wrap gap-3">
                       <Button
                         onClick={() =>
-                          window.open(`/customer/${vehicle.id}`, "_blank")
+                          window.open(`/vehicles/${vehicle.stockNumber}`, "_blank")
                         }
                         className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                       >
@@ -532,6 +532,28 @@ export default function CustomerShowroomPage() {
                           ? "Copied!"
                           : "Share Link"}
                       </Button>
+                      {vehicle.threeSixtyImageUrl && (
+                        <a
+                          href={vehicle.threeSixtyImageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="View 360° Image"
+                        >
+                          <Button
+                            variant="outline"
+                            className="border-white/30 text-white hover:bg-white/10"
+                          >
+                            <Image
+                              src="/360.svg"
+                              alt="360 View Icon"
+                              width={20}
+                              height={20}
+                              className="mr-2 filter invert"
+                            />
+                            360° View
+                          </Button>
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
