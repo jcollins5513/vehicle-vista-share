@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
-import { cn } from "/lib/utils";
+import { cn } from "@/lib/utils";
 
 type InteractiveHoverButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
 
