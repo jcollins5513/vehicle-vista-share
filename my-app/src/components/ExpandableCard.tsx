@@ -19,8 +19,8 @@ export default function ExpandableCard({ vehicle, isActive, onActivate }: Expand
     if (!isActive || vehicle.images.length <= 1) return;
 
     const imageTimer = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % Math.min(vehicle.images.length, 3));
-    }, 3000); // Change image every 3 seconds
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % Math.min(vehicle.images.length, 5));
+    }, 5000); // Change image every 3 seconds
 
     return () => clearInterval(imageTimer);
   }, [isActive, vehicle.images.length]);
