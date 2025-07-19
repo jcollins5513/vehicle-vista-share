@@ -324,15 +324,15 @@ export default function CustomerShowroomPage() {
                   <div className="absolute top-3 right-3 flex space-x-2">
                     <Button
                       size="icon"
-                      onClick={() => toggleFavorite(Number(vehicle.id))}
+                      onClick={() => toggleFavorite(vehicle.id)}
                       className={`w-8 h-8 rounded-full border-0 transition-all ${
-                        favorites.has(Number(vehicle.id))
+                        favorites.has(vehicle.id)
                           ? "bg-red-500/80 hover:bg-red-600"
                           : "bg-black/50 hover:bg-black/70"
                       }`}
                     >
                       <Heart
-                        className={`w-4 h-4 ${favorites.has(Number(vehicle.id)) ? "fill-current" : ""}`}
+                        className={`w-4 h-4 ${favorites.has(vehicle.id) ? "fill-current" : ""}`}
                       />
                     </Button>
                     <Button
@@ -452,15 +452,15 @@ export default function CustomerShowroomPage() {
                       <div className="flex items-center space-x-3">
                         <Button
                           size="icon"
-                          onClick={() => toggleFavorite(Number(vehicle.id))}
+                          onClick={() => toggleFavorite(vehicle.id)}
                           className={`w-8 h-8 rounded-full border-0 ${
-                            favorites.has(Number(vehicle.id))
+                            favorites.has(vehicle.id)
                               ? "bg-red-500/80 hover:bg-red-600"
                               : "bg-white/10 hover:bg-white/20"
                           }`}
                         >
                           <Heart
-                            className={`w-4 h-4 ${favorites.has(Number(vehicle.id)) ? "fill-current" : ""}`}
+                            className={`w-4 h-4 ${favorites.has(vehicle.id) ? "fill-current" : ""}`}
                           />
                         </Button>
                         <Button
