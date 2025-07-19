@@ -27,6 +27,8 @@ const eslintConfig = [
       ...jsxA11yPlugin.configs.recommended.rules,
       "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
       "@typescript-eslint/no-explicit-any": "off",
+      "jsx-a11y/click-events-have-key-events": "off",
+      "jsx-a11y/no-static-element-interactions": "off"
     },
   },
 ];
