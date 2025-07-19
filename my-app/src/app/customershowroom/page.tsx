@@ -101,7 +101,7 @@ export default function CustomerShowroomPage() {
       await navigator.clipboard.writeText(link);
       setCopiedLink(vehicle.id);
       setTimeout(() => setCopiedLink(null), 2000);
-    } catch (_err) {
+    } catch {
       // Fallback for older browsers
       const textArea = document.createElement("textarea");
       textArea.value = link;
