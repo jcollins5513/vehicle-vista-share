@@ -31,7 +31,7 @@ const selectors = {
 
 // Clean and format Redis URL and token
 const cleanUrl = (url) => {
-  if (!url) return '';
+  if (!url) return '';r
   // Remove quotes and trim
   return url.replace(/["']/g, '').trim();
 };

@@ -9,15 +9,45 @@ import {
 
 // Key patterns
 const VEHICLE_KEY = (id: string) => `vehicle:${id}`;
-const VEHICLES_KEY = 'vehicles:all'; // Original key for sorted set of vehicle IDs
-const DEALERSHIP_INVENTORY_KEY = 'dealership:inventory'; // Primary key for inventory data
+const VEHICLES_KEY = 'vehicles:all';
+const DEALERSHIP_INVENTORY_KEY = 'dealership:inventory';
 const MEDIA_KEY = (id: string) => `media:${id}`;
 const VEHICLE_MEDIA_KEY = (vehicleId: string) => `vehicle:${vehicleId}:media`;
 const UNATTACHED_MEDIA_KEY = 'media:unattached';
 const SHOWROOM_CACHE_KEY = 'vista:inventory';
 
-// TTL in seconds (1 hour)
-const DEFAULT_TTL = 60 * 60;
+// TTL in seconds (0 means no expiration)
+const DEFAULT_TTL = 0; // Persistent until explicitly deleted or overwritten
+
+// Keys that should never expire
+const PERSISTENT_KEYS = [
+  DEALERSHIP_INVENTORY_KEY,
+  SHOWROOM_CACHE_KEY,
+  VEHICLES_KEY
+];
+
+// Helper function to ensure keys persist
+async function ensurePersistent(key: string): Promise<void> {
+  try {
+    await redisClient.persist(key);
+  } catch (error) {
+    console.warn(`[Redis] Could not set PERSIST on key ${key}:`, error);
+  }
+}
+
+interface InventoryData {
+  vehicles: unknown[];
+  lastUpdated?: string;
+  cachedAt?: string;
+}
+
+interface ShowroomData {
+  vehicles: Vehicle[];
+  customMedia: Media[];
+  cachedAt: number;
+  fromCache: boolean;
+  error?: string;
+}
 
 export const redisService = {
   // Vehicle operations
@@ -265,126 +295,140 @@ export const redisService = {
   },
 
   // Get showroom data with Redis caching
-  async getShowroomData(useCache = false): Promise<{
-    vehicles: Vehicle[];
-    customMedia: Media[];
-    cachedAt: number;
-    fromCache: boolean;
-    error?: string;
-  }> {
+  async getShowroomData(useCache = true): Promise<ShowroomData> {
+    console.log('[RedisService] getShowroomData called, useCache:', useCache);
     const cacheKey = SHOWROOM_CACHE_KEY;
 
     try {
-      // 1. Try to get data from the primary cache ('showroom:data')
+      // Always try to get from cache first if useCache is true
       if (useCache) {
-        const cachedData: any = await redisClient.jsonGet(cacheKey);
-        if (cachedData && typeof cachedData === 'object' && cachedData.cachedAt && (Date.now() - cachedData.cachedAt) < DEFAULT_TTL * 1000) {
-          console.log('[Redis] Using fresh cache from showroom:data');
-          return { ...cachedData, fromCache: true };
-        }
-      }
-
-      // 2. If cache is stale or not used, try to build from the raw inventory key ('vista:inventory')
-      console.log('[Redis] Cache stale or ignored, fetching from vista:inventory');
-      const inventoryData = await this.getInventoryData();
-      const unattachedMedia = await this.getUnattachedMedia();
-
-      const vehicles = inventoryData.vehicles as Vehicle[];
-
-      if (vehicles && vehicles.length > 0) {
-        console.log(`[Redis] Found ${vehicles.length} vehicles in vista:inventory. Caching to showroom:data.`);
-        const result = {
-          vehicles: vehicles,
-          customMedia: unattachedMedia,
-          cachedAt: Date.now(),
-          fromCache: false,
-        };
-        // Update the primary cache
-        await redisClient.jsonSet(cacheKey, result, { ex: DEFAULT_TTL });
-        return result;
-      }
-
-      // 3. Fallback: If 'vista:inventory' is also empty, try to use a stale cache if it exists.
-      console.warn('[Redis] vista:inventory is empty. Checking for any available stale cache.');
-      const staleCache: any = await redisClient.jsonGet(cacheKey);
-      if (staleCache && typeof staleCache === 'object' && Array.isArray(staleCache.vehicles) && staleCache.vehicles.length > 0) {
-        console.log('[Redis] Using stale cache from showroom:data as a last resort.');
-        return { ...staleCache, fromCache: true, error: 'Displaying stale data; live feed is down.' };
-      }
-
-      // 4. If all sources fail, return an error state.
-      console.error('[Redis] All data sources are empty.');
-      return {
-        vehicles: [],
-        customMedia: [],
-        cachedAt: 0,
-        fromCache: false,
-        error: 'Inventory data is currently unavailable.',
-      };
-    } catch (error: any) {
-      console.error('[Redis] A critical error occurred in getShowroomData:', error);
-      return {
-        vehicles: [],
-        customMedia: [],
-        cachedAt: 0,
-        fromCache: false,
-        error: error.message || 'A critical error occurred while fetching data.',
-      };
-    }
-  },
-
-  /**
-   * Retrieve the raw inventory data scraped from the dealership website.
-   */
-  async getInventoryData(): Promise<{ vehicles: unknown[]; lastUpdated?: string }> {
-    try {
-      const data = await redisClient.get(DEALERSHIP_INVENTORY_KEY);
-      if (!data) {
-        return { vehicles: [] };
-      }
-
-      // If data is neither an object nor a string, something unexpected happened.
-      // This check is for robustness, though redisClient.get should return object/string/null.
-      if (typeof data !== 'object' && typeof data !== 'string') {
-        console.warn(`[RedisService] Unexpected data type for inventory key ${DEALERSHIP_INVENTORY_KEY}:`, typeof data);
-        return { vehicles: [] };
-      }
-
-      // Handle case when data is already an object (not a string)
-      if (typeof data === 'object' && data !== null) {
-        console.log('[Redis] Inventory data is already an object');
-        // Type assertion to help TypeScript understand the structure
-        const typedData = data as { vehicles?: unknown[], lastUpdated?: string };
-        return {
-          vehicles: Array.isArray(typedData.vehicles) ? typedData.vehicles : [],
-          lastUpdated: typedData.lastUpdated,
-        };
-      } 
-      // Handle case when data is a string that needs parsing
-      else if (typeof data === 'string') {
         try {
-          const parsedData = JSON.parse(data);
-          return {
-            vehicles: Array.isArray(parsedData.vehicles) ? parsedData.vehicles : [],
-            lastUpdated: parsedData.lastUpdated,
-          };
-        } catch (parseError) {
-          console.error('[Redis] Error parsing inventory data:', parseError);
-          return { vehicles: [] };
+          const cachedData = await redisClient.get(SHOWROOM_CACHE_KEY);
+          if (cachedData) {
+            const parsedData = typeof cachedData === 'string' 
+              ? JSON.parse(cachedData) 
+              : cachedData;
+              
+            if (parsedData && Array.isArray(parsedData.vehicles)) {
+              console.log('[Redis] Using cached showroom data');
+              return {
+                vehicles: parsedData.vehicles,
+                customMedia: parsedData.customMedia || [],
+                cachedAt: parsedData.cachedAt || Date.now(),
+                fromCache: true
+              };
+            }
+          }
+        } catch (error) {
+          console.error('[Redis] Error getting/parsing cached showroom data:', error);
+          // Continue to fetch fresh data if cache access fails
         }
       }
+
+      // If we get here, either cache is disabled or no valid cache exists
+      console.log('[Redis] Fetching fresh showroom data');
+      const vehicles = await this.getVehicles();
+      const customMedia = await this.getUnattachedMedia();
       
-      // Log what we actually received for debugging
-      console.log('[Redis] Inventory data type:', typeof data);
-      console.log('[Redis] Inventory data structure:', 
-        typeof data === 'object' ? Object.keys(data || {}) : 'non-object');
-      
-      return { vehicles: [] };
-    } catch (error) {
-      console.error('[Redis] Error getting inventory data:', error);
+      // Cache the result with no TTL for persistent storage
+      const cacheData = {
+        vehicles,
+        customMedia,
+        cachedAt: Date.now(),
+        fromCache: false
+      };
+
+      try {
+        console.log('[Redis] Caching showroom data without TTL');
+        // Use set without TTL for persistent storage
+        await redisClient.set(SHOWROOM_CACHE_KEY, cacheData);
+    console.log('[Redis] Fetching inventory data from Redis');
+    // Get the inventory data from Redis
+    const inventoryData = await redisClient.get(DEALERSHIP_INVENTORY_KEY);
+    
+    if (!inventoryData) {
+      console.log('[Redis] No inventory data found in Redis');
       return { vehicles: [] };
     }
-  },
-};
+
+    // Parse the inventory data
+    let parsedData: { vehicles: unknown[]; lastUpdated?: string };
+    try {
+      parsedData = typeof inventoryData === 'string' 
+        ? JSON.parse(inventoryData) 
+        : inventoryData;
+        
+      console.log(`[Redis] Retrieved ${Array.isArray(parsedData.vehicles) ? parsedData.vehicles.length : 0} vehicles from inventory`);
+    } catch (parseError) {
+      console.error('[Redis] Error parsing inventory data:', parseError);
+      return { vehicles: [] };
+    }
+
+    // Ensure we have a valid vehicles array
+    if (!Array.isArray(parsedData.vehicles)) {
+      console.warn('[Redis] Invalid vehicles data in inventory:', parsedData);
+      return { vehicles: [] };
+    }
+
+    // Verify the data is still in Redis (for debugging)
+    try {
+      const exists = await redisClient.exists(DEALERSHIP_INVENTORY_KEY);
+      console.log(`[Redis] Inventory data ${exists ? 'exists' : 'does not exist'} in Redis`);
+    } catch (checkError) {
+      console.warn('[Redis] Error checking inventory data existence:', checkError);
+    }
+
+    return {
+      vehicles: parsedData.vehicles,
+      lastUpdated: parsedData.lastUpdated
+    };
+  } catch (error) {
+    console.error('[Redis] Error in getInventoryData:', error);
+    return { vehicles: [] };
+  }
+},
+
+/**
+ * Store inventory data in Redis with no expiration
+ */
+async cacheInventoryData(vehicles: unknown[], lastUpdated?: string): Promise<void> {
+  try {
+    console.log(`[Redis] Caching ${vehicles.length} vehicles in inventory`);
+    const dataToCache = {
+      vehicles,
+      lastUpdated: lastUpdated || new Date().toISOString(),
+      cachedAt: new Date().toISOString()
+    };
+    
+    // Store without TTL for persistent storage
+    await redisClient.set(DEALERSHIP_INVENTORY_KEY, dataToCache);
+    
+    // Ensure the key is marked as persistent
+    try {
+      await redisClient.persist(DEALERSHIP_INVENTORY_KEY);
+      console.log('[Redis] Inventory data cached successfully with no TTL');
+    } catch (persistError) {
+      console.warn('[Redis] Could not set PERSIST on inventory key:', persistError);
+    }
+    
+    // Also update the vehicles sorted set
+    try {
+      await redisClient.del(VEHICLES_KEY); // Clear existing set
+      if (vehicles.length > 0) {
+        const vehicleIds = vehicles.map((v: any) => v.id || v.stockNumber).filter(Boolean);
+        if (vehicleIds.length > 0) {
+          const args = vehicleIds.flatMap(id => [0, id]);
+          await redisClient.zadd(VEHICLES_KEY, ...args);
+          await redisClient.persist(VEHICLES_KEY);
+        }
+      }
+    } catch (setError) {
+      console.error('[Redis] Error updating vehicles sorted set:', setError);
+    }
+  } catch (error) {
+    console.error('[Redis] Error in cacheInventoryData:', error);
+    throw error;
+  }
+},
 
 export default redisService;

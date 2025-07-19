@@ -104,22 +104,30 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
     options?: RedisClientOptions | number
   ): Promise<'OK'> {
     return withErrorHandling(async () => {
-      const opts: RedisClientOptions =
-        typeof options === 'number' ? { ex: options } : options || {};
+      let opts: RedisClientOptions | undefined;
+      
+      // Only include TTL options if explicitly provided
+      if (typeof options === 'number' && options > 0) {
+        opts = { ex: options };
+      } else if (options && typeof options === 'object') {
+        // Only include TTL if it's a positive number
+        opts = options.ex || options.ex === 0 ? { ...options } : undefined;
+      }
 
       // Handle primitive values directly
       if (
         typeof value === 'string' ||
         typeof value === 'number' ||
-        typeof value === 'boolean'
+        typeof value === 'boolean' ||
+        value === null
       ) {
-        return originalSet(key, String(value), opts);
+        return opts ? originalSet(key, String(value), opts) : originalSet(key, String(value));
       }
 
       // Handle object values with JSON stringification
-      if (value !== null && typeof value === 'object') {
+      if (typeof value === 'object') {
         const serializedValue = JSON.stringify(value);
-        return originalSet(key, serializedValue, opts);
+        return opts ? originalSet(key, serializedValue, opts) : originalSet(key, serializedValue);
       }
 
       throw new Error(`Unsupported value type for Redis SET: ${typeof value}`);
@@ -154,10 +162,20 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
     options?: RedisClientOptions | number
   ): Promise<'OK'> {
     return withErrorHandling(async () => {
-      const opts: RedisClientOptions =
-        typeof options === 'number' ? { ex: options } : options || {};
+      let opts: RedisClientOptions | undefined;
+      
+      // Only include TTL options if explicitly provided
+      if (typeof options === 'number' && options > 0) {
+        opts = { ex: options };
+      } else if (options && typeof options === 'object') {
+        // Only include TTL if it's a positive number
+        opts = options.ex || options.ex === 0 ? { ...options } : undefined;
+      }
 
-      return (client as unknown as UpstashRedis).set(key, JSON.stringify(value), opts);
+      const serializedValue = JSON.stringify(value);
+      return opts 
+        ? (client as unknown as UpstashRedis).set(key, serializedValue, opts)
+        : (client as unknown as UpstashRedis).set(key, serializedValue);
     });
   };
 
