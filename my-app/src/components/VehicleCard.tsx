@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import {
   Card,
   CardHeader,
@@ -37,11 +38,14 @@ export default function VehicleCard({ vehicle, onClick }: VehicleCardProps) {
       }}
       className="cursor-pointer hover:shadow-md transition-shadow"
     >
-      <CardHeader className="p-0">
-        <img
+      <CardHeader className="p-0 relative h-48 w-full">
+        <Image
           src={vehicle.images[0]}
           alt={title}
-          className="w-full h-48 object-cover rounded-t-lg"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-cover rounded-t-lg"
+          priority={false}
         />
       </CardHeader>
       <CardContent className="p-4">

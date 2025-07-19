@@ -7,22 +7,33 @@ import * as s3Module from '../s3';
 
 // Mock the uuid and S3 client libraries
 jest.mock('uuid');
-jest.mock('@aws-sdk/client-s3');
 
-// Type definitions for our mocks
-type MockS3Client = jest.Mocked<S3Client>;
-type MockPutObjectCommand = jest.MockedClass<typeof PutObjectCommand>;
-type MockDeleteObjectCommand = jest.MockedClass<typeof DeleteObjectCommand>;
+// Create mock implementations
+const mockSend = jest.fn();
+const mockPutObjectCommand = jest.fn((input) => ({
+  input,
+  constructor: { name: 'PutObjectCommand' }
+}));
+
+const mockDeleteObjectCommand = jest.fn((input) => ({
+  input,
+  constructor: { name: 'DeleteObjectCommand' }
+}));
+
+// Mock the AWS SDK
+jest.mock('@aws-sdk/client-s3', () => ({
+  S3Client: jest.fn(() => ({
+    send: mockSend
+  })),
+  PutObjectCommand: mockPutObjectCommand,
+  DeleteObjectCommand: mockDeleteObjectCommand
+}));
 
 describe('S3 Helper Functions', () => {
-  let mockSend: jest.Mock;
-  let mockUuidV4: jest.Mock;
-  let mockPutObjectCommand: MockPutObjectCommand;
-  let mockDeleteObjectCommand: MockDeleteObjectCommand;
-
   const OLD_ENV = process.env;
   const BUCKET = 'test-bucket';
   const REGION = 'us-east-2';
+  let mockUuidV4: jest.Mock;
 
   beforeEach(() => {
     jest.resetModules();
@@ -36,23 +47,15 @@ describe('S3 Helper Functions', () => {
     };
 
     // Setup mocks
-    mockSend = jest.fn();
     mockUuidV4 = uuidv4 as jest.Mock;
-    
-    // Mock the S3 client and commands
-    (S3Client as jest.Mock).mockImplementation(() => ({
-      send: mockSend,
-    }));
-    
-    mockPutObjectCommand = PutObjectCommand as MockPutObjectCommand;
-    mockDeleteObjectCommand = DeleteObjectCommand as MockDeleteObjectCommand;
-    
-    // Clear all mocks
-    jest.clearAllMocks();
+    mockSend.mockClear();
+    mockPutObjectCommand.mockClear();
+    mockDeleteObjectCommand.mockClear();
   });
 
-  afterAll(() => {
+  afterEach(() => {
     process.env = OLD_ENV;
+    jest.clearAllMocks();
   });
 
   it('uploadBufferToS3 should upload a buffer and return the public URL and key', async () => {
@@ -78,7 +81,7 @@ describe('S3 Helper Functions', () => {
     expect(mockSend).toHaveBeenCalledTimes(1);
     const sentCommand = mockSend.mock.calls[0][0];
     
-    expect(sentCommand).toBeInstanceOf(PutObjectCommand);
+    expect(sentCommand.constructor.name).toBe('PutObjectCommand');
     expect(sentCommand.input).toEqual({
       Bucket: BUCKET,
       Key: expectedKey,
@@ -99,7 +102,7 @@ describe('S3 Helper Functions', () => {
     expect(mockSend).toHaveBeenCalledTimes(1);
     const sentCommand = mockSend.mock.calls[0][0];
     
-    expect(sentCommand).toBeInstanceOf(DeleteObjectCommand);
+    expect(sentCommand.constructor.name).toBe('DeleteObjectCommand');
     expect(sentCommand.input).toEqual({
       Bucket: BUCKET,
       Key: key,
