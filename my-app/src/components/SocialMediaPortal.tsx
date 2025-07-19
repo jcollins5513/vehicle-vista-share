@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
+import Image from "next/image";
 import {
   Upload,
   Download,
@@ -13,8 +14,6 @@ import {
   Wand2,
   Image as ImageIcon,
   Sparkles,
-  Camera,
-  Zap,
   RefreshCw,
   Copy,
   Check,
@@ -43,15 +42,15 @@ const SocialMediaPortal = () => {
 
   // Advanced background removal with multiple algorithms
   const removeBackground = async (imageUrl: string): Promise<string> => {
-    return new Promise(async (resolve) => {
+    return new Promise<string>(async (resolve) => {
       const canvas = canvasRef.current;
       if (!canvas) return resolve(imageUrl);
 
       const ctx = canvas.getContext("2d");
       if (!ctx) return resolve(imageUrl);
 
-      const img = new Image();
-      img.crossOrigin = "anonymous";
+      const img = document.createElement('img');
+      img.crossOrigin = 'anonymous';
 
       img.onload = async () => {
         canvas.width = img.width;
@@ -68,13 +67,13 @@ const SocialMediaPortal = () => {
           const isBackground = new Array(width * height).fill(false);
           const confidenceMap = new Array(width * height).fill(0);
 
-          // Algorithm 1: GrabCut-style color clustering
-          const colorClusters: Array<{
-            r: number;
-            g: number;
-            b: number;
-            count: number;
-          }> = [];
+          // Color clusters for potential future use
+          // const colorClusters: Array<{
+          //   r: number;
+          //   g: number;
+          //   b: number;
+          //   count: number;
+          // }> = [];
 
           // Sample colors from image borders (likely background)
           const borderSamples = [];
@@ -267,12 +266,11 @@ const SocialMediaPortal = () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return resolve(processedImageUrl);
 
-      const backgroundImg = new Image();
-      const vehicleImg = new Image();
-
+      const backgroundImg = document.createElement('img');
+      const vehicleImg = document.createElement('img');
+      
       // Your logo URL - replace with actual logo
-      const logoUrl =
-        "https://cdn.builder.io/api/v1/image/assets%2F0f7830926b04438e96198e445d7c6df8%2Fd945695f3c88472c9e8bfb7dd5aa59a5";
+      const logoUrl = "https://cdn.builder.io/api/v1/image/assets%2F0f7830926b04438e96198e445d7c6df8%2Fd945695f3c88472c9e8bfb7dd5aa59a5";
 
       backgroundImg.crossOrigin = "anonymous";
       vehicleImg.crossOrigin = "anonymous";
@@ -505,11 +503,16 @@ const SocialMediaPortal = () => {
             {selectedImage && (
               <div className="mt-6">
                 <h3 className="font-semibold mb-3">Original Image</h3>
-                <img
-                  src={selectedImage}
-                  alt="Original"
-                  className="w-full h-48 object-cover rounded-lg"
-                />
+                <div className="relative w-full h-48">
+                  <Image
+                    src={selectedImage}
+                    alt="Original"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover rounded-lg"
+                    priority={false}
+                  />
+                </div>
               </div>
             )}
           </Card>
@@ -542,26 +545,26 @@ const SocialMediaPortal = () => {
             {processedImages && !isProcessing && (
               <div className="space-y-4">
                 <div className="relative">
-                  <img
-                    src={
-                      showOriginal
-                        ? processedImages.original
-                        : processedImages.withLogo
-                    }
-                    alt="Processed"
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-
-                  <button
-                    onClick={() => setShowOriginal(!showOriginal)}
-                    className="absolute top-2 right-2 bg-black/50 p-2 rounded-lg hover:bg-black/70 transition-colors"
-                  >
-                    {showOriginal ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
+                  <div className="relative w-full h-64">
+                    <Image
+                      src={showOriginal ? processedImages.original : processedImages.withLogo}
+                      alt="Processed result"
+                      fill
+                      className="object-cover rounded-lg"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                    <button
+                      onClick={() => setShowOriginal(!showOriginal)}
+                      className="absolute top-2 right-2 bg-black/50 p-2 rounded-lg hover:bg-black/70 transition-colors"
+                      aria-label={showOriginal ? "Show processed" : "Show original"}
+                    >
+                      {showOriginal ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex space-x-2">

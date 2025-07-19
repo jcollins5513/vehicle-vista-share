@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import VehicleCard from "./VehicleCard";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -62,11 +63,14 @@ export default function VehicleGrid({ vehicles }: { vehicles: Vehicle[] }) {
         <DialogContent>
           {selectedVehicle && (
             <div className="space-y-4">
-              <div className="relative">
-                <img
+              <div className="relative w-full h-64">
+                <Image
                   src={selectedVehicle.images[currentImageIndex]}
                   alt={`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`}
-                  className="w-full h-64 object-cover rounded-lg"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover rounded-lg"
+                  priority={false}
                 />
                 {selectedVehicle.images.length > 1 && (
                   <>
