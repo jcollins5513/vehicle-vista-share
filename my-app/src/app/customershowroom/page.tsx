@@ -32,7 +32,7 @@ export default function CustomerShowroomPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"price" | "year" | "make">("year");
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
-  const [copiedLink, setCopiedLink] = useState<number | null>(null);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [selectedFilters, setSelectedFilters] = useState({
     make: "",
     priceRange: "",
@@ -99,9 +99,9 @@ export default function CustomerShowroomPage() {
     const link = `${window.location.origin}/customer/${vehicle.id}`;
     try {
       await navigator.clipboard.writeText(link);
-      setCopiedLink(vehicle.id as unknown as number); // Type assertion to number
+      setCopiedLink(vehicle.id);
       setTimeout(() => setCopiedLink(null), 2000);
-    } catch (err) {
+    } catch (_err) {
       // Fallback for older browsers
       const textArea = document.createElement("textarea");
       textArea.value = link;
@@ -109,7 +109,7 @@ export default function CustomerShowroomPage() {
       textArea.select();
       document.execCommand("copy");
       document.body.removeChild(textArea);
-      setCopiedLink(vehicle.id as unknown as number); // Type assertion to match the type
+      setCopiedLink(vehicle.id);
       setTimeout(() => setCopiedLink(null), 2000);
     }
   };
