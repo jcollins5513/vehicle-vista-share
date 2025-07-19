@@ -15,11 +15,6 @@ const SHOWROOM_CACHE_KEY = 'vista:inventory';
 const DEFAULT_TTL = 0; // Persistent until explicitly deleted or overwritten
 
 // Keys that should never expire
-const PERSISTENT_KEYS = [
-  DEALERSHIP_INVENTORY_KEY,
-  SHOWROOM_CACHE_KEY,
-  VEHICLES_KEY
-];
 
 // Helper function to ensure keys persist
 async function ensurePersistent(key: string): Promise<void> {
@@ -74,7 +69,9 @@ class RedisService implements IRedisService {
     try {
       const data = await redisClient.get(VEHICLE_KEY(id));
       if (!data) return null;
-      return redisToVehicle(data);
+      // Parse the JSON string to an object before passing to redisToVehicle
+      const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+      return redisToVehicle(parsedData);
     } catch (error) {
       console.error(`[Redis] Error getting vehicle ${id}:`, error);
       return null;
