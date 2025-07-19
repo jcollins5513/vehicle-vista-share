@@ -95,29 +95,59 @@ class RedisService implements IRedisService {
 
   async getVehicles(): Promise<Vehicle[]> {
     try {
+      console.log('[Redis] Fetching all vehicles...');
+      
       // First try to get all vehicles at once if they're stored as a list
       const allVehicles = await redisClient.get(VEHICLES_KEY);
       if (allVehicles) {
         try {
-          const parsed = typeof allVehicles === 'string' 
-            ? JSON.parse(allVehicles) 
-            : allVehicles;
+          console.log('[Redis] Found vehicles in list format, parsing...');
+          const parsed = typeof allVehicles === 'string' ? JSON.parse(allVehicles) : allVehicles;
           if (Array.isArray(parsed)) {
+            console.log(`[Redis] Successfully parsed ${parsed.length} vehicles from list`);
             return parsed;
           }
         } catch (e) {
           console.warn('[Redis] Failed to parse vehicles list, falling back to individual lookups', e);
         }
       }
-
-      // Fall back to getting vehicles individually
+      
+      // If we get here, either the list wasn't found or parsing failed
+      // Try to get vehicle IDs from the set
+      console.log('[Redis] Fetching vehicle IDs from set...');
       const vehicleIds = await redisClient.smembers(VEHICLES_KEY);
-      const vehicles = await Promise.all(
-        vehicleIds.map(id => this.getVehicle(id))
-      );
-      return vehicles.filter((v): v is Vehicle => v !== null);
+      console.log(`[Redis] Found ${vehicleIds.length} vehicle IDs in set`);
+      
+      if (vehicleIds.length === 0) {
+        console.log('[Redis] No vehicle IDs found in set, checking inventory data...');
+        // Try to get vehicles from inventory data as a last resort
+        const inventoryData = await this.getInventoryData();
+        if (inventoryData.vehicles && inventoryData.vehicles.length > 0) {
+          console.log(`[Redis] Found ${inventoryData.vehicles.length} vehicles in inventory data`);
+          // Convert inventory vehicles to proper Vehicle format if needed
+          return inventoryData.vehicles.map((v: any) => ({
+            id: v.id || v.stockNumber,
+            stockNumber: v.stockNumber || v.id,
+            // Add other required fields with defaults
+            make: v.make || '',
+            model: v.model || '',
+            year: v.year || new Date().getFullYear(),
+            // Add other fields with appropriate defaults
+            ...v
+          }));
+        }
+        return [];
+      }
+      
+      // Fetch each vehicle individually
+      console.log(`[Redis] Fetching ${vehicleIds.length} individual vehicles...`);
+      const vehicles = await Promise.all(vehicleIds.map(id => this.getVehicle(id)));
+      const validVehicles = vehicles.filter((v): v is Vehicle => v !== null);
+      
+      console.log(`[Redis] Successfully retrieved ${validVehicles.length} valid vehicles`);
+      return validVehicles;
     } catch (error) {
-      console.error('[Redis] Error getting vehicles:', error);
+      console.error('[Redis] Error in getVehicles:', error);
       return [];
     }
   }
@@ -173,10 +203,23 @@ class RedisService implements IRedisService {
   // Cache operations
   async warmCache(vehicles: Vehicle[], mediaItems: Media[]): Promise<void> {
     try {
-      await Promise.all([
-        ...vehicles.map(v => this.cacheVehicle(v)),
-        ...mediaItems.map(m => this.cacheMedia(m))
-      ]);
+      console.log(`[Redis] Warming cache with ${vehicles.length} vehicles and ${mediaItems.length} media items`);
+      
+      // Cache all vehicles
+      await Promise.all(vehicles.map(v => this.cacheVehicle(v)));
+      
+      // Update the vehicles:all set with all vehicle IDs
+      if (vehicles.length > 0) {
+        const vehicleIds = vehicles.map(v => v.id);
+        console.log(`[Redis] Updating vehicles:all set with ${vehicleIds.length} vehicle IDs`);
+        await redisClient.sadd(VEHICLES_KEY, ...vehicleIds);
+        await ensurePersistent(VEHICLES_KEY);
+      }
+      
+      // Cache all media items
+      await Promise.all(mediaItems.map(m => this.cacheMedia(m)));
+      
+      console.log('[Redis] Cache warm-up completed successfully');
     } catch (error) {
       console.error('[Redis] Error warming cache:', error);
       throw error;
