@@ -95,6 +95,22 @@ class RedisService implements IRedisService {
 
   async getVehicles(): Promise<Vehicle[]> {
     try {
+      // First try to get all vehicles at once if they're stored as a list
+      const allVehicles = await redisClient.get(VEHICLES_KEY);
+      if (allVehicles) {
+        try {
+          const parsed = typeof allVehicles === 'string' 
+            ? JSON.parse(allVehicles) 
+            : allVehicles;
+          if (Array.isArray(parsed)) {
+            return parsed;
+          }
+        } catch (e) {
+          console.warn('[Redis] Failed to parse vehicles list, falling back to individual lookups', e);
+        }
+      }
+
+      // Fall back to getting vehicles individually
       const vehicleIds = await redisClient.smembers(VEHICLES_KEY);
       const vehicles = await Promise.all(
         vehicleIds.map(id => this.getVehicle(id))
