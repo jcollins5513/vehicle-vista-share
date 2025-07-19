@@ -31,7 +31,7 @@ export default function CustomerShowroomPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"price" | "year" | "make">("year");
-  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [selectedFilters, setSelectedFilters] = useState({
     make: "",
@@ -83,7 +83,7 @@ export default function CustomerShowroomPage() {
       }
     });
 
-  const toggleFavorite = (vehicleId: number) => {
+  const toggleFavorite = (vehicleId: string) => {
     setFavorites((prev) => {
       const newFavorites = new Set(prev);
       if (newFavorites.has(vehicleId)) {
@@ -340,7 +340,7 @@ export default function CustomerShowroomPage() {
                       onClick={() => copyShareLink(vehicle)}
                       className="w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 border-0"
                     >
-                      {copiedLink === Number(vehicle.id) ? (
+                      {copiedLink === vehicle.id ? (
                         <Check className="w-4 h-4 text-green-400" />
                       ) : (
                         <Share2 className="w-4 h-4" />
@@ -468,7 +468,7 @@ export default function CustomerShowroomPage() {
                           onClick={() => copyShareLink(vehicle)}
                           className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border-0"
                         >
-                          {copiedLink === Number(vehicle.id) ? (
+                          {copiedLink === vehicle.id ? (
                             <Check className="w-4 h-4 text-green-400" />
                           ) : (
                             <Share2 className="w-4 h-4" />
@@ -528,7 +528,7 @@ export default function CustomerShowroomPage() {
                         className="border-white/30 text-white hover:bg-white/10"
                       >
                         <Copy className="w-4 h-4 mr-2" />
-                        {copiedLink === Number(vehicle.id)
+                        {copiedLink === vehicle.id
                           ? "Copied!"
                           : "Share Link"}
                       </Button>
