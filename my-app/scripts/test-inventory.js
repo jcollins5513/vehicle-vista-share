@@ -1,4 +1,4 @@
-// Test script to populate vista:inventory key in Redis
+// Test script to populate dealership:inventory key in Redis
 const { Redis } = require('@upstash/redis');
 require('dotenv').config();
 
@@ -58,11 +58,11 @@ async function main() {
     };
 
     // Store in Redis
-    await client.set('vista:inventory', JSON.stringify(inventoryData));
+    await client.set('dealership:inventory', JSON.stringify(inventoryData));
     console.log('Test inventory data stored in Redis');
 
     // Verify data was stored correctly
-    const storedData = await client.get('vista:inventory');
+    const storedData = await client.get('dealership:inventory');
     console.log('Retrieved data:', storedData);
 
   } catch (error) {

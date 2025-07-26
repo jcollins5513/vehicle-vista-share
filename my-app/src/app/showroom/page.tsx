@@ -1,20 +1,46 @@
 import { redisService } from "@/lib/services/redisService";
-import { unstable_cache } from "next/cache";
-
 import InventoryCarousel from "@/components/InventoryCarousel";
 
-// Revalidation time in seconds (5 minutes)
-export const revalidate = 300;
+// Disable all caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+// Add cache control headers
+export function generateMetadata() {
+  return {
+    headers: {
+      'Cache-Control': 'no-store, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+  };
+}
 
 async function getShowroomData() {
+  // Add a version parameter to prevent caching
+  const version = Date.now();
   try {
-    console.log("[Showroom Debug] Fetching showroom data...");
-    // Try to get fresh data from Redis
-    const data = await redisService.getShowroomData();
+    // Log all Redis keys for debugging
+    await redisService.logAllKeys();
+    console.log("[Showroom] Rendering showroom data at", new Date().toISOString());
+    console.log(`[Showroom] Fetching showroom data (v=${version})...`);
+    console.log('[Showroom] Calling redisService.getShowroomData(false)');
+    // Try to get fresh data from Redis with version parameter
+    const data = await redisService.getShowroomData(false);
+    
+    console.log('[Showroom] Received showroom data:', {
+      vehicleCount: data.vehicles?.length || 0,
+      fromCache: data.fromCache,
+      cachedAt: data.cachedAt,
+      lastUpdated: data.lastUpdated,
+      firstVehicle: data.vehicles?.[0]?.make || 'No vehicles'
+    });
 
+    console.log("[Showroom Debug] Raw Redis response keys:", Object.keys(data));
     console.log(
-      "[Showroom Debug] Raw Redis response:",
-      JSON.stringify(data, null, 2),
+      "[Showroom Debug] Data source:",
+      data.fromCache ? 'CACHED' : 'FRESH',
+      data.lastUpdated ? `(Updated: ${new Date(data.lastUpdated).toISOString()})` : ''
     );
 
     // If we have an error in the response, treat it as a failure
@@ -24,9 +50,18 @@ async function getShowroomData() {
     }
 
     console.log("[Showroom Debug] Vehicles count:", data.vehicles?.length || 0);
-    console.log(
-      "[Showroom Debug] First vehicle:",
-      data.vehicles?.[0] ? JSON.stringify(data.vehicles[0]) : "None",
+    
+    // Log first few vehicles for debugging
+    const sampleVehicles = data.vehicles?.slice(0, 3) || [];
+    console.log("[Showroom Debug] Sample vehicles:", 
+      sampleVehicles.map(v => ({
+        id: v.id,
+        stockNumber: v.stockNumber,
+        make: v.make,
+        model: v.model,
+        year: v.year,
+        price: v.price
+      }))
     );
 
     return {
@@ -53,15 +88,8 @@ async function getShowroomData() {
 
 
 export default async function ShowroomPage() {
-  const getCachedShowroomData = unstable_cache(
-    async () => getShowroomData(),
-    ["showroom-data"],
-    { revalidate: revalidate },
-  );
-  const {
-    vehicles = [],
-    fromCache,
-  } = await getCachedShowroomData();
+  // Get fresh data on each request
+  const { vehicles = [], fromCache } = await getShowroomData();
 
 
 
