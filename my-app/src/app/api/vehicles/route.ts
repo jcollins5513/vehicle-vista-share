@@ -45,11 +45,11 @@ export async function GET() {
     console.log('[API] Fetching inventory data from Redis...');
     // Get the complete inventory data including metadata
     const inventoryData = await redisService.getInventoryData();
-    const vehicles = inventoryData.vehicles || [];
-    console.log(`[API] Retrieved ${vehicles.length} vehicles from Redis`);
+    const typedVehicles = inventoryData.vehicles as RedisVehicle[];
+    console.log(`[API] Got ${typedVehicles.length} vehicles from Redis`);
     console.log(`[API] Inventory last updated: ${inventoryData.lastUpdated || 'unknown'}`);
     
-    if (vehicles.length === 0) {
+    if (typedVehicles.length === 0) {
       console.log('[API] No vehicles found in inventory data');
     }
     
@@ -72,9 +72,9 @@ export async function GET() {
       };
 
       // Merge vehicle data with 360 image data
-      const vehiclesWithAllData = vehicles
+      const vehiclesWithAllData = typedVehicles
         .filter(isRedisVehicle) // Filter out any invalid vehicle data
-        .map(vehicle => {
+        .map((vehicle: RedisVehicle) => {
           try {
             // Create a new object with all required Vehicle interface fields
             const vehicleData: Vehicle = {
@@ -123,9 +123,9 @@ export async function GET() {
     } catch (dbError) {
       console.error('[API] Database error:', dbError);
       // If DB fails but we have vehicles, return them without 360 images
-      if (vehicles.length > 0) {
+      if (typedVehicles.length > 0) {
         console.log('[API] Returning vehicles without 360 images due to database error');
-        return NextResponse.json(vehicles.map(vehicle => ({
+        return NextResponse.json(typedVehicles.map((vehicle: RedisVehicle) => ({
           ...vehicle,
           id: vehicle.id || vehicle.stockNumber,
           threeSixtyImageUrl: null,
