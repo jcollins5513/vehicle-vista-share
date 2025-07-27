@@ -91,12 +91,21 @@ export function toMedia(media: Media): Media {
  * Convert application Vehicle type to Redis-compatible format
  */
 export function vehicleToRedis(vehicle: Omit<Vehicle, 'media'>): Record<string, string> {
+  // Start with an empty object and manually add each property with proper string conversion
   const result: Record<string, string> = {
-    ...vehicle,
-    // Convert complex types to strings
+    id: vehicle.id,
+    stockNumber: vehicle.stockNumber,
+    make: vehicle.make,
+    model: vehicle.model,
     year: vehicle.year.toString(),
     price: vehicle.price.toString(),
     mileage: vehicle.mileage.toString(),
+    color: vehicle.color,
+    vin: vehicle.vin,
+    // Convert boolean values to strings
+    isNew: vehicle.isNew?.toString() || 'false',
+    isFeatured: vehicle.isFeatured?.toString() || 'false',
+    isSold: vehicle.isSold?.toString() || 'false',
     features: JSON.stringify(vehicle.features || []),
     images: JSON.stringify(vehicle.images || []),
     // Convert dates to ISO strings
