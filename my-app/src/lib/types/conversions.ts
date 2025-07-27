@@ -108,9 +108,9 @@ export function vehicleToRedis(vehicle: Omit<Vehicle, 'media'>): Record<string, 
     isSold: vehicle.isSold?.toString() || 'false',
     features: JSON.stringify(vehicle.features || []),
     images: JSON.stringify(vehicle.images || []),
-    // Convert dates to ISO strings
-    createdAt: vehicle.createdAt.toISOString(),
-    updatedAt: vehicle.updatedAt.toISOString(),
+    // Convert dates to ISO strings with null checks
+    createdAt: vehicle.createdAt ? vehicle.createdAt.toISOString() : new Date().toISOString(),
+    updatedAt: vehicle.updatedAt ? vehicle.updatedAt.toISOString() : new Date().toISOString(),
     // Convert null/undefined to empty strings for Redis
     trim: vehicle.trim ?? '',
     engine: vehicle.engine ?? '',
