@@ -312,7 +312,21 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
           </div>
 
           <script>
-            window.onload = () => window.print();
+            window.onload = () => {
+              // Configure print settings to remove headers/footers
+              const printSettings = {
+                marginType: 1, // Custom margins
+                isHeaderFooterEnabled: false,
+                isBackgroundEnabled: true
+              };
+
+              // For Chrome/Chromium browsers
+              if (window.chrome) {
+                document.title = ' '; // Remove title from header
+              }
+
+              window.print();
+            };
           </script>
         </body>
       </html>
