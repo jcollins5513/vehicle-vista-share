@@ -1,0 +1,343 @@
+'use client';
+
+import { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
+import { VehicleWithMedia } from '@/types';
+import { PrinterIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+interface WindowStickerProps {
+  vehicle: VehicleWithMedia;
+}
+
+const WindowSticker = ({ vehicle }: WindowStickerProps) => {
+  const getCarfaxUrl = (vin: string) => 
+    `https://www.carfax.com/VehicleHistory/p/Report.cfx?partner=DVW_1&vin=${vin}`;
+
+  const handlePrintWindowSticker = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const sourceQrCode = document.getElementById(`window-source-qr-${vehicle.stockNumber}`)?.querySelector('svg')?.outerHTML;
+    const carfaxQrCode = document.getElementById(`window-carfax-qr-${vehicle.stockNumber}`)?.querySelector('svg')?.outerHTML;
+    const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim();
+
+    // Convert features array to organized sections
+    const technicalFeatures = vehicle.features?.filter(f => 
+      f.toLowerCase().includes('engine') || 
+      f.toLowerCase().includes('transmission') || 
+      f.toLowerCase().includes('steering') ||
+      f.toLowerCase().includes('battery') ||
+      f.toLowerCase().includes('alternator')
+    ) || [];
+
+    const interiorFeatures = vehicle.features?.filter(f => 
+      f.toLowerCase().includes('air conditioning') ||
+      f.toLowerCase().includes('seat') ||
+      f.toLowerCase().includes('interior') ||
+      f.toLowerCase().includes('steering wheel') ||
+      f.toLowerCase().includes('console') ||
+      f.toLowerCase().includes('upholstery') ||
+      f.toLowerCase().includes('mirror') ||
+      f.toLowerCase().includes('outlet') ||
+      f.toLowerCase().includes('display')
+    ) || [];
+
+    const exteriorFeatures = vehicle.features?.filter(f => 
+      f.toLowerCase().includes('headlight') ||
+      f.toLowerCase().includes('door') ||
+      f.toLowerCase().includes('window') ||
+      f.toLowerCase().includes('wheel') ||
+      f.toLowerCase().includes('molding') ||
+      f.toLowerCase().includes('mirror') ||
+      f.toLowerCase().includes('badge')
+    ) || [];
+
+    const electronicFeatures = vehicle.features?.filter(f => 
+      f.toLowerCase().includes('speaker') ||
+      f.toLowerCase().includes('radio') ||
+      f.toLowerCase().includes('am/fm')
+    ) || [];
+
+    const safetyFeatures = vehicle.features?.filter(f => 
+      f.toLowerCase().includes('brake') ||
+      f.toLowerCase().includes('airbag') ||
+      f.toLowerCase().includes('abs') ||
+      f.toLowerCase().includes('emergency') ||
+      f.toLowerCase().includes('camera') ||
+      f.toLowerCase().includes('control') ||
+      f.toLowerCase().includes('assist') ||
+      f.toLowerCase().includes('suspension') ||
+      f.toLowerCase().includes('key')
+    ) || [];
+
+    const additionalFeatures = vehicle.features?.filter(f => 
+      !technicalFeatures.includes(f) &&
+      !interiorFeatures.includes(f) &&
+      !exteriorFeatures.includes(f) &&
+      !electronicFeatures.includes(f) &&
+      !safetyFeatures.includes(f)
+    ) || [];
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Window Sticker - ${vehicle.stockNumber}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 20px;
+              background: white;
+              color: black;
+              line-height: 1.4;
+            }
+            
+            .header {
+              text-align: center;
+              margin-bottom: 20px;
+              border-bottom: 2px solid #000;
+              padding-bottom: 15px;
+            }
+            
+            .header img {
+              max-width: 400px;
+              margin-bottom: 10px;
+            }
+            
+            .vehicle-title {
+              font-size: 20px;
+              font-weight: bold;
+              margin: 10px 0;
+            }
+            
+            .basic-info {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 10px;
+              margin-bottom: 20px;
+              font-size: 14px;
+            }
+            
+            .basic-info div {
+              display: flex;
+              justify-content: space-between;
+            }
+            
+            .features-section {
+              margin-bottom: 20px;
+            }
+            
+            .features-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr 1fr;
+              gap: 20px;
+              margin-bottom: 20px;
+            }
+            
+            .feature-category {
+              border: 1px solid #ccc;
+              padding: 10px;
+            }
+            
+            .feature-category h3 {
+              font-size: 14px;
+              font-weight: bold;
+              margin-bottom: 8px;
+              text-decoration: underline;
+            }
+            
+            .feature-category ul {
+              list-style: none;
+              font-size: 11px;
+            }
+            
+            .feature-category li {
+              margin-bottom: 2px;
+            }
+            
+            .qr-section {
+              display: flex;
+              justify-content: space-around;
+              margin: 30px 0;
+              border-top: 2px solid #000;
+              padding-top: 20px;
+            }
+            
+            .qr-code {
+              text-align: center;
+            }
+            
+            .qr-code svg {
+              width: 120px !important;
+              height: 120px !important;
+            }
+            
+            .qr-label {
+              margin-top: 5px;
+              font-weight: bold;
+              font-size: 12px;
+            }
+            
+            .disclaimer {
+              font-size: 8px;
+              margin-top: 20px;
+              border-top: 1px solid #ccc;
+              padding-top: 10px;
+              text-align: justify;
+            }
+            
+            @media print {
+              body {
+                padding: 0;
+              }
+              
+              .qr-code svg {
+                width: 100px !important;
+                height: 100px !important;
+              }
+              
+              @page {
+                margin: 10mm;
+                size: auto;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <img src="https://cdn.builder.io/api/v1/image/assets%2F0f7830926b04438e96198e445d7c6df8%2F2e0eb47e66704c669bf4794845b398f2?format=webp&width=800" alt="Bentley Supercenter Logo" />
+            <div class="vehicle-title">${vehicleTitle}</div>
+            <div>Stock #: ${vehicle.stockNumber}</div>
+          </div>
+          
+          <div class="basic-info">
+            <div><span>Odometer:</span><span>${vehicle.mileage?.toLocaleString() || 'N/A'}</span></div>
+            <div><span>Transmission:</span><span>${vehicle.transmission || 'N/A'}</span></div>
+            <div><span>Engine:</span><span>${vehicle.engine || 'N/A'}</span></div>
+            <div><span>VIN:</span><span>${vehicle.vin}</span></div>
+            <div><span>Color:</span><span>${vehicle.color}</span></div>
+            <div><span>Stock #:</span><span>${vehicle.stockNumber}</span></div>
+            <div><span>Interior:</span><span>Premium</span></div>
+            <div><span>Drivetrain:</span><span>N/A</span></div>
+          </div>
+          
+          <div class="features-grid">
+            ${technicalFeatures.length > 0 ? `
+              <div class="feature-category">
+                <h3>Technical</h3>
+                <ul>
+                  ${technicalFeatures.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            ${interiorFeatures.length > 0 ? `
+              <div class="feature-category">
+                <h3>Interior</h3>
+                <ul>
+                  ${interiorFeatures.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            ${exteriorFeatures.length > 0 ? `
+              <div class="feature-category">
+                <h3>Exterior</h3>
+                <ul>
+                  ${exteriorFeatures.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            ${electronicFeatures.length > 0 ? `
+              <div class="feature-category">
+                <h3>Electronic</h3>
+                <ul>
+                  ${electronicFeatures.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            ${safetyFeatures.length > 0 ? `
+              <div class="feature-category">
+                <h3>Safety</h3>
+                <ul>
+                  ${safetyFeatures.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            ${additionalFeatures.length > 0 ? `
+              <div class="feature-category">
+                <h3>Additional</h3>
+                <ul>
+                  ${additionalFeatures.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+          </div>
+          
+          <div class="qr-section">
+            <div class="qr-code">
+              ${sourceQrCode}
+              <div class="qr-label">Vehicle Details</div>
+            </div>
+            <div class="qr-code">
+              ${carfaxQrCode}
+              <div class="qr-label">CARFAX Report</div>
+            </div>
+          </div>
+          
+          <div class="disclaimer">
+            It is your responsibility to address any and all differences between information on this label and the actual vehicle specifications and/or any warranties offered prior to the sale of this vehicle. Vehicle data on this label is compiled from publicly available sources believed by the Publisher to be reliable. Vehicle data may change without notice. The Publisher assumes no responsibility for errors and/or omissions in this data, the compilation of this data or sticker placement, and makes no representations express or implied to any actual or prospective purchaser of the vehicle as to the condition of the vehicle, vehicle specifications, ownership, vehicle history, equipment/accessories, price or warranties. Actual mileage may vary.
+          </div>
+          
+          <script>
+            window.onload = () => window.print();
+          </script>
+        </body>
+      </html>
+    `);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Hidden QR codes for printing */}
+      <div className="hidden">
+        <div id={`window-source-qr-${vehicle.stockNumber}`}>
+          <QRCodeSVG
+            value={vehicle.sourceUrl || `${window.location.origin}/customer/${vehicle.id}`}
+            size={120}
+            level="H"
+            includeMargin={true}
+          />
+        </div>
+        <div id={`window-carfax-qr-${vehicle.stockNumber}`}>
+          <QRCodeSVG
+            value={getCarfaxUrl(vehicle.vin)}
+            size={120}
+            level="H"
+            includeMargin={true}
+          />
+        </div>
+      </div>
+
+      {/* Print button */}
+      <Button
+        onClick={handlePrintWindowSticker}
+        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        <PrinterIcon className="w-4 h-4 mr-2" />
+        Print Window Sticker
+      </Button>
+    </div>
+  );
+};
+
+export default WindowSticker;
