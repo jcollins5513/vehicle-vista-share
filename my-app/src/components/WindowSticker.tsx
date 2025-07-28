@@ -341,42 +341,14 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
           </div>
 
           <script>
-            // Remove any potential timestamp elements
-            document.addEventListener('DOMContentLoaded', function() {
-              // Clear document title completely
-              document.title = '';
-
-              // Remove meta tags that might show in headers
-              const metaTags = document.querySelectorAll('meta[name="description"], meta[name="author"], meta[name="date"]');
-              metaTags.forEach(tag => tag.remove());
-
-              // Override document.lastModified if it exists
-              if (document.lastModified) {
-                Object.defineProperty(document, 'lastModified', {
-                  value: '',
-                  writable: false
-                });
-              }
-            });
-
             window.onload = () => {
-              // Final cleanup before printing
+              // Clear document title to prevent it showing in headers
               document.title = '';
 
-              // Add CSS to hide any remaining browser elements
-              const style = document.createElement('style');
-              style.textContent = \`
-                @media print {
-                  @page { margin: 0.5in; }
-                  body { margin: 0; padding: 15px; }
-                }
-              \`;
-              document.head.appendChild(style);
-
-              // Short delay to ensure styles are applied
-              setTimeout(() => {
+              // Show instruction alert before printing
+              if (confirm('To print without timestamp, please:\\n\\n1. Click "More settings" in the print dialog\\n2. Uncheck "Headers and footers"\\n3. Then click Print\\n\\nClick OK to open print dialog')) {
                 window.print();
-              }, 100);
+              }
             };
           </script>
         </body>
