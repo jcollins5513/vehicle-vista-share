@@ -49,7 +49,7 @@ export function createRedisClient(mockClient?: UpstashRedis): RedisClient {
   const client = mockClient || new UpstashRedis({
     url: REDIS_CONFIG.url!,
     token: REDIS_CONFIG.token!,
-    cache: 'force-cache',
+    cache: 'no-store', // Changed from 'force-cache' to prevent caching
     retry: {
       retries: 3,
       backoff: (retryCount) => {

@@ -1,10 +1,9 @@
-require('dotenv').config();
-const { Redis } = require('@upstash/redis');
+import 'dotenv/config';
+import { Redis } from '@upstash/redis';
+import puppeteer from 'puppeteer';
 
-const puppeteer = require('puppeteer');
-const cron = require('node-cron');
 
-const CACHE_KEY = 'vista:inventory';
+const CACHE_KEY = 'dealership:inventory'; // Changed from 'vista:inventory' to match the key used in redisService.ts
 const CACHE_TTL = parseInt(process.env.SCRAPE_INTERVAL_HOURS || '24') * 60 * 60;
 const BASE_URL = 'https://www.bentleysupercenter.com/VehicleSearchResults';
 const ITEMS_PER_PAGE = 24;
@@ -31,7 +30,7 @@ const selectors = {
 
 // Clean and format Redis URL and token
 const cleanUrl = (url) => {
-  if (!url) return '';r
+  if (!url) return '';
   // Remove quotes and trim
   return url.replace(/["']/g, '').trim();
 };
@@ -76,7 +75,7 @@ async function scrapeVehicle(url, browser) {
 
   try {
     console.log('[DEBUG] Navigating to vehicle page:', url);
-    await page.goto(url, { waitUntil: 'networkidle0' });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
     console.log('[DEBUG] Vehicle page loaded');
 
     const data = await page.evaluate((selectors) => {
@@ -165,7 +164,7 @@ async function scrapeInventory() {
       console.log(`[DEBUG] Scraping page ${currentPage} with offset ${offset}:`, pageUrl);
       console.time(`page-${currentPage}`);
       
-      await page.goto(pageUrl, { waitUntil: 'networkidle0' });
+      await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
       console.log('[DEBUG] Page loaded successfully');
 
       // Get all vehicle links on the page

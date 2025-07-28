@@ -30,10 +30,14 @@ export interface Vehicle {
   bodyStyle?: string;
   vehicleClass?: string;
   status: 'available' | 'sold';
-  createdAt: Date;
-  updatedAt: Date;
+  isNew?: boolean;
+  isFeatured?: boolean;
+  isSold?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
   media?: Media[];
   threeSixtyImageUrl?: string | null;
+  lastUpdated?: Date;
 }
 
 /**

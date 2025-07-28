@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
-const { join } = require('path');
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES modules equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const nextConfig = {
   images: {
@@ -25,4 +31,4 @@ const nextConfig = {
 
 process.env.NEXT_TELEMETRY_DISABLED = '1';
 
-module.exports = nextConfig;
+export default nextConfig;
