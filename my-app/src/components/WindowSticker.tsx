@@ -32,8 +32,31 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
     printWindow.document.write(`
       <html>
         <head>
-          <title>Window Sticker - ${vehicle.stockNumber}</title>
+          <title> </title>
+          <meta name="description" content="">
+          <meta name="author" content="">
           <style>
+            /* Reset and override all browser defaults */
+            html, body, div, span, h1, h2, h3, h4, h5, h6, p {
+              margin: 0;
+              padding: 0;
+            }
+
+            @page {
+              margin: 0.5in;
+              size: letter;
+              /* Remove headers and footers */
+              @top-left { content: none; }
+              @top-center { content: none; }
+              @top-right { content: none; }
+              @bottom-left { content: none; }
+              @bottom-center { content: none; }
+              @bottom-right { content: none; }
+              @top-left-corner { content: none; }
+              @top-right-corner { content: none; }
+              @bottom-left-corner { content: none; }
+              @bottom-right-corner { content: none; }
+            }
             * {
               margin: 0;
               padding: 0;
