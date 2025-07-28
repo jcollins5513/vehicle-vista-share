@@ -559,6 +559,7 @@ export default function CustomerShowroomPage() {
                           </Button>
                         </a>
                       )}
+                      <WindowSticker vehicle={vehicle} />
                     </div>
                   </div>
                 </div>
