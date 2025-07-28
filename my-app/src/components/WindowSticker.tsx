@@ -42,26 +42,27 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
             
             body {
               font-family: Arial, sans-serif;
-              padding: 15px;
+              padding: 20px;
               background: white;
               color: black;
-              line-height: 1.2;
+              line-height: 1.3;
               max-width: 8.5in;
               margin: 0 auto;
+              min-height: 11in;
             }
 
             .header {
               display: flex;
               align-items: center;
-              margin-bottom: 15px;
-              border-bottom: 2px solid #000;
-              padding-bottom: 10px;
+              margin-bottom: 25px;
+              border-bottom: 3px solid #000;
+              padding-bottom: 15px;
             }
 
             .header img {
-              width: 200px;
+              width: 250px;
               height: auto;
-              margin-right: 20px;
+              margin-right: 30px;
             }
 
             .header-text {
@@ -69,63 +70,70 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
             }
 
             .vehicle-title {
-              font-size: 18px;
+              font-size: 24px;
               font-weight: bold;
-              margin: 0 0 5px 0;
+              margin: 0 0 8px 0;
+              color: #000;
             }
 
             .stock-info {
-              font-size: 14px;
-              margin: 0;
+              font-size: 16px;
+              margin: 3px 0;
+              color: #333;
             }
 
             .content-grid {
               display: grid;
               grid-template-columns: 2fr 1fr;
-              gap: 20px;
-              margin-bottom: 15px;
+              gap: 30px;
+              margin-bottom: 25px;
             }
 
             .basic-info {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 8px;
-              font-size: 12px;
-              margin-bottom: 15px;
+              gap: 12px;
+              font-size: 14px;
+              margin-bottom: 25px;
             }
 
             .basic-info div {
               display: flex;
               justify-content: space-between;
-              border-bottom: 1px dotted #ccc;
-              padding-bottom: 2px;
+              border-bottom: 1px dotted #666;
+              padding-bottom: 4px;
+            }
+
+            .basic-info div span:first-child {
+              font-weight: bold;
             }
 
             .features-section {
-              margin-bottom: 15px;
+              margin-bottom: 25px;
             }
 
             .features-grid {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 10px;
+              gap: 15px;
             }
 
             .feature-column ul {
               list-style: disc;
-              margin-left: 15px;
-              font-size: 10px;
+              margin-left: 20px;
+              font-size: 12px;
             }
 
             .feature-column li {
-              margin-bottom: 1px;
+              margin-bottom: 3px;
             }
 
             .features-title {
-              font-size: 14px;
+              font-size: 16px;
               font-weight: bold;
-              margin-bottom: 8px;
+              margin-bottom: 12px;
               text-decoration: underline;
+              color: #000;
             }
 
             .qr-section {
@@ -136,8 +144,8 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
 
             .qr-codes {
               display: flex;
-              gap: 15px;
-              margin-bottom: 10px;
+              gap: 20px;
+              margin-bottom: 15px;
             }
 
             .qr-code {
@@ -145,22 +153,45 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
             }
 
             .qr-code svg {
-              width: 80px !important;
-              height: 80px !important;
+              width: 100px !important;
+              height: 100px !important;
             }
 
             .qr-label {
-              margin-top: 3px;
+              margin-top: 5px;
               font-weight: bold;
-              font-size: 10px;
+              font-size: 12px;
+            }
+
+            .price-section {
+              text-align: center;
+              margin: 30px 0 20px 0;
+              padding: 20px;
+              border: 3px solid #000;
+              background: #f5f5f5;
+            }
+
+            .price-label {
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              color: #000;
+            }
+
+            .price-value {
+              font-size: 36px;
+              font-weight: bold;
+              color: #d4af37;
+              text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
             }
 
             .disclaimer {
-              font-size: 7px;
-              margin-top: 10px;
+              font-size: 8px;
+              margin-top: 20px;
               border-top: 1px solid #ccc;
-              padding-top: 8px;
+              padding-top: 10px;
               text-align: justify;
+              line-height: 1.2;
             }
             
             @media print {
