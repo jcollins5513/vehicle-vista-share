@@ -225,8 +225,8 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
             <img src="/Bentley-logo-groups.svg" alt="Bentley Logo" />
             <div class="header-text">
               <div class="vehicle-title">${vehicleTitle}</div>
-              <div class="stock-info">Stock #: ${vehicle.stockNumber} | VIN: ${vehicle.vin}</div>
-              <div class="stock-info">Price: $${vehicle.price?.toLocaleString() || 'Contact for Price'}</div>
+              <div class="stock-info">Stock #: ${vehicle.stockNumber}</div>
+              <div class="stock-info">VIN: ${vehicle.vin}</div>
             </div>
           </div>
 
