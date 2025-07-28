@@ -182,93 +182,57 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
         </head>
         <body>
           <div class="header">
-            <img src="https://cdn.builder.io/api/v1/image/assets%2F0f7830926b04438e96198e445d7c6df8%2F2e0eb47e66704c669bf4794845b398f2?format=webp&width=800" alt="Bentley Supercenter Logo" />
-            <div class="vehicle-title">${vehicleTitle}</div>
-            <div>Stock #: ${vehicle.stockNumber}</div>
-          </div>
-          
-          <div class="basic-info">
-            <div><span>Odometer:</span><span>${vehicle.mileage?.toLocaleString() || 'N/A'}</span></div>
-            <div><span>Transmission:</span><span>${vehicle.transmission || 'N/A'}</span></div>
-            <div><span>Engine:</span><span>${vehicle.engine || 'N/A'}</span></div>
-            <div><span>VIN:</span><span>${vehicle.vin}</span></div>
-            <div><span>Color:</span><span>${vehicle.color}</span></div>
-            <div><span>Stock #:</span><span>${vehicle.stockNumber}</span></div>
-            <div><span>Interior:</span><span>Premium</span></div>
-            <div><span>Drivetrain:</span><span>N/A</span></div>
-          </div>
-          
-          <div class="features-grid">
-            ${technicalFeatures.length > 0 ? `
-              <div class="feature-category">
-                <h3>Technical</h3>
-                <ul>
-                  ${technicalFeatures.map(f => `<li>${f}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-            
-            ${interiorFeatures.length > 0 ? `
-              <div class="feature-category">
-                <h3>Interior</h3>
-                <ul>
-                  ${interiorFeatures.map(f => `<li>${f}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-            
-            ${exteriorFeatures.length > 0 ? `
-              <div class="feature-category">
-                <h3>Exterior</h3>
-                <ul>
-                  ${exteriorFeatures.map(f => `<li>${f}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-            
-            ${electronicFeatures.length > 0 ? `
-              <div class="feature-category">
-                <h3>Electronic</h3>
-                <ul>
-                  ${electronicFeatures.map(f => `<li>${f}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-            
-            ${safetyFeatures.length > 0 ? `
-              <div class="feature-category">
-                <h3>Safety</h3>
-                <ul>
-                  ${safetyFeatures.map(f => `<li>${f}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-            
-            ${additionalFeatures.length > 0 ? `
-              <div class="feature-category">
-                <h3>Additional</h3>
-                <ul>
-                  ${additionalFeatures.map(f => `<li>${f}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-          </div>
-          
-          <div class="qr-section">
-            <div class="qr-code">
-              ${sourceQrCode}
-              <div class="qr-label">Vehicle Details</div>
-            </div>
-            <div class="qr-code">
-              ${carfaxQrCode}
-              <div class="qr-label">CARFAX Report</div>
+            <img src="/Bentley-logo-groups.svg" alt="Bentley Logo" />
+            <div class="header-text">
+              <div class="vehicle-title">${vehicleTitle}</div>
+              <div class="stock-info">Stock #: ${vehicle.stockNumber} | VIN: ${vehicle.vin}</div>
+              <div class="stock-info">Price: $${vehicle.price?.toLocaleString() || 'Contact for Price'}</div>
             </div>
           </div>
-          
+
+          <div class="content-grid">
+            <div class="left-column">
+              <div class="basic-info">
+                <div><span>Odometer:</span><span>${vehicle.mileage?.toLocaleString() || 'N/A'}</span></div>
+                <div><span>Engine:</span><span>${vehicle.engine || 'N/A'}</span></div>
+                <div><span>Color:</span><span>${vehicle.color}</span></div>
+                <div><span>Transmission:</span><span>${vehicle.transmission || 'N/A'}</span></div>
+              </div>
+
+              ${keyFeatures.length > 0 ? `
+                <div class="features-section">
+                  <div class="features-title">Key Features</div>
+                  <div class="features-grid">
+                    ${chunkedFeatures.map(chunk => `
+                      <div class="feature-column">
+                        <ul>
+                          ${chunk.map(f => `<li>${f}</li>`).join('')}
+                        </ul>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="qr-section">
+              <div class="qr-codes">
+                <div class="qr-code">
+                  ${sourceQrCode}
+                  <div class="qr-label">Vehicle Details</div>
+                </div>
+                <div class="qr-code">
+                  ${carfaxQrCode}
+                  <div class="qr-label">CARFAX Report</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="disclaimer">
             It is your responsibility to address any and all differences between information on this label and the actual vehicle specifications and/or any warranties offered prior to the sale of this vehicle. Vehicle data on this label is compiled from publicly available sources believed by the Publisher to be reliable. Vehicle data may change without notice. The Publisher assumes no responsibility for errors and/or omissions in this data, the compilation of this data or sticker placement, and makes no representations express or implied to any actual or prospective purchaser of the vehicle as to the condition of the vehicle, vehicle specifications, ownership, vehicle history, equipment/accessories, price or warranties. Actual mileage may vary.
           </div>
-          
+
           <script>
             window.onload = () => window.print();
           </script>
