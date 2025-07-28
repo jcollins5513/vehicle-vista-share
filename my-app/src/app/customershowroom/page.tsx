@@ -400,24 +400,27 @@ export default function CustomerShowroomPage() {
                     </div>
                   </div>
 
-                  <div className="flex space-x-2">
-                    <Button
-                      onClick={() =>
-                        window.open(`/customer/${vehicle.id}`, "_blank")
-                      }
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-sm"
-                    >
-                      <Eye className="w-3 h-3 mr-1" />
-                      View Details
-                    </Button>
-                    <Button
-                      onClick={() => scheduleViewing(vehicle)}
-                      variant="outline"
-                      className="flex-1 border-white/30 text-white hover:bg-white/10 text-sm"
-                    >
-                      <Calendar className="w-3 h-3 mr-1" />
-                      Schedule
-                    </Button>
+                  <div className="space-y-2">
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={() =>
+                          window.open(`/customer/${vehicle.id}`, "_blank")
+                        }
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-sm"
+                      >
+                        <Eye className="w-3 h-3 mr-1" />
+                        View Details
+                      </Button>
+                      <Button
+                        onClick={() => scheduleViewing(vehicle)}
+                        variant="outline"
+                        className="flex-1 border-white/30 text-white hover:bg-white/10 text-sm"
+                      >
+                        <Calendar className="w-3 h-3 mr-1" />
+                        Schedule
+                      </Button>
+                    </div>
+                    <WindowSticker vehicle={vehicle} />
                   </div>
                 </div>
               </Card>
