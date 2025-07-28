@@ -24,6 +24,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import type { VehicleWithMedia } from "@/types";
+import WindowSticker from "@/components/WindowSticker";
 
 export default function CustomerShowroomPage() {
   const [vehicles, setVehicles] = useState<VehicleWithMedia[]>([]);
