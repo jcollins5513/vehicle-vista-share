@@ -218,10 +218,45 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
             }
             
             @media print {
+              /* Force remove all page headers and footers */
+              @page {
+                margin: 0.5in 0.5in 0.5in 0.5in;
+                size: letter;
+
+                /* Explicitly remove all header/footer content */
+                @top-left { content: ""; display: none; }
+                @top-center { content: ""; display: none; }
+                @top-right { content: ""; display: none; }
+                @bottom-left { content: ""; display: none; }
+                @bottom-center { content: ""; display: none; }
+                @bottom-right { content: ""; display: none; }
+                @top-left-corner { content: ""; display: none; }
+                @top-right-corner { content: ""; display: none; }
+                @bottom-left-corner { content: ""; display: none; }
+                @bottom-right-corner { content: ""; display: none; }
+              }
+
+              /* Override browser print defaults */
+              html {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+
               body {
                 padding: 15px;
                 max-width: none;
                 min-height: auto;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+
+              /* Hide any potential timestamp elements */
+              .timestamp, .print-date, .print-time,
+              [class*="timestamp"], [class*="date"], [class*="time"] {
+                display: none !important;
+                visibility: hidden !important;
               }
 
               .header img {
@@ -243,35 +278,6 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
 
               .disclaimer {
                 font-size: 7px;
-              }
-
-              @page {
-                margin: 0.5in;
-                size: letter;
-              }
-
-              /* Hide browser-generated headers and footers */
-              @page :first {
-                margin-top: 0.5in;
-              }
-
-              @page :left {
-                margin-left: 0.5in;
-              }
-
-              @page :right {
-                margin-right: 0.5in;
-              }
-
-              /* Remove any browser-added content */
-              html, body {
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-
-              * {
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
               }
             }
           </style>
