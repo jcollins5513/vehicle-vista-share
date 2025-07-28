@@ -196,21 +196,30 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
             
             @media print {
               body {
-                padding: 10px;
+                padding: 15px;
                 max-width: none;
+                min-height: auto;
               }
 
               .header img {
-                width: 150px;
+                width: 200px;
+              }
+
+              .vehicle-title {
+                font-size: 20px;
               }
 
               .qr-code svg {
-                width: 70px !important;
-                height: 70px !important;
+                width: 85px !important;
+                height: 85px !important;
+              }
+
+              .price-value {
+                font-size: 30px;
               }
 
               .disclaimer {
-                font-size: 6px;
+                font-size: 7px;
               }
 
               @page {
