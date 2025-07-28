@@ -22,62 +22,12 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
     const carfaxQrCode = document.getElementById(`window-carfax-qr-${vehicle.stockNumber}`)?.querySelector('svg')?.outerHTML;
     const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim();
 
-    // Convert features array to organized sections
-    const technicalFeatures = vehicle.features?.filter(f => 
-      f.toLowerCase().includes('engine') || 
-      f.toLowerCase().includes('transmission') || 
-      f.toLowerCase().includes('steering') ||
-      f.toLowerCase().includes('battery') ||
-      f.toLowerCase().includes('alternator')
-    ) || [];
-
-    const interiorFeatures = vehicle.features?.filter(f => 
-      f.toLowerCase().includes('air conditioning') ||
-      f.toLowerCase().includes('seat') ||
-      f.toLowerCase().includes('interior') ||
-      f.toLowerCase().includes('steering wheel') ||
-      f.toLowerCase().includes('console') ||
-      f.toLowerCase().includes('upholstery') ||
-      f.toLowerCase().includes('mirror') ||
-      f.toLowerCase().includes('outlet') ||
-      f.toLowerCase().includes('display')
-    ) || [];
-
-    const exteriorFeatures = vehicle.features?.filter(f => 
-      f.toLowerCase().includes('headlight') ||
-      f.toLowerCase().includes('door') ||
-      f.toLowerCase().includes('window') ||
-      f.toLowerCase().includes('wheel') ||
-      f.toLowerCase().includes('molding') ||
-      f.toLowerCase().includes('mirror') ||
-      f.toLowerCase().includes('badge')
-    ) || [];
-
-    const electronicFeatures = vehicle.features?.filter(f => 
-      f.toLowerCase().includes('speaker') ||
-      f.toLowerCase().includes('radio') ||
-      f.toLowerCase().includes('am/fm')
-    ) || [];
-
-    const safetyFeatures = vehicle.features?.filter(f => 
-      f.toLowerCase().includes('brake') ||
-      f.toLowerCase().includes('airbag') ||
-      f.toLowerCase().includes('abs') ||
-      f.toLowerCase().includes('emergency') ||
-      f.toLowerCase().includes('camera') ||
-      f.toLowerCase().includes('control') ||
-      f.toLowerCase().includes('assist') ||
-      f.toLowerCase().includes('suspension') ||
-      f.toLowerCase().includes('key')
-    ) || [];
-
-    const additionalFeatures = vehicle.features?.filter(f => 
-      !technicalFeatures.includes(f) &&
-      !interiorFeatures.includes(f) &&
-      !exteriorFeatures.includes(f) &&
-      !electronicFeatures.includes(f) &&
-      !safetyFeatures.includes(f)
-    ) || [];
+    // Select only most important features for compact display
+    const keyFeatures = vehicle.features?.slice(0, 12) || [];
+    const chunkedFeatures = [];
+    for (let i = 0; i < keyFeatures.length; i += 6) {
+      chunkedFeatures.push(keyFeatures.slice(i, i + 6));
+    }
 
     printWindow.document.write(`
       <html>
