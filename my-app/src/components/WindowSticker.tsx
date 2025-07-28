@@ -341,20 +341,42 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
           </div>
 
           <script>
-            window.onload = () => {
-              // Configure print settings to remove headers/footers
-              const printSettings = {
-                marginType: 1, // Custom margins
-                isHeaderFooterEnabled: false,
-                isBackgroundEnabled: true
-              };
+            // Remove any potential timestamp elements
+            document.addEventListener('DOMContentLoaded', function() {
+              // Clear document title completely
+              document.title = '';
 
-              // For Chrome/Chromium browsers
-              if (window.chrome) {
-                document.title = ' '; // Remove title from header
+              // Remove meta tags that might show in headers
+              const metaTags = document.querySelectorAll('meta[name="description"], meta[name="author"], meta[name="date"]');
+              metaTags.forEach(tag => tag.remove());
+
+              // Override document.lastModified if it exists
+              if (document.lastModified) {
+                Object.defineProperty(document, 'lastModified', {
+                  value: '',
+                  writable: false
+                });
               }
+            });
 
-              window.print();
+            window.onload = () => {
+              // Final cleanup before printing
+              document.title = '';
+
+              // Add CSS to hide any remaining browser elements
+              const style = document.createElement('style');
+              style.textContent = \`
+                @media print {
+                  @page { margin: 0.5in; }
+                  body { margin: 0; padding: 15px; }
+                }
+              \`;
+              document.head.appendChild(style);
+
+              // Short delay to ensure styles are applied
+              setTimeout(() => {
+                window.print();
+              }, 100);
             };
           </script>
         </body>
