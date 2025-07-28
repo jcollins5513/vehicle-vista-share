@@ -40,105 +40,126 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               box-sizing: border-box;
             }
             
-            body { 
-              font-family: Arial, sans-serif; 
-              padding: 20px;
+            body {
+              font-family: Arial, sans-serif;
+              padding: 15px;
               background: white;
               color: black;
-              line-height: 1.4;
+              line-height: 1.2;
+              max-width: 8.5in;
+              margin: 0 auto;
             }
-            
+
             .header {
-              text-align: center;
-              margin-bottom: 20px;
+              display: flex;
+              align-items: center;
+              margin-bottom: 15px;
               border-bottom: 2px solid #000;
-              padding-bottom: 15px;
+              padding-bottom: 10px;
             }
-            
+
             .header img {
-              max-width: 400px;
-              margin-bottom: 10px;
+              width: 200px;
+              height: auto;
+              margin-right: 20px;
             }
-            
+
+            .header-text {
+              flex: 1;
+            }
+
             .vehicle-title {
-              font-size: 20px;
+              font-size: 18px;
               font-weight: bold;
-              margin: 10px 0;
+              margin: 0 0 5px 0;
             }
-            
+
+            .stock-info {
+              font-size: 14px;
+              margin: 0;
+            }
+
+            .content-grid {
+              display: grid;
+              grid-template-columns: 2fr 1fr;
+              gap: 20px;
+              margin-bottom: 15px;
+            }
+
             .basic-info {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 10px;
-              margin-bottom: 20px;
-              font-size: 14px;
+              gap: 8px;
+              font-size: 12px;
+              margin-bottom: 15px;
             }
-            
+
             .basic-info div {
               display: flex;
               justify-content: space-between;
+              border-bottom: 1px dotted #ccc;
+              padding-bottom: 2px;
             }
-            
+
             .features-section {
-              margin-bottom: 20px;
+              margin-bottom: 15px;
             }
-            
+
             .features-grid {
               display: grid;
-              grid-template-columns: 1fr 1fr 1fr;
-              gap: 20px;
-              margin-bottom: 20px;
+              grid-template-columns: 1fr 1fr;
+              gap: 10px;
             }
-            
-            .feature-category {
-              border: 1px solid #ccc;
-              padding: 10px;
+
+            .feature-column ul {
+              list-style: disc;
+              margin-left: 15px;
+              font-size: 10px;
             }
-            
-            .feature-category h3 {
+
+            .feature-column li {
+              margin-bottom: 1px;
+            }
+
+            .features-title {
               font-size: 14px;
               font-weight: bold;
               margin-bottom: 8px;
               text-decoration: underline;
             }
-            
-            .feature-category ul {
-              list-style: none;
-              font-size: 11px;
-            }
-            
-            .feature-category li {
-              margin-bottom: 2px;
-            }
-            
+
             .qr-section {
               display: flex;
-              justify-content: space-around;
-              margin: 30px 0;
-              border-top: 2px solid #000;
-              padding-top: 20px;
+              flex-direction: column;
+              align-items: center;
             }
-            
+
+            .qr-codes {
+              display: flex;
+              gap: 15px;
+              margin-bottom: 10px;
+            }
+
             .qr-code {
               text-align: center;
             }
-            
+
             .qr-code svg {
-              width: 120px !important;
-              height: 120px !important;
+              width: 80px !important;
+              height: 80px !important;
             }
-            
+
             .qr-label {
-              margin-top: 5px;
+              margin-top: 3px;
               font-weight: bold;
-              font-size: 12px;
+              font-size: 10px;
             }
-            
+
             .disclaimer {
-              font-size: 8px;
-              margin-top: 20px;
+              font-size: 7px;
+              margin-top: 10px;
               border-top: 1px solid #ccc;
-              padding-top: 10px;
+              padding-top: 8px;
               text-align: justify;
             }
             
