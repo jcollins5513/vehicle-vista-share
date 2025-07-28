@@ -269,6 +269,11 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
             </div>
           </div>
 
+          <div class="price-section">
+            <div class="price-label">ASKING PRICE</div>
+            <div class="price-value">$${vehicle.price?.toLocaleString() || 'Contact for Price'}</div>
+          </div>
+
           <div class="disclaimer">
             It is your responsibility to address any and all differences between information on this label and the actual vehicle specifications and/or any warranties offered prior to the sale of this vehicle. Vehicle data on this label is compiled from publicly available sources believed by the Publisher to be reliable. Vehicle data may change without notice. The Publisher assumes no responsibility for errors and/or omissions in this data, the compilation of this data or sticker placement, and makes no representations express or implied to any actual or prospective purchaser of the vehicle as to the condition of the vehicle, vehicle specifications, ownership, vehicle history, equipment/accessories, price or warranties. Actual mileage may vary.
           </div>
