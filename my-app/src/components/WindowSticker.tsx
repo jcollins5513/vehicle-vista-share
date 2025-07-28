@@ -226,6 +226,30 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
                 margin: 0.5in;
                 size: letter;
               }
+
+              /* Hide browser-generated headers and footers */
+              @page :first {
+                margin-top: 0.5in;
+              }
+
+              @page :left {
+                margin-left: 0.5in;
+              }
+
+              @page :right {
+                margin-right: 0.5in;
+              }
+
+              /* Remove any browser-added content */
+              html, body {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
             }
           </style>
         </head>
