@@ -236,18 +236,18 @@ Contact us today to schedule your test drive!
       const aspectRatio = img.width / img.height;
       const maxWidth = canvas.width * 0.7;
       const maxHeight = canvas.height * 0.7;
-      
+
       let drawWidth = maxWidth;
       let drawHeight = drawWidth / aspectRatio;
-      
+
       if (drawHeight > maxHeight) {
         drawHeight = maxHeight;
         drawWidth = drawHeight * aspectRatio;
       }
-      
+
       const x = (canvas.width - drawWidth) / 2;
       const y = (canvas.height - drawHeight) / 2;
-      
+
       ctx.drawImage(img, x, y, drawWidth, drawHeight);
 
       // Add text overlay
@@ -270,8 +270,59 @@ Contact us today to schedule your test drive!
         }
       }, 'image/png');
     };
-    
+
     img.src = image.processedUrl;
+  };
+
+  const postToFacebookMarketplace = async () => {
+    if (!selectedVehicleData || !generatedContent || processedImages.length === 0) {
+      alert('Please select a vehicle, generate content, and process at least one image before posting to Facebook.');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+
+      // Prepare images for upload (in a real implementation, these would be uploaded to a CDN first)
+      const imageUrls = processedImages
+        .filter(img => img.status === 'completed')
+        .map(img => img.processedUrl);
+
+      const postData = {
+        vehicleId: selectedVehicleData.id,
+        images: imageUrls,
+        content: generatedContent,
+        price: selectedVehicleData.price || 0,
+        vehicleInfo: {
+          make: selectedVehicleData.make,
+          model: selectedVehicleData.model,
+          year: selectedVehicleData.year,
+          mileage: selectedVehicleData.mileage,
+          stockNumber: selectedVehicleData.stockNumber
+        }
+      };
+
+      const response = await fetch('/api/facebook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(postData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`✅ Successfully posted to Facebook Marketplace!\n\nPost ID: ${result.postId}\nVehicle: ${selectedVehicleData.year} ${selectedVehicleData.make} ${selectedVehicleData.model}\n\nNote: This is a simulated response. Real Facebook integration requires additional setup.`);
+      } else {
+        throw new Error(result.error || 'Failed to post to Facebook');
+      }
+    } catch (error) {
+      console.error('Error posting to Facebook:', error);
+      alert(`❌ Error posting to Facebook Marketplace: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const removeProcessedImage = (imageId: string) => {
@@ -533,7 +584,7 @@ Contact us today to schedule your test drive!
                       <h4 className="text-white font-medium mb-2">{selectedTemplateData.name}</h4>
                       <p className="text-white/70 text-sm mb-2">{selectedTemplateData.description}</p>
                       <div className="flex items-center space-x-4 text-xs text-white/60">
-                        <span>📐 {selectedTemplateData.dimensions.width}x{selectedTemplateData.dimensions.height}</span>
+                        <span>��� {selectedTemplateData.dimensions.width}x{selectedTemplateData.dimensions.height}</span>
                         <span style={{ backgroundColor: selectedTemplateData.backgroundColor }} className="w-4 h-4 rounded"></span>
                       </div>
                     </div>
