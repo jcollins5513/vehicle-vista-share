@@ -26,6 +26,7 @@ import Image from "next/image";
 import type { VehicleWithMedia } from "@/types";
 import WindowSticker from "@/components/WindowSticker";
 import BatchPrintModal from "@/components/BatchPrintModal";
+import BackgroundRemovalManager from "@/components/BackgroundRemovalManager";
 
 export default function CustomerShowroomPage() {
   const [vehicles, setVehicles] = useState<VehicleWithMedia[]>([]);
