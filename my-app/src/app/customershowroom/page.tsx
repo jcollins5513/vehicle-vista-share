@@ -17,7 +17,7 @@ import {
   Phone,
   MessageSquare,
   MapPin,
-  PrinterIcon,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import type { VehicleWithMedia } from "@/types";
 import WindowSticker from "@/components/WindowSticker";
+import BatchPrintModal from "@/components/BatchPrintModal";
 
 export default function CustomerShowroomPage() {
   const [vehicles, setVehicles] = useState<VehicleWithMedia[]>([]);
@@ -35,6 +36,7 @@ export default function CustomerShowroomPage() {
   const [sortBy, setSortBy] = useState<"price" | "year" | "make">("year");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [isBatchPrintModalOpen, setIsBatchPrintModalOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
     make: "",
     priceRange: "",
@@ -230,6 +232,14 @@ export default function CustomerShowroomPage() {
                   {filteredVehicles.length} vehicles
                 </span>
               </div>
+              <Button
+                onClick={() => setIsBatchPrintModalOpen(true)}
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/10"
+                title="Batch Print"
+              >
+                <Printer className="w-4 h-4" />
+              </Button>
               <Button
                 onClick={() =>
                   setViewMode(viewMode === "grid" ? "list" : "grid")
@@ -591,6 +601,15 @@ export default function CustomerShowroomPage() {
           </div>
         </div>
       </div>
+      
+      {/* Batch Print Modal */}
+      {isBatchPrintModalOpen && (
+        <BatchPrintModal
+          vehicles={filteredVehicles}
+          isOpen={isBatchPrintModalOpen}
+          onClose={() => setIsBatchPrintModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
