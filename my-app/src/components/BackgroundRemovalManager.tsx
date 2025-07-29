@@ -584,7 +584,7 @@ Contact us today to schedule your test drive!
                       <h4 className="text-white font-medium mb-2">{selectedTemplateData.name}</h4>
                       <p className="text-white/70 text-sm mb-2">{selectedTemplateData.description}</p>
                       <div className="flex items-center space-x-4 text-xs text-white/60">
-                        <span>��� {selectedTemplateData.dimensions.width}x{selectedTemplateData.dimensions.height}</span>
+                        <span>📐 {selectedTemplateData.dimensions.width}x{selectedTemplateData.dimensions.height}</span>
                         <span style={{ backgroundColor: selectedTemplateData.backgroundColor }} className="w-4 h-4 rounded"></span>
                       </div>
                     </div>
@@ -645,20 +645,27 @@ Contact us today to schedule your test drive!
                 <div className="space-y-3">
                   <Button
                     className="w-full bg-[#1877f2] hover:bg-[#166fe5]"
-                    onClick={() => {
-                      // TODO: Implement Facebook Marketplace API integration
-                      alert('Facebook Marketplace integration coming soon! This will automatically post to your Facebook business page and Marketplace.');
-                    }}
+                    onClick={postToFacebookMarketplace}
+                    disabled={!selectedVehicleData || !generatedContent || processedImages.length === 0 || isProcessing}
                   >
-                    <Facebook className="w-4 h-4 mr-2" />
-                    Post to Facebook Marketplace
+                    {isProcessing ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Facebook className="w-4 h-4 mr-2" />
+                    )}
+                    {isProcessing ? 'Posting...' : 'Post to Facebook Marketplace'}
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     className="w-full border-[#1877f2] text-[#1877f2] hover:bg-[#1877f2]/10"
                     onClick={() => {
-                      alert('Facebook Page posting integration coming soon!');
+                      if (generatedContent && selectedVehicleData) {
+                        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/customer/' + selectedVehicleData.id)}&quote=${encodeURIComponent(generatedContent)}`;
+                        window.open(facebookUrl, '_blank', 'width=600,height=400');
+                      } else {
+                        alert('Please select a vehicle and generate content first.');
+                      }
                     }}
                   >
                     <Share2 className="w-4 h-4 mr-2" />
@@ -668,6 +675,12 @@ Contact us today to schedule your test drive!
                   <div className="text-xs text-white/60 p-3 bg-white/5 rounded-lg">
                     💡 <strong>Pro Tip:</strong> Use the processed images with transparent backgrounds to create stunning social media posts that stand out in the feed!
                   </div>
+
+                  {processedImages.length > 0 && generatedContent && selectedVehicleData && (
+                    <div className="text-xs text-green-400 p-3 bg-green-500/10 rounded-lg">
+                      ✅ Ready to post! You have {processedImages.filter(img => img.status === 'completed').length} processed images and generated content for the {selectedVehicleData.year} {selectedVehicleData.make} {selectedVehicleData.model}.
+                    </div>
+                  )}
                 </div>
               </Card>
             </div>
