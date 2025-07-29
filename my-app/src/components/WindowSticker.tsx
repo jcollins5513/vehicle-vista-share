@@ -3,16 +3,45 @@
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { VehicleWithMedia } from '@/types';
-import { PrinterIcon } from 'lucide-react';
+import { PrinterIcon, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { generateBuyersGuidePDF, createPDFBlobUrl } from '@/lib/pdf-service';
 
 interface WindowStickerProps {
   vehicle: VehicleWithMedia;
 }
 
 const WindowSticker = ({ vehicle }: WindowStickerProps) => {
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  
   const getCarfaxUrl = (vin: string) => 
     `https://www.carfax.com/VehicleHistory/p/Report.cfx?partner=DVW_1&vin=${vin}`;
+    
+  const openBuyersGuidePDF = async () => {
+    try {
+      setIsGeneratingPDF(true);
+      
+      // Generate the PDF with vehicle-specific information
+      const pdfBytes = await generateBuyersGuidePDF(vehicle);
+      
+      // Create a blob URL for the PDF
+      const pdfUrl = createPDFBlobUrl(pdfBytes);
+      
+      // Open the PDF in a new tab
+      window.open(pdfUrl, '_blank');
+      
+      // Clean up the blob URL after a delay to ensure it's loaded
+      setTimeout(() => {
+        URL.revokeObjectURL(pdfUrl);
+      }, 5000);
+    } catch (error) {
+      console.error('Error generating Buyers Guide PDF:', error);
+      alert('Failed to generate Buyers Guide PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   const handlePrintWindowSticker = () => {
     const printWindow = window.open('', '_blank');
@@ -378,14 +407,40 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
         </div>
       </div>
 
-      {/* Print button */}
-      <Button
-        onClick={handlePrintWindowSticker}
-        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        <PrinterIcon className="w-4 h-4 mr-2" />
-        Print Window Sticker
-      </Button>
+      {/* Print options with popover */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            <PrinterIcon className="w-4 h-4 mr-2" />
+            Print Window Sticker
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-2 bg-slate-800 border border-white/20 text-white">
+          <div className="flex flex-col space-y-2">
+            <Button
+              onClick={handlePrintWindowSticker}
+              className="flex items-center justify-start px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded"
+            >
+              <PrinterIcon className="w-4 h-4 mr-2" />
+              Custom Window Sticker
+            </Button>
+            <Button
+              onClick={openBuyersGuidePDF}
+              disabled={isGeneratingPDF}
+              className="flex items-center justify-start px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded"
+            >
+              {isGeneratingPDF ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <FileText className="w-4 h-4 mr-2" />
+              )}
+              {isGeneratingPDF ? 'Generating...' : 'Buyers Guide PDF'}
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };
