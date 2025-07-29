@@ -105,7 +105,32 @@ export default function BackgroundRemovalManager({ vehicles, onUpdate }: Backgro
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    setSelectedFiles(files);
+
+    // Filter to only include image files
+    const imageFiles = files.filter(file =>
+      file.type.startsWith('image/') &&
+      ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type.toLowerCase())
+    );
+
+    if (imageFiles.length !== files.length) {
+      const skipped = files.length - imageFiles.length;
+      alert(`⚠️ Skipped ${skipped} non-image file(s). Only image files (JPEG, PNG, WebP) are supported.`);
+    }
+
+    setSelectedFiles(imageFiles);
+  };
+
+  const handleFolderSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+
+    // Group files by folder structure if needed
+    const imageFiles = files.filter(file =>
+      file.type.startsWith('image/') &&
+      ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type.toLowerCase())
+    );
+
+    console.log(`📁 Selected folder with ${imageFiles.length} image files`);
+    setSelectedFiles(imageFiles);
   };
 
   const processImages = async () => {
