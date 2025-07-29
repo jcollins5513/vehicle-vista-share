@@ -93,6 +93,12 @@ export default function BackgroundRemovalManager({ vehicles, onUpdate }: Backgro
   const [isGeneratingContent, setIsGeneratingContent] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState<{
+    current: number;
+    total: number;
+    currentFile: string;
+  } | null>(null);
+  const [uploadMode, setUploadMode] = useState<'files' | 'folder'>('files');
 
   const selectedVehicleData = vehicles.find(v => v.id === selectedVehicle);
   const selectedTemplateData = socialTemplates.find(t => t.id === selectedTemplate);
