@@ -18,29 +18,38 @@ interface BatchPrintModalProps {
 }
 
 export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrintModalProps) {
-  const [selectedVehicles, setSelectedVehicles] = useState<Set<string>>(new Set());
+  // Using an array instead of a Set for better React state management
+  const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
   const [printType, setPrintType] = useState<'window-sticker' | 'buyers-guide'>('window-sticker');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
 
   // Toggle selection of a vehicle
   const toggleVehicleSelection = (vehicleId: string) => {
-    const newSelection = new Set(selectedVehicles);
-    if (newSelection.has(vehicleId)) {
-      newSelection.delete(vehicleId);
-    } else {
-      newSelection.add(vehicleId);
-    }
-    setSelectedVehicles(newSelection);
+    setSelectedVehicleIds(prev => {
+      const isSelected = prev.includes(vehicleId);
+      const newSelection = isSelected 
+        ? prev.filter(id => id !== vehicleId)
+        : [...prev, vehicleId];
+      
+      console.log('Vehicle toggled:', vehicleId, 'Selected:', !isSelected);
+      console.log('New selection size:', newSelection.length);
+      console.log('Selection contents:', newSelection);
+      
+      return newSelection;
+    });
   };
 
   // Select or deselect all vehicles
   const toggleSelectAll = (select: boolean) => {
     if (select) {
-      const allIds = new Set(vehicles.map(v => v.id));
-      setSelectedVehicles(allIds);
+      const allIds = vehicles.map(v => v.id);
+      console.log('Selecting all vehicles:', allIds.length, 'vehicles');
+      console.log('All IDs:', allIds);
+      setSelectedVehicleIds(allIds);
     } else {
-      setSelectedVehicles(new Set());
+      console.log('Deselecting all vehicles');
+      setSelectedVehicleIds([]);
     }
   };
 
@@ -374,13 +383,18 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
 
   // Handle batch printing
   const handleBatchPrint = async () => {
-    if (selectedVehicles.size === 0) return;
+    if (selectedVehicleIds.length === 0) return;
+    
+    console.log('Starting batch print with', selectedVehicleIds.length, 'vehicles selected');
+    console.log('Selected vehicle IDs:', selectedVehicleIds);
     
     setIsGenerating(true);
-    setProgress({ current: 0, total: selectedVehicles.size });
+    setProgress({ current: 0, total: selectedVehicleIds.length });
     
     try {
-      const selectedVehiclesList = vehicles.filter(v => selectedVehicles.has(v.id));
+      const selectedVehiclesList = vehicles.filter(v => selectedVehicleIds.includes(v.id));
+      console.log('Filtered vehicle list length:', selectedVehiclesList.length);
+      console.log('First few vehicles:', selectedVehiclesList.slice(0, 3).map(v => ({ id: v.id, make: v.make, model: v.model })));
       
       if (printType === 'window-sticker') {
         // Store all print windows to prevent garbage collection
@@ -476,7 +490,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
         
         <div className="flex justify-between items-center mb-2">
           <div className="text-sm text-white/70">
-            {selectedVehicles.size} of {vehicles.length} vehicles selected
+            {selectedVehicleIds.length} of {vehicles.length} vehicles selected
           </div>
           <div className="flex space-x-2">
             <Button 
@@ -507,8 +521,9 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
               >
                 <Checkbox 
                   id={`vehicle-${vehicle.id}`} 
-                  checked={selectedVehicles.has(vehicle.id)}
+                  checked={selectedVehicleIds.includes(vehicle.id)}
                   onCheckedChange={() => toggleVehicleSelection(vehicle.id)}
+                  onClick={(e) => e.stopPropagation()} // Prevent event bubbling
                 />
                 <Label 
                   htmlFor={`vehicle-${vehicle.id}`}
@@ -541,7 +556,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
           </Button>
           <Button 
             onClick={handleBatchPrint} 
-            disabled={selectedVehicles.size === 0 || isGenerating}
+            disabled={selectedVehicleIds.length === 0 || isGenerating}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {isGenerating ? (
@@ -552,7 +567,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
             ) : (
               <>
                 <PrinterIcon className="w-4 h-4 mr-2" />
-                Print {selectedVehicles.size} {printType === 'window-sticker' ? 'Window Stickers' : 'Buyers Guides'}
+                Print {selectedVehicleIds.length} {printType === 'window-sticker' ? 'Window Stickers' : 'Buyers Guides'}
               </>
             )}
           </Button>
