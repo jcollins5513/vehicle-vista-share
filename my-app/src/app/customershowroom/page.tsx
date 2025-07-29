@@ -213,7 +213,7 @@ export default function CustomerShowroomPage() {
                   alt="Bentley Logo"
                   width={32}
                   height={32}
-                  className="w-8 h-8 object-contain filter brightness-0 invert"
+                  className="w-full h-8 object-contain filter brightness-0 invert"
                 />
               </div>
               <div>
@@ -360,13 +360,7 @@ export default function CustomerShowroomPage() {
                     </Button>
                   </div>
 
-                  {/* Special Offers Badge */}
-                  <div className="absolute top-3 left-3">
-                    <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
-                      <Zap className="w-3 h-3 inline mr-1" />
-                      SPECIAL OFFER
-                    </div>
-                  </div>
+                  <div className="absolute top-3 left-3" />
                 </div>
 
                 <div className="p-4">
