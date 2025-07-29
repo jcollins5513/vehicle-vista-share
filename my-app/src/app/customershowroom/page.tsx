@@ -233,6 +233,7 @@ export default function CustomerShowroomPage() {
                   {filteredVehicles.length} vehicles
                 </span>
               </div>
+              <BackgroundRemovalManager vehicles={vehicles} />
               <Button
                 onClick={() => setIsBatchPrintModalOpen(true)}
                 variant="outline"
