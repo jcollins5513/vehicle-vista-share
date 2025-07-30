@@ -60,8 +60,9 @@ export async function generateBuyersGuidePDF(vehicle: VehicleWithMedia): Promise
             console.log(`Successfully filled field: ${fieldName} with value: ${value}`);
             return true;
           }
-        } catch (_) {
+        } catch (error) {
           // Field not found with this name, continue to next possible name
+          // We intentionally don't log this error as it's expected for many field names
         }
       }
       return false;
@@ -309,11 +310,36 @@ export async function generateBuyersGuidePDF(vehicle: VehicleWithMedia): Promise
       }
     }
     
-    // Flatten the form (makes the filled fields non-editable)
-    form.flatten();
-    
-    // Serialize the PDFDocument to bytes
-    return await pdfDoc.save();
+    // Create a simplified version of the PDF that's more printer-friendly
+    try {
+      // Instead of flattening the form (which can cause printer issues),
+      // we'll create a clean copy of the PDF with just the text
+      const cleanPdfDoc = await PDFDocument.create();
+      
+      // Copy pages from the original document to the new one
+      const [copiedPage] = await cleanPdfDoc.copyPages(pdfDoc, [0]);
+      cleanPdfDoc.addPage(copiedPage);
+      
+      // Serialize the clean PDFDocument to bytes with compatibility options
+      return await cleanPdfDoc.save({
+        useObjectStreams: false,  // Improves printer compatibility
+        addDefaultPage: false     // Don't add extra pages
+      });
+    } catch (error) {
+      console.error('Error creating printer-friendly PDF:', error);
+      
+      // Fall back to the original PDF if the clean version fails
+      console.log('Falling back to standard PDF format');
+      
+      // Don't flatten the form as this can cause printer issues
+      // form.flatten();
+      
+      // Serialize with compatibility options
+      return await pdfDoc.save({
+        useObjectStreams: false,  // Improves printer compatibility
+        addDefaultPage: false     // Don't add extra pages
+      });
+    }
   } catch (error) {
     console.error('Error generating Buyers Guide PDF:', error);
     throw new Error('Failed to generate Buyers Guide PDF');
