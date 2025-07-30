@@ -137,12 +137,20 @@ export default function BackgroundRemovalManager({ vehicles, onUpdate }: Backgro
     if (!selectedVehicle || selectedFiles.length === 0) return;
 
     setIsProcessing(true);
-    const newProcessedImages: ProcessedImage[] = [];
+    setProcessingProgress({ current: 0, total: selectedFiles.length, currentFile: '' });
 
-    for (const file of selectedFiles) {
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
       const imageId = `${selectedVehicle}-${Date.now()}-${Math.random()}`;
       const originalUrl = URL.createObjectURL(file);
-      
+
+      // Update progress
+      setProcessingProgress({
+        current: i + 1,
+        total: selectedFiles.length,
+        currentFile: file.name
+      });
+
       const processedImage: ProcessedImage = {
         id: imageId,
         original: file,
@@ -153,24 +161,23 @@ export default function BackgroundRemovalManager({ vehicles, onUpdate }: Backgro
         status: 'processing'
       };
 
-      newProcessedImages.push(processedImage);
       setProcessedImages(prev => [...prev, processedImage]);
 
       try {
         const processedBlob = await removeBackground(file);
         const processedUrl = URL.createObjectURL(processedBlob);
-        
-        setProcessedImages(prev => 
-          prev.map(img => 
-            img.id === imageId 
+
+        setProcessedImages(prev =>
+          prev.map(img =>
+            img.id === imageId
               ? { ...img, processed: processedBlob, processedUrl, status: 'completed' }
               : img
           )
         );
       } catch (error) {
-        console.error('Error processing image:', error);
-        setProcessedImages(prev => 
-          prev.map(img => 
+        console.error(`Error processing ${file.name}:`, error);
+        setProcessedImages(prev =>
+          prev.map(img =>
             img.id === imageId ? { ...img, status: 'error' } : img
           )
         );
@@ -178,6 +185,7 @@ export default function BackgroundRemovalManager({ vehicles, onUpdate }: Backgro
     }
 
     setIsProcessing(false);
+    setProcessingProgress(null);
     setSelectedFiles([]);
   };
 
