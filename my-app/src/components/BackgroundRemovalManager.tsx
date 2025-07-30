@@ -117,10 +117,20 @@ export default function BackgroundRemovalManager({ vehicles, onUpdate }: Backgro
     }
   });
 
-  // Ensure modal starts closed on component mount
+  // Check service health and ensure modal starts closed on component mount
   useEffect(() => {
     setIsModalOpen(false);
     console.log('🔧 BackgroundRemovalManager mounted, modal set to closed');
+
+    // Check if background removal service is available
+    checkBackgroundRemovalHealth().then(health => {
+      setServiceHealth(health);
+      if (health.available) {
+        console.log(`✅ Background removal service available: ${health.service}`);
+      } else {
+        console.warn('⚠️ Background removal service unavailable:', health.error);
+      }
+    });
   }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
