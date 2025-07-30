@@ -447,34 +447,128 @@ Contact us today to schedule your test drive!
 
                   <div>
                     <label className="block text-white/70 text-sm mb-2">Upload Images</label>
+
+                    {/* Upload Mode Toggle */}
+                    <div className="flex space-x-2 mb-3">
+                      <Button
+                        type="button"
+                        onClick={() => setUploadMode('files')}
+                        size="sm"
+                        variant={uploadMode === 'files' ? 'default' : 'outline'}
+                        className={uploadMode === 'files' ? 'bg-blue-600' : 'border-white/30 text-white hover:bg-white/10'}
+                      >
+                        <FileImage className="w-3 h-3 mr-1" />
+                        Files
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => setUploadMode('folder')}
+                        size="sm"
+                        variant={uploadMode === 'folder' ? 'default' : 'outline'}
+                        className={uploadMode === 'folder' ? 'bg-blue-600' : 'border-white/30 text-white hover:bg-white/10'}
+                      >
+                        📁 Folder
+                      </Button>
+                    </div>
+
                     <div className="border-2 border-dashed border-white/30 rounded-lg p-6 text-center">
                       <Upload className="w-8 h-8 text-white/50 mx-auto mb-2" />
-                      <p className="text-white/70 mb-2">Drag and drop images or click to select</p>
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleFileSelect}
-                        className="hidden"
-                        id="file-upload"
-                      />
-                      <label
-                        htmlFor="file-upload"
-                        className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-block"
-                      >
-                        Select Files
-                      </label>
+                      <p className="text-white/70 mb-2">
+                        {uploadMode === 'files'
+                          ? 'Drag and drop images or click to select files'
+                          : 'Select a folder containing vehicle images'
+                        }
+                      </p>
+
+                      {uploadMode === 'files' ? (
+                        <>
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={handleFileSelect}
+                            className="hidden"
+                            id="file-upload"
+                          />
+                          <label
+                            htmlFor="file-upload"
+                            className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-block"
+                          >
+                            Select Files
+                          </label>
+                        </>
+                      ) : (
+                        <>
+                          <input
+                            type="file"
+                            webkitdirectory=""
+                            directory=""
+                            multiple
+                            accept="image/*"
+                            onChange={handleFolderSelect}
+                            className="hidden"
+                            id="folder-upload"
+                          />
+                          <label
+                            htmlFor="folder-upload"
+                            className="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg inline-block"
+                          >
+                            Select Folder
+                          </label>
+                        </>
+                      )}
                     </div>
-                    
+
                     {selectedFiles.length > 0 && (
                       <div className="mt-3">
-                        <p className="text-white/70 text-sm mb-2">{selectedFiles.length} files selected:</p>
-                        <div className="space-y-1">
-                          {selectedFiles.map((file, index) => (
-                            <div key={index} className="text-white/60 text-xs">
-                              📁 {file.name}
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-white/70 text-sm">{selectedFiles.length} images selected</p>
+                          <Button
+                            onClick={() => setSelectedFiles([])}
+                            size="sm"
+                            variant="outline"
+                            className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                        <div className="max-h-32 overflow-y-auto space-y-1">
+                          {selectedFiles.slice(0, 10).map((file, index) => (
+                            <div key={index} className="text-white/60 text-xs flex items-center">
+                              <FileImage className="w-3 h-3 mr-1" />
+                              {file.name} ({(file.size / 1024 / 1024).toFixed(1)}MB)
                             </div>
                           ))}
+                          {selectedFiles.length > 10 && (
+                            <div className="text-white/50 text-xs">
+                              ... and {selectedFiles.length - 10} more files
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Processing Progress */}
+                    {processingProgress && (
+                      <div className="mt-3 p-3 bg-blue-500/10 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-blue-400 text-sm font-medium">
+                            Processing... ({processingProgress.current}/{processingProgress.total})
+                          </span>
+                          <span className="text-white/70 text-xs">
+                            {Math.round((processingProgress.current / processingProgress.total) * 100)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-white/10 rounded-full h-2 mb-2">
+                          <div
+                            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${(processingProgress.current / processingProgress.total) * 100}%`
+                            }}
+                          />
+                        </div>
+                        <div className="text-white/60 text-xs truncate">
+                          Current: {processingProgress.currentFile}
                         </div>
                       </div>
                     )}
