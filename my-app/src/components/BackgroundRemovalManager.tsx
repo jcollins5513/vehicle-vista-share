@@ -439,9 +439,13 @@ Contact us today to schedule your test drive!
   }, []);
 
   if (!isModalOpen) {
+    console.log('🔘 Rendering button (modal closed)');
     return (
       <Button
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => {
+          console.log('🔵 Button clicked, opening modal');
+          setIsModalOpen(true);
+        }}
         className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
       >
         <Wand2 className="w-4 h-4 mr-2" />
@@ -449,6 +453,8 @@ Contact us today to schedule your test drive!
       </Button>
     );
   }
+
+  console.log('🔴 Rendering modal (modal open)');
 
   return (
     <div
