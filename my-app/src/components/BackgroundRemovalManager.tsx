@@ -616,16 +616,33 @@ Contact us today to schedule your test drive!
               {processedImages.length > 0 && (
                 <Card className="bg-white/10 border-white/20 p-4">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Processed Images</h3>
-                    <Button
-                      onClick={clearAll}
-                      variant="outline"
-                      size="sm"
-                      className="border-red-500/50 text-red-400 hover:bg-red-500/10"
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Clear All
-                    </Button>
+                    <h3 className="text-lg font-semibold text-white">
+                      Processed Images
+                      <span className="text-white/60 text-sm ml-2">
+                        ({processedImages.filter(img => img.status === 'completed').length} completed)
+                      </span>
+                    </h3>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={downloadAllProcessed}
+                        variant="outline"
+                        size="sm"
+                        className="border-green-500/50 text-green-400 hover:bg-green-500/10"
+                        disabled={processedImages.filter(img => img.status === 'completed').length === 0}
+                      >
+                        <Download className="w-4 h-4 mr-1" />
+                        Download All
+                      </Button>
+                      <Button
+                        onClick={clearAll}
+                        variant="outline"
+                        size="sm"
+                        className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Clear All
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
