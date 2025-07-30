@@ -227,7 +227,7 @@ Create compelling copy that highlights the luxury and appeal of this vehicle. In
       setGeneratedContent(`🚗 Discover the luxury of this stunning ${selectedVehicleData.year} ${selectedVehicleData.make} ${selectedVehicleData.model}! 
 
 ✨ Premium features and exceptional performance
-💎 Priced at $${selectedVehicleData.price?.toLocaleString() || 'Contact for price'}
+�� Priced at $${selectedVehicleData.price?.toLocaleString() || 'Contact for price'}
 🏁 Only ${selectedVehicleData.mileage?.toLocaleString() || 'Low'} miles
 
 Contact us today to schedule your test drive!
@@ -445,7 +445,14 @@ Contact us today to schedule your test drive!
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          setIsModalOpen(false);
+        }
+      }}
+    >
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-white/20 max-w-6xl w-full max-h-[90vh] overflow-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
