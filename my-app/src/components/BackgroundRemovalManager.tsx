@@ -408,6 +408,20 @@ Contact us today to schedule your test drive!
     setProcessingProgress(null);
   };
 
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isModalOpen) {
+        setIsModalOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isModalOpen]);
+
   // Cleanup URLs on unmount
   useEffect(() => {
     return () => {
