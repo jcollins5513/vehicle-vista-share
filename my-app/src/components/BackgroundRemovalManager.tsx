@@ -109,13 +109,11 @@ export default function BackgroundRemovalManager({ vehicles, onUpdate }: Backgro
   const selectedVehicleData = vehicles.find(v => v.id === selectedVehicle);
   const selectedTemplateData = socialTemplates.find(t => t.id === selectedTemplate);
 
-  // Force modal to be closed on every render
-  useEffect(() => {
-    if (isModalOpen) {
-      console.log('🔧 Modal was open, forcing it closed');
-      setIsModalOpen(false);
-    }
-  });
+  // Force modal to be closed - remove this after testing
+  if (isModalOpen && process.env.NODE_ENV === 'development') {
+    console.log('🔧 Development mode: forcing modal closed');
+    setTimeout(() => setIsModalOpen(false), 0);
+  }
 
   // Check service health and ensure modal starts closed on component mount
   useEffect(() => {
