@@ -678,7 +678,7 @@ Contact us today to schedule your test drive!
 
                   <Button
                     onClick={processImages}
-                    disabled={!selectedVehicle || selectedFiles.length === 0 || isProcessing}
+                    disabled={!selectedVehicle || selectedFiles.length === 0 || isProcessing || !serviceHealth?.available}
                     className="w-full bg-purple-600 hover:bg-purple-700"
                   >
                     {isProcessing ? (
@@ -688,6 +688,23 @@ Contact us today to schedule your test drive!
                     )}
                     {isProcessing ? 'Processing...' : 'Remove Backgrounds'}
                   </Button>
+
+                  {serviceHealth && !serviceHealth.available && (
+                    <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                      <h4 className="text-red-400 font-medium mb-2">⚠️ Background Removal Service Not Available</h4>
+                      <p className="text-red-300 text-sm mb-3">{serviceHealth.error}</p>
+                      {serviceHealth.installInstructions && (
+                        <div className="bg-black/30 rounded p-3">
+                          <p className="text-white/70 text-xs mb-2">Install Command:</p>
+                          <code className="text-green-400 text-sm">{serviceHealth.installInstructions}</code>
+                        </div>
+                      )}
+                      <div className="mt-3 text-xs text-red-300">
+                        <p>This service uses <strong>nadermx/backgroundremover</strong> for high-quality AI background removal.</p>
+                        <p>Requirements: Python ≥3.6, PyTorch, FFmpeg 4.4+</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </Card>
 
