@@ -470,7 +470,10 @@ Contact us today to schedule your test drive!
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">Background Removal & Social Media Manager</h2>
             <Button
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => {
+                console.log('🔵 Close button clicked');
+                setIsModalOpen(false);
+              }}
               variant="outline"
               className="border-white/30 text-white hover:bg-white/10"
             >
