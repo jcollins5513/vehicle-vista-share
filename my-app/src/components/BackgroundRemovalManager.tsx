@@ -103,6 +103,12 @@ export default function BackgroundRemovalManager({ vehicles, onUpdate }: Backgro
   const selectedVehicleData = vehicles.find(v => v.id === selectedVehicle);
   const selectedTemplateData = socialTemplates.find(t => t.id === selectedTemplate);
 
+  // Ensure modal starts closed on component mount
+  useEffect(() => {
+    setIsModalOpen(false);
+    console.log('🔧 BackgroundRemovalManager mounted, modal set to closed');
+  }, []);
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
 
