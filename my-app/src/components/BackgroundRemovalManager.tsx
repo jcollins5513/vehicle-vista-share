@@ -509,7 +509,26 @@ Contact us today to schedule your test drive!
             {/* Left Panel - Upload & Processing */}
             <div className="space-y-6">
               <Card className="bg-white/10 border-white/20 p-4">
-                <h3 className="text-lg font-semibold text-white mb-4">1. Select Vehicle & Upload Images</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white">1. Select Vehicle & Upload Images</h3>
+                  {serviceHealth && (
+                    <div className="flex items-center space-x-2 text-xs">
+                      {serviceHealth.available ? (
+                        <>
+                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <span className="text-green-400">
+                            {serviceHealth.service || 'nadermx/backgroundremover'} Ready
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                          <span className="text-red-400">Service Unavailable</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
                 
                 <div className="space-y-4">
                   <div>
