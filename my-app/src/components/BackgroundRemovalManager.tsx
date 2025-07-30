@@ -375,6 +375,28 @@ Contact us today to schedule your test drive!
     });
   };
 
+  const downloadAllProcessed = () => {
+    const completedImages = processedImages.filter(img => img.status === 'completed');
+
+    if (completedImages.length === 0) {
+      alert('No processed images to download');
+      return;
+    }
+
+    // Download each image with a small delay to avoid browser blocking
+    completedImages.forEach((image, index) => {
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = image.processedUrl;
+        const filename = selectedVehicleData
+          ? `${selectedVehicleData.year}-${selectedVehicleData.make}-${selectedVehicleData.model}-${index + 1}-processed.png`
+          : `processed-image-${index + 1}.png`;
+        link.download = filename;
+        link.click();
+      }, index * 200);
+    });
+  };
+
   const clearAll = () => {
     processedImages.forEach(image => {
       URL.revokeObjectURL(image.originalUrl);
@@ -383,6 +405,7 @@ Contact us today to schedule your test drive!
     setProcessedImages([]);
     setSelectedFiles([]);
     setGeneratedContent('');
+    setProcessingProgress(null);
   };
 
   // Cleanup URLs on unmount
