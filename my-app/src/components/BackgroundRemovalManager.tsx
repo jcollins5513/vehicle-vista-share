@@ -22,7 +22,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import Image from 'next/image';
-import { removeBackground } from '@/utils/removeBackground';
+import { removeBackground, checkBackgroundRemovalHealth } from '@/utils/removeBackground';
 import type { VehicleWithMedia } from '@/types';
 
 interface ProcessedImage {
