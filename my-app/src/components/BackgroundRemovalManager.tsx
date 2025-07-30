@@ -103,6 +103,14 @@ export default function BackgroundRemovalManager({ vehicles, onUpdate }: Backgro
   const selectedVehicleData = vehicles.find(v => v.id === selectedVehicle);
   const selectedTemplateData = socialTemplates.find(t => t.id === selectedTemplate);
 
+  // Force modal to be closed on every render
+  useEffect(() => {
+    if (isModalOpen) {
+      console.log('🔧 Modal was open, forcing it closed');
+      setIsModalOpen(false);
+    }
+  });
+
   // Ensure modal starts closed on component mount
   useEffect(() => {
     setIsModalOpen(false);
@@ -882,7 +890,7 @@ Contact us today to schedule your test drive!
                   </Button>
 
                   <div className="text-xs text-white/60 p-3 bg-white/5 rounded-lg">
-                    💡 <strong>Pro Tip:</strong> Use the processed images with transparent backgrounds to create stunning social media posts that stand out in the feed!
+                    ���� <strong>Pro Tip:</strong> Use the processed images with transparent backgrounds to create stunning social media posts that stand out in the feed!
                   </div>
 
                   {processedImages.length > 0 && generatedContent && selectedVehicleData && (
