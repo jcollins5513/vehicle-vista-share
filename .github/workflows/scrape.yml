@@ -9,11 +9,6 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        # Set the working directory to my-app for all subsequent run steps
-        working-directory: ./my-app
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -22,24 +17,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          # Cache npm packages based on the lock file in my-app
           cache: 'npm'
           cache-dependency-path: my-app/package-lock.json
 
       - name: Install dependencies
+        working-directory: ./my-app
         run: npm install
 
       - name: Run scraper script
-        # This command is now run from within the my-app directory
+        working-directory: ./my-app
         run: node scripts/scrape.js
 
       - name: Upload scrape results
-        # This step runs even if the scraper fails, to capture logs
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() # Always run this step to upload logs even if the script fails
         with:
           name: scrape-results
-          # Define the paths for the files to upload
           path: |
             my-app/vehicle-data.json
             my-app/error-*.png
