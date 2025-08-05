@@ -27,6 +27,8 @@ jobs:
       - name: Run scraper script
         working-directory: ./my-app
         run: node scripts/scrape.js
+        env:
+          NODE_ENV: production
 
       - name: Upload scrape results
         uses: actions/upload-artifact@v4
