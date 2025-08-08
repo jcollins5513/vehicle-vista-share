@@ -323,12 +323,13 @@ export default function CustomerShowroomPage() {
                       src={
                         vehicle.media?.[0]?.url ||
                         vehicle.images?.[0] ||
-                        "/placeholder.png"
+                        "/placeholder.svg"
                       }
                       alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                       width={400}
                       height={300}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      unoptimized={vehicle.images?.[0]?.includes('bentleysupercenter.com')}
                     />
                   </div>
 
@@ -450,12 +451,13 @@ export default function CustomerShowroomPage() {
                       src={
                         vehicle.media?.[0]?.url ||
                         vehicle.images?.[0] ||
-                        "/placeholder.png"
+                        "/placeholder.svg"
                       }
                       alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                       width={128}
                       height={96}
                       className="w-full h-full object-cover"
+                      unoptimized={vehicle.images?.[0]?.includes('bentleysupercenter.com')}
                     />
                   </div>
 

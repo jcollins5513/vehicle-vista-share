@@ -40,12 +40,13 @@ export default function VehicleCard({ vehicle, onClick }: VehicleCardProps) {
     >
       <CardHeader className="p-0 relative h-48 w-full">
         <Image
-          src={vehicle.images[0]}
+          src={vehicle.images[0] || "/placeholder.svg"}
           alt={title}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover rounded-t-lg"
           priority={false}
+          unoptimized={vehicle.images[0]?.includes('bentleysupercenter.com')}
         />
       </CardHeader>
       <CardContent className="p-4">

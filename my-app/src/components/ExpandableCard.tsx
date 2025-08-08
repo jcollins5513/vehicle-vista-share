@@ -20,7 +20,7 @@ export default function ExpandableCard({ vehicle, isActive, onActivate }: Expand
 
     const imageTimer = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % Math.min(vehicle.images.length, 5));
-    }, 5000); // Change image every 3 seconds
+    }, 5000); // Change image every 5 seconds
 
     return () => clearInterval(imageTimer);
   }, [isActive, vehicle.images.length]);
@@ -56,10 +56,11 @@ export default function ExpandableCard({ vehicle, isActive, onActivate }: Expand
             className="absolute w-full h-full"
           >
             <Image
-              src={vehicle.images[currentImageIndex]}
+              src={vehicle.images[currentImageIndex] || "/placeholder.svg"}
               alt={`${title} - image ${currentImageIndex + 1}`}
               layout="fill"
               objectFit="cover"
+              unoptimized={vehicle.images[currentImageIndex]?.includes('bentleysupercenter.com')}
             />
           </motion.div>
         </AnimatePresence>

@@ -158,126 +158,63 @@ async function extractVehicleDataFromCard(vehicleCard, page) {
                     return images;
                 }
                 
-                // Try to extract the car ID from data attributes first
-                let carId = getAttribute('data-car-id') || 
-                           getAttribute('data-vehicle-id') || 
-                           getAttribute('data-id') ||
-                           getAttribute('data-inventory-id') ||
-                           getAttribute('data-photo-id') ||
-                           getAttribute('data-image-id') ||
-                           getAttribute('data-stocknum'); // Stock number might be the car ID
+                // First, try to extract car ID from existing image URLs on the card
+                let carId = null;
+                const existingImages = card.querySelectorAll('img[src*="inventoryphotos"]');
                 
-                // If not found in data attributes, try to extract from existing image URLs
-                if (!carId) {
-                    const existingImages = card.querySelectorAll('img[src*="inventoryphotos"]');
-                    if (existingImages.length > 0) {
-                        for (const img of existingImages) {
-                            if (img.src) {
-                                let src = img.src;
-                                if (src && src.startsWith('/')) {
-                                    src = `https://www.bentleysupercenter.com${src}`;
-                                }
-                                
-                                // Extract car ID from URL pattern: /inventoryphotos/{carId}/{vin}/ip/
-                                const carIdMatch = src.match(/\/inventoryphotos\/(\d+)\//);
-                                if (carIdMatch) {
-                                    carId = carIdMatch[1];
-                                    console.log(`[DEBUG] Extracted car ID: ${carId} from URL: ${src}`);
-                                    break;
-                                }
+                if (existingImages.length > 0) {
+                    for (const img of existingImages) {
+                        if (img.src) {
+                            let src = img.src;
+                            if (src && src.startsWith('/')) {
+                                src = `https://www.bentleysupercenter.com${src}`;
                             }
-                        }
-                    }
-                }
-                
-                // If still no car ID found, try to extract from vehicle detail page URL
-                if (!carId) {
-                    const vehicleLink = card.querySelector('a[href*="vehicle"]') || card.querySelector('a[href*="inventory"]');
-                    if (vehicleLink && vehicleLink.href) {
-                        const urlMatch = vehicleLink.href.match(/[?&]id=(\d+)/) || vehicleLink.href.match(/\/(\d+)\/?$/);
-                        if (urlMatch) {
-                            carId = urlMatch[1];
-                            console.log(`[DEBUG] Extracted car ID: ${carId} from vehicle link: ${vehicleLink.href}`);
-                        }
-                    }
-                }
-                
-                // If still no car ID, try to extract from any image URL that might be on the card
-                if (!carId) {
-                    const allImages = card.querySelectorAll('img');
-                    for (const img of allImages) {
-                        if (img.src && img.src.includes('inventoryphotos')) {
-                            const carIdMatch = img.src.match(/\/inventoryphotos\/(\d+)\//);
+                            
+                            // Extract car ID from URL pattern: /inventoryphotos/{carId}/{vin}/ip/
+                            const carIdMatch = src.match(/\/inventoryphotos\/(\d+)\//);
                             if (carIdMatch) {
                                 carId = carIdMatch[1];
-                                console.log(`[DEBUG] Extracted car ID: ${carId} from image src: ${img.src}`);
+                                console.log(`[DEBUG] Extracted car ID: ${carId} from existing image URL: ${src}`);
                                 break;
                             }
                         }
                     }
                 }
                 
-                // If still no car ID found, generate a unique ID based on VIN and stock number
-                if (!carId) {
-                    // Create a simple hash-based car ID from VIN and stock number
-                    const combined = `${vin}${stockNumber}`;
-                    let hash = 0;
-                    for (let i = 0; i < combined.length; i++) {
-                        const char = combined.charCodeAt(i);
-                        hash = ((hash << 5) - hash) + char;
-                        hash = hash & hash; // Convert to 32-bit integer
+                // If we found a car ID from existing images, use it to generate more images
+                if (carId) {
+                    console.log(`[DEBUG] Using car ID: ${carId} for VIN: ${vin}, Stock: ${stockNumber}`);
+                    
+                    // Convert VIN to lowercase for URL generation
+                    const vinLower = vin.toLowerCase();
+                    
+                    // Generate image URLs using the correct pattern
+                    // Pattern: https://www.bentleysupercenter.com/inventoryphotos/{carId}/{vin}/ip/{imageNumber}.jpg
+                    const baseUrl = `https://www.bentleysupercenter.com/inventoryphotos/${carId}/${vinLower}/ip`;
+                    
+                    console.log(`[DEBUG] Generating images for VIN: ${vin} (${vinLower}), Car ID: ${carId}`);
+                    console.log(`[DEBUG] Base URL: ${baseUrl}`);
+                    
+                    // Generate images 1-20 (most vehicles have 10-15 images)
+                    for (let i = 1; i <= 20; i++) {
+                        const imageUrl = `${baseUrl}/${i}.jpg`;
+                        images.push(imageUrl);
                     }
-                    carId = Math.abs(hash).toString().substring(0, 5); // Get first 5 digits
-                    console.log(`[DEBUG] Generated unique car ID: ${carId} for VIN: ${vin}, Stock: ${stockNumber}`);
+                    
+                    // Also try alternative image formats for the first few images
+                    for (let i = 1; i <= 5; i++) {
+                        const pngUrl = `${baseUrl}/${i}.png`;
+                        const jpegUrl = `${baseUrl}/${i}.jpeg`;
+                        images.push(pngUrl, jpegUrl);
+                    }
+                    
+                    // Clean all URLs by removing query parameters and remove duplicates
+                    const cleanImages = images.map(url => url.split('?')[0]);
+                    return [...new Set(cleanImages)];
+                } else {
+                    console.log(`[DEBUG] No car ID found for VIN: ${vin}, Stock: ${stockNumber} - no images will be generated`);
+                    return images;
                 }
-                
-                // Validate that we have a unique car ID for this specific vehicle
-                console.log(`[DEBUG] Using car ID: ${carId} for VIN: ${vin}, Stock: ${stockNumber}`);
-                
-                // Try to find existing image URLs first (fallback)
-                const existingImages = card.querySelectorAll('img[src*="inventoryphotos"]');
-                
-                if (existingImages.length > 0) {
-                    existingImages.forEach(img => {
-                        if (img.src) {
-                            let src = img.src;
-                            if (src && src.startsWith('/')) {
-                                src = `https://www.bentleysupercenter.com${src}`;
-                            }
-                            // Clean up the URL by removing ALL query parameters (timestamp, bg-color, width, etc.)
-                            src = src.split('?')[0];
-                            if (src && !images.includes(src)) {
-                                images.push(src);
-                            }
-                        }
-                    });
-                }
-                
-                // Generate image URLs using the correct pattern
-                // Pattern: https://www.bentleysupercenter.com/inventoryphotos/{carId}/{vin}/ip/{imageNumber}.jpg
-                const baseUrl = `https://www.bentleysupercenter.com/inventoryphotos/${carId}/${vin}/ip`;
-                
-                console.log(`[DEBUG] Generating images for VIN: ${vin}, Car ID: ${carId}`);
-                console.log(`[DEBUG] Base URL: ${baseUrl}`);
-                
-                // Try to get image count from data attributes or assume a reasonable number
-                const imageCount = parseInt(getAttribute('data-image-count')) || 10; // Default to 10 images
-                
-                for (let i = 1; i <= imageCount; i++) {
-                    const imageUrl = `${baseUrl}/${i}.jpg`;
-                    images.push(imageUrl);
-                }
-                
-                // Also try alternative image formats (but fewer to avoid duplicates)
-                for (let i = 1; i <= 3; i++) {
-                    const pngUrl = `${baseUrl}/${i}.png`;
-                    const jpegUrl = `${baseUrl}/${i}.jpeg`;
-                    images.push(pngUrl, jpegUrl);
-                }
-                
-                // Clean all URLs by removing query parameters and remove duplicates
-                const cleanImages = images.map(url => url.split('?')[0]);
-                return [...new Set(cleanImages)];
             };
 
             const validateImageUrl = async (url) => {
@@ -374,66 +311,7 @@ async function extractVehicleDataFromCard(vehicleCard, page) {
             };
         });
 
-        // If we still don't have a car ID, try to visit the vehicle detail page
-        if (!vehicleData.carId && vehicleData.stockNumber) {
-            try {
-                console.log(`[DEBUG] Attempting to get car ID from detail page for stock: ${vehicleData.stockNumber}`);
-                
-                // Find the vehicle detail link (avoid Carfax links)
-                const detailLink = await vehicleCard.$('a[href*="vehicle"]') || 
-                                  await vehicleCard.$('a[href*="inventory"]') ||
-                                  await vehicleCard.$('a[href*="bentleysupercenter"]');
-                if (detailLink) {
-                    const href = await detailLink.evaluate(link => link.href);
-                    if (href && !href.includes('carfax.com')) {
-                        console.log(`[DEBUG] Visiting detail page: ${href}`);
-                        
-                        // Open detail page in new tab
-                        const detailPage = await page.browser().newPage();
-                        await detailPage.goto(href, { waitUntil: 'networkidle2', timeout: 30000 });
-                        
-                        // Look for car ID in the detail page
-                        const carIdFromDetail = await detailPage.evaluate(() => {
-                            // Try multiple selectors to find car ID
-                            const selectors = [
-                                'img[src*="inventoryphotos"]',
-                                '[data-car-id]',
-                                '[data-vehicle-id]',
-                                '[data-inventory-id]'
-                            ];
-                            
-                            for (const selector of selectors) {
-                                const elements = document.querySelectorAll(selector);
-                                for (const element of elements) {
-                                    if (selector === 'img[src*="inventoryphotos"]') {
-                                        // Clean the URL first by removing query parameters
-                                        const cleanSrc = element.src.split('?')[0];
-                                        const carIdMatch = cleanSrc.match(/\/inventoryphotos\/(\d+)\//);
-                                        if (carIdMatch) return carIdMatch[1];
-                                    } else {
-                                        const carId = element.getAttribute('data-car-id') || 
-                                                    element.getAttribute('data-vehicle-id') || 
-                                                    element.getAttribute('data-inventory-id');
-                                        if (carId) return carId;
-                                    }
-                                }
-                            }
-                            return null;
-                        });
-                        
-                        if (carIdFromDetail) {
-                            vehicleData.carId = carIdFromDetail;
-                            console.log(`[DEBUG] Found car ID from detail page: ${carIdFromDetail}`);
-                        }
-                        
-                        await detailPage.close();
-                    }
-                }
-            } catch (detailError) {
-                console.log(`[DEBUG] Could not get car ID from detail page: ${detailError.message}`);
-                // If detail page fails, we'll use the generated car ID from above
-            }
-        }
+        // Note: Car ID is now extracted directly from existing image URLs in the getImages() function
         
         return vehicleData;
     } catch (error) {

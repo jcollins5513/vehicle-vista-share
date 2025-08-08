@@ -65,14 +65,15 @@ export default function VehicleGrid({ vehicles }: { vehicles: Vehicle[] }) {
             <div className="space-y-4">
               <div className="relative w-full h-64">
                 <Image
-                  src={selectedVehicle.images[currentImageIndex]}
+                  src={selectedVehicle.images[currentImageIndex] || "/placeholder.svg"}
                   alt={`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover rounded-lg"
                   priority={false}
+                  unoptimized={selectedVehicle.images[currentImageIndex]?.includes('bentleysupercenter.com')}
                 />
-                {selectedVehicle.images.length > 1 && (
+                {selectedVehicle.images.length > 1 && selectedVehicle.images[currentImageIndex] && (
                   <>
                     <Button
                       variant="outline"
