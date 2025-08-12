@@ -2,13 +2,12 @@ import 'dotenv/config';
 import { PrismaClient } from '../src/generated/prisma/index.js';
 import { Redis } from '@upstash/redis';
 import puppeteer from 'puppeteer';
-import cron from 'node-cron';
 import fs from 'fs';
 
 const CACHE_KEY = 'dealership:inventory';
 const CACHE_TTL = parseInt(process.env.SCRAPE_INTERVAL_HOURS || '24') * 60 * 60;
 const BASE_URL = 'https://www.bentleysupercenter.com/searchused.aspx';
-const ITEMS_PER_PAGE = 24;
+// const ITEMS_PER_PAGE = 24; // Not used currently
 
 const selectors = {
     CSS_SELECTOR_VEHICLE_CARD: 'div[data-vehicle-information]',
@@ -120,7 +119,7 @@ async function getBrowserLaunchOptions() {
     };
 }
 
-async function extractVehicleDataFromCard(vehicleCard, page) {
+async function extractVehicleDataFromCard(vehicleCard) {
     try {
         // Extract data from the vehicle card's data attributes
         const vehicleData = await vehicleCard.evaluate((card) => {
@@ -217,14 +216,7 @@ async function extractVehicleDataFromCard(vehicleCard, page) {
                 }
             };
 
-            const validateImageUrl = async (url) => {
-                try {
-                    const response = await fetch(url, { method: 'HEAD' });
-                    return response.ok;
-                } catch (error) {
-                    return false;
-                }
-            };
+            // Note: image URL validation is intentionally skipped for speed
 
             const getExteriorColor = () => {
                 const extColorElement = card.querySelector('.vehicle-colors__ext .vehicle-colors__icon');
@@ -251,6 +243,17 @@ async function extractVehicleDataFromCard(vehicleCard, page) {
                 });
                 
                 return pricing;
+            };
+
+            const getDetailUrl = () => {
+                const link = card.querySelector('a.vehicle-title, a[href*="/used/"], a[href*="vehicle-details"], a[href*="vin"]');
+                if (!link) return '';
+                let href = link.getAttribute('href') || '';
+                if (!href) return '';
+                if (href.startsWith('/')) {
+                    href = `https://www.bentleysupercenter.com${href}`;
+                }
+                return href;
             };
 
             // Extract basic vehicle information from data attributes
@@ -307,7 +310,8 @@ async function extractVehicleDataFromCard(vehicleCard, page) {
                 inStock,
                 features,
                 images,
-                pricingDetails
+                pricingDetails,
+                detailUrl: getDetailUrl()
             };
         });
 
@@ -317,6 +321,57 @@ async function extractVehicleDataFromCard(vehicleCard, page) {
     } catch (error) {
         console.error('[ERROR] Failed to extract data from vehicle card:', error.message);
         return null;
+    }
+}
+
+async function extractAllFeaturesFromDetail(browser, detailUrl) {
+    if (!detailUrl) return [];
+    let detailPage;
+    try {
+        detailPage = await browser.newPage();
+        await detailPage.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        await detailPage.goto(detailUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+        // Some pages lazy-load or truncate features; attempt to expand if button exists
+        try {
+            await detailPage.waitForSelector('.all-features__truncate-button', { timeout: 3000 });
+            await detailPage.evaluate(() => {
+                const btn = document.querySelector('.all-features__truncate-button');
+                if (btn) {
+                    (btn).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                }
+            });
+        } catch {
+            // Ignore if button not present
+        }
+
+        // Wait for features container or proceed after a short delay
+        try {
+            await detailPage.waitForSelector('#Options ul li, .all-features__tab-content', { timeout: 8000 });
+        } catch {}
+
+        const features = await detailPage.evaluate(() => {
+            const items = Array.from(document.querySelectorAll('#Options ul li'));
+            if (items.length > 0) {
+                return items.map(li => (li.textContent || '').trim()).filter(Boolean);
+            }
+            // Fallback: try any features lists inside all-features section
+            const container = document.querySelector('.bottom-block__item.bottom-block__item--all-features, .all-features');
+            if (!container) return [];
+            return Array.from(container.querySelectorAll('ul li'))
+                .map(li => (li.textContent || '').trim())
+                .filter(Boolean);
+        });
+
+        console.log(`[DEBUG] Extracted ${features.length} features from detail page: ${detailUrl}`);
+        return [...new Set(features)];
+    } catch (error) {
+        console.log('[DEBUG] Failed to extract features from detail page:', error.message);
+        return [];
+    } finally {
+        if (detailPage) {
+            try { await detailPage.close(); } catch {}
+        }
     }
 }
 
@@ -369,7 +424,7 @@ async function getTotalPages(page) {
         
         console.log(`[DEBUG] Detected ${totalPages} total pages`);
         return totalPages;
-    } catch (e) {
+    } catch {
         console.log("[DEBUG] Could not find total pages element, assuming 1 page.");
         return 1;
     }
@@ -408,7 +463,7 @@ async function scrapeInventory() {
             // Wait for vehicle cards to load
             try {
                 await page.waitForSelector(selectors.CSS_SELECTOR_VEHICLE_CARD, { timeout: 30000 });
-            } catch (error) {
+            } catch {
                 console.log(`[DEBUG] No vehicle cards found on page ${pageNum}, stopping pagination`);
                 break;
             }
@@ -433,6 +488,19 @@ async function scrapeInventory() {
                 console.log(`[DEBUG] Processing vehicle ${j + 1} of ${vehicleCards.length} on page ${pageNum}`);
                 const vehicleData = await extractVehicleDataFromCard(vehicleCards[j], page);
                 if (vehicleData) {
+                    // Enrich features with full list from the vehicle detail page, if available
+                    try {
+                        if (vehicleData.detailUrl) {
+                            const detailFeatures = await extractAllFeaturesFromDetail(browser, vehicleData.detailUrl);
+                            if (detailFeatures.length > 0) {
+                                const existing = Array.isArray(vehicleData.features) ? vehicleData.features : [];
+                                vehicleData.features = [...new Set([...existing, ...detailFeatures])];
+                            }
+                        }
+                    } catch {
+                        console.log('[DEBUG] Skipping detail feature extraction due to error while fetching detail features');
+                    }
+
                     allVehicles.push(vehicleData);
                     
                     // Save to database

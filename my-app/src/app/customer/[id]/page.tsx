@@ -49,6 +49,21 @@ export default function CustomerPage() {
     year: "",
   });
 
+  const getDisplayPrice = (vehicle: VehicleWithMedia): string => {
+    const pd = vehicle.pricingDetails || {};
+    const sale = pd["Sale Price"] || pd["Sale price"] || pd["SALE PRICE"] || pd["SalePrice"];
+    if (sale && typeof sale === "string") return sale.replace(/\s/g, "");
+    if (vehicle.salePrice) {
+      return typeof vehicle.salePrice === "number"
+        ? `$${vehicle.salePrice.toLocaleString()}`
+        : vehicle.salePrice;
+    }
+    if (typeof vehicle.price === "number" && vehicle.price > 0) {
+      return `$${vehicle.price.toLocaleString()}`;
+    }
+    return "Contact for Price";
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -118,7 +133,7 @@ export default function CustomerPage() {
       await navigator.clipboard.writeText(link);
       setCopiedLink(vehicle.id as unknown as number);
       setTimeout(() => setCopiedLink(null), 2000);
-    } catch (err) {
+    } catch {
       // Fallback for older browsers
       const textArea = document.createElement("textarea");
       textArea.value = link;
@@ -262,9 +277,7 @@ export default function CustomerPage() {
                 </h1>
                 <div className="flex items-center space-x-4 mb-4">
                   <span className="text-green-400 font-bold text-3xl">
-                    $
-                    {selectedVehicle.price?.toLocaleString() ||
-                      "Contact for Price"}
+                    {getDisplayPrice(selectedVehicle)}
                   </span>
                   <div className="flex space-x-1">
                     {[...Array(5)].map((_, i) => (
@@ -303,6 +316,28 @@ export default function CustomerPage() {
                   </p>
                 </div>
               </div>
+
+              {Array.isArray(selectedVehicle.features) && selectedVehicle.features.length > 0 && (
+                <div className="bg-white/10 rounded-lg p-4">
+                  <h3 className="text-white font-bold text-xl mb-3">Features</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <ul className="list-disc list-inside space-y-1 text-white/90">
+                      {selectedVehicle.features
+                        .slice(0, Math.ceil(selectedVehicle.features.length / 2))
+                        .map((feature, idx) => (
+                          <li key={`feat-left-${idx}`}>{feature}</li>
+                        ))}
+                    </ul>
+                    <ul className="list-disc list-inside space-y-1 text-white/90">
+                      {selectedVehicle.features
+                        .slice(Math.ceil(selectedVehicle.features.length / 2))
+                        .map((feature, idx) => (
+                          <li key={`feat-right-${idx}`}>{feature}</li>
+                        ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <Button
@@ -492,8 +527,7 @@ export default function CustomerPage() {
 
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-green-400 font-bold text-xl">
-                        $
-                        {vehicle.price?.toLocaleString() || "Contact for Price"}
+                        {getDisplayPrice(vehicle)}
                       </span>
                       <span className="text-white/60 text-sm">
                         Stock #{vehicle.stockNumber}
@@ -575,7 +609,7 @@ export default function CustomerPage() {
                         <div>
                           <span className="text-white/60">Price: </span>
                           <span className="text-green-400 font-bold">
-                            ${vehicle.price?.toLocaleString() || "Contact"}
+                            {getDisplayPrice(vehicle)}
                           </span>
                         </div>
                         <div>

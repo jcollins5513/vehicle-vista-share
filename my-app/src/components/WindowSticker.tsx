@@ -52,10 +52,12 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
     const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim();
 
     // Select only most important features for compact display
-    const keyFeatures = vehicle.features?.slice(0, 12) || [];
+    const allFeatures = vehicle.features || [];
     const chunkedFeatures = [];
-    for (let i = 0; i < keyFeatures.length; i += 6) {
-      chunkedFeatures.push(keyFeatures.slice(i, i + 6));
+    const columns = 2;
+    const perCol = Math.ceil(allFeatures.length / columns) || 1;
+    for (let i = 0; i < allFeatures.length; i += perCol) {
+      chunkedFeatures.push(allFeatures.slice(i, i + perCol));
     }
 
     printWindow.document.write(`
@@ -330,7 +332,7 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
                 <div><span>Transmission:</span><span>${vehicle.transmission || 'N/A'}</span></div>
               </div>
 
-              ${keyFeatures.length > 0 ? `
+              ${allFeatures.length > 0 ? `
                 <div class="features-section">
                   <div class="features-title">Key Features</div>
                   <div class="features-grid">
@@ -361,8 +363,17 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
           </div>
 
           <div class="price-section">
-            <div class="price-label">ASKING PRICE</div>
-            <div class="price-value">$${vehicle.price?.toLocaleString() || 'Contact for Price'}</div>
+            <div class="price-label">SALE PRICE</div>
+            <div class="price-value">
+              ${(() => {
+                const pd = (vehicle.pricingDetails || {});
+                const sale = pd['Sale Price'] || pd['Sale price'] || pd['SALE PRICE'] || pd['SalePrice'];
+                if (sale) return sale;
+                if (vehicle.salePrice) return typeof vehicle.salePrice === 'number' ? `$${vehicle.salePrice.toLocaleString()}` : vehicle.salePrice;
+                if (vehicle.price && vehicle.price > 0) return `$${vehicle.price.toLocaleString()}`;
+                return 'Contact for Price';
+              })()}
+            </div>
           </div>
 
           <div class="disclaimer">

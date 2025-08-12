@@ -63,6 +63,25 @@ export default function CustomerShowroomPage() {
     fetchData();
   }, []);
 
+  const getDisplayPrice = (vehicle: VehicleWithMedia): string => {
+    // Prefer Sale Price from pricingDetails
+    const pd = vehicle.pricingDetails || {};
+    const sale = pd['Sale Price'] || pd['Sale price'] || pd['SALE PRICE'] || pd['SalePrice'];
+    if (sale && typeof sale === 'string') {
+      return sale.replace(/\s/g, '');
+    }
+    // Fallback to explicit salePrice field if present
+    if (vehicle.salePrice) {
+      if (typeof vehicle.salePrice === 'number') return `$${vehicle.salePrice.toLocaleString()}`;
+      return vehicle.salePrice;
+    }
+    // Fallback to base price
+    if (typeof vehicle.price === 'number' && vehicle.price > 0) {
+      return `$${vehicle.price.toLocaleString()}`;
+    }
+    return 'Contact for Price';
+  };
+
   const filteredVehicles = vehicles
     .filter(
       (vehicle) =>
@@ -388,9 +407,9 @@ export default function CustomerShowroomPage() {
                   <p className="text-white/80 text-sm mb-3">{vehicle.model}</p>
 
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-green-400 font-bold text-xl">
-                      ${vehicle.price?.toLocaleString() || "Contact for Price"}
-                    </span>
+                      <span className="text-green-400 font-bold text-xl">
+                        {getDisplayPrice(vehicle)}
+                      </span>
                     <span className="text-white/60 text-sm">
                       Stock #{vehicle.stockNumber}
                     </span>
@@ -462,7 +481,7 @@ export default function CustomerShowroomPage() {
                   </div>
 
                   <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
+                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-white text-xl font-bold">
                         {vehicle.year} {vehicle.make} {vehicle.model}
                       </h3>

@@ -14,6 +14,8 @@ export interface Vehicle {
   make: string;
   model: string;
   price: number;
+  /** Optional sale price if available from scraped data */
+  salePrice?: number | string;
   mileage: number;
   features: string[];
   images: string[];
@@ -23,6 +25,8 @@ export interface Vehicle {
   transmission?: string;
   description?: string;
   sourceUrl?: string;
+  /** Detailed pricing breakdown as label -> value (e.g., Sale Price) */
+  pricingDetails?: Record<string, string>;
   facebookPostId?: string;
   lastFacebookPostDate?: Date;
   lastMarketplacePostDate?: Date;

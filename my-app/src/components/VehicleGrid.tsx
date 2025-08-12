@@ -13,6 +13,8 @@ type Vehicle = {
   make: string;
   model: string;
   price: number;
+  salePrice?: number | string;
+  pricingDetails?: Record<string, string>;
   mileage: number;
   color: string;
   images: string[];
@@ -100,7 +102,18 @@ export default function VehicleGrid({ vehicles }: { vehicles: Vehicle[] }) {
               <h2 className="text-2xl font-bold">
                 {selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}
               </h2>
-              <p className="text-xl">${selectedVehicle.price.toLocaleString()}</p>
+              <p className="text-xl">{
+                (() => {
+                  const pd = selectedVehicle.pricingDetails || {};
+                  const sale = pd['Sale Price'] || pd['Sale price'] || pd['SALE PRICE'] || pd['SalePrice'];
+                  if (sale && typeof sale === 'string') return sale.replace(/\s/g, '');
+                  if (selectedVehicle.salePrice) {
+                    return typeof selectedVehicle.salePrice === 'number' ? `$${selectedVehicle.salePrice.toLocaleString()}` : selectedVehicle.salePrice;
+                  }
+                  if (typeof selectedVehicle.price === 'number' && selectedVehicle.price > 0) return `$${selectedVehicle.price.toLocaleString()}`;
+                  return 'Contact for Price';
+                })()
+              }</p>
               <div className="text-sm text-gray-500 space-y-1">
                 <p>Mileage: {selectedVehicle.mileage.toLocaleString()} miles</p>
                 <p>Color: {selectedVehicle.color}</p>
