@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, PrinterIcon, FileText } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { VehicleWithMedia } from '@/types';
 import { generateBuyersGuidePDF, createPDFBlobUrl } from '@/lib/pdf-service';
 
@@ -53,6 +54,9 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
     }
   };
 
+  const getCarfaxUrl = (vin: string) => 
+    `https://www.carfax.com/VehicleHistory/p/Report.cfx?partner=DVW_1&vin=${vin}`;
+
   // Removed obsolete per-vehicle single-window template
 
   // Generate a single print window that contains multiple one-page stickers
@@ -61,6 +65,9 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
     const pages = vehiclesToPrint.map((vehicle) => {
       const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim();
       const vehicleColor = (vehicle as any).color || (vehicle as any).exteriorColor || 'N/A';
+
+      const sourceSvg = document.getElementById(`batch-source-qr-${vehicle.id}`)?.querySelector('svg')?.outerHTML || '';
+      const carfaxSvg = document.getElementById(`batch-carfax-qr-${vehicle.id}`)?.querySelector('svg')?.outerHTML || '';
 
       const MAX_FEATURES = 35;
       const keyFeatures = (vehicle.features || []).slice(0, MAX_FEATURES);
@@ -119,11 +126,13 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
             </div>
 
             <div class="qr-section">
-              <div class="qr-codes">
+            <div class="qr-codes">
                 <div class="qr-code">
+                  ${sourceSvg}
                   <div class="qr-label">Vehicle Details</div>
                 </div>
                 <div class="qr-code">
+                  ${carfaxSvg}
                   <div class="qr-label">CARFAX Report</div>
                 </div>
               </div>
@@ -183,8 +192,8 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
             .feature-column ul { list-style: disc; margin-left: 20px; font-size: 12px; }
             .feature-column li { margin-bottom: 3px; }
             .qr-section { display: flex; flex-direction: column; align-items: center; }
-            .qr-codes { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 15px; }
-            .qr-code svg { width: 90px !important; height: 90px !important; }
+            .qr-codes { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-bottom: 20px; }
+            .qr-code svg { width: 110px !important; height: 110px !important; }
             .qr-label { margin-top: 5px; font-weight: bold; font-size: 12px; }
             .price-section { text-align: center; margin: 30px 0 20px 0; padding: 20px; border: 3px solid #000; background: #f5f5f5; }
             .price-label { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #000; }
@@ -333,6 +342,25 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
                     Stock #{vehicle.stockNumber} | VIN: {vehicle.vin}
                   </div>
                 </Label>
+                {/* Hidden QR codes for batch print HTML extraction */}
+                <div className="hidden">
+                  <div id={`batch-source-qr-${vehicle.id}`}>
+                    <QRCodeSVG
+                      value={vehicle.sourceUrl || `${window.location.origin}/customer/${vehicle.id}`}
+                      size={140}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+                  <div id={`batch-carfax-qr-${vehicle.id}`}>
+                    <QRCodeSVG
+                      value={getCarfaxUrl(vehicle.vin)}
+                      size={140}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+                </div>
               </div>
             ))}
           </div>

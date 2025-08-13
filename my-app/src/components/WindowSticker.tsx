@@ -215,8 +215,8 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               display: flex;
               flex-direction: column;
               align-items: center;
-              gap: 12px;
-              margin-bottom: 15px;
+              gap: 20px;
+              margin-bottom: 20px;
             }
 
             .qr-code {
@@ -224,8 +224,8 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
             }
 
             .qr-code svg {
-              width: 90px !important;
-              height: 90px !important;
+              width: 110px !important;
+              height: 110px !important;
             }
 
             .qr-label {
@@ -316,8 +316,8 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               .vehicle-title { font-size: 20px; }
 
               .qr-code svg {
-                width: 75px !important;
-                height: 75px !important;
+                width: 95px !important;
+                height: 95px !important;
               }
 
               .price-value { font-size: 30px; }
