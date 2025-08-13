@@ -58,7 +58,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
     const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim();
     
     // Select only most important features for compact display and single-page fit
-    const MAX_FEATURES = 18;
+    const MAX_FEATURES =35;
     const keyFeatures = (vehicle.features || []).slice(0, MAX_FEATURES);
     const chunkedFeatures = [] as string[][];
     const columns = 2;
