@@ -54,7 +54,7 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
     // Select only most important features for compact display
     const allFeatures = vehicle.features || [];
     // Cap features to guarantee single-page fit
-    const MAX_FEATURES = 18;
+    const MAX_FEATURES = 35;
     const selectedFeatures = allFeatures.slice(0, MAX_FEATURES);
     const chunkedFeatures = [];
     const columns = 2;
@@ -62,6 +62,7 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
     for (let i = 0; i < selectedFeatures.length; i += perCol) {
       chunkedFeatures.push(selectedFeatures.slice(i, i + perCol));
     }
+    const vehicleColor = vehicle.color || (vehicle as any).exteriorColor || 'N/A';
 
     printWindow.document.write(`
       <html>
@@ -182,7 +183,7 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               display: grid;
               grid-template-columns: 1fr 1fr;
               gap: 15px;
-              max-height: 4in;
+              max-height: 5in;
               overflow: hidden;
             }
 
@@ -212,7 +213,9 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
 
             .qr-codes {
               display: flex;
-              gap: 20px;
+              flex-direction: column;
+              align-items: center;
+              gap: 12px;
               margin-bottom: 15px;
             }
 
@@ -221,8 +224,8 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
             }
 
             .qr-code svg {
-              width: 100px !important;
-              height: 100px !important;
+              width: 90px !important;
+              height: 90px !important;
             }
 
             .qr-label {
@@ -313,8 +316,8 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               .vehicle-title { font-size: 20px; }
 
               .qr-code svg {
-                width: 85px !important;
-                height: 85px !important;
+                width: 75px !important;
+                height: 75px !important;
               }
 
               .price-value { font-size: 30px; }
@@ -339,7 +342,7 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               <div class="basic-info">
                 <div><span>Odometer:</span><span>${vehicle.mileage?.toLocaleString() || 'N/A'}</span></div>
                 <div><span>Engine:</span><span>${vehicle.engine || 'N/A'}</span></div>
-                <div><span>Color:</span><span>${vehicle.color}</span></div>
+                <div><span>Color:</span><span>${vehicleColor}</span></div>
                 <div><span>Transmission:</span><span>${vehicle.transmission || 'N/A'}</span></div>
               </div>
 

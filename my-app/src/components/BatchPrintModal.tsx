@@ -53,278 +53,37 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
     }
   };
 
-  // Generate window sticker HTML for a vehicle
-  const generateWindowStickerHTML = (vehicle: VehicleWithMedia) => {
-    const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim();
-    
-    // Select only most important features for compact display and single-page fit
-    const MAX_FEATURES =35;
-    const keyFeatures = (vehicle.features || []).slice(0, MAX_FEATURES);
-    const chunkedFeatures = [] as string[][];
-    const columns = 2;
-    const perCol = Math.ceil(keyFeatures.length / columns) || 1;
-    for (let i = 0; i < keyFeatures.length; i += perCol) {
-      chunkedFeatures.push(keyFeatures.slice(i, i + perCol));
-    }
+  // Removed obsolete per-vehicle single-window template
 
-    return `
-      <html>
-        <head>
-          <title>${vehicleTitle} - Window Sticker</title>
-          <style>
-            /* Reset and override all browser defaults */
-            html, body, div, span, h1, h2, h3, h4, h5, h6, p {
-              margin: 0;
-              padding: 0;
-            }
+  // Generate a single print window that contains multiple one-page stickers
+  const generateBatchWindowStickersHTML = (vehiclesToPrint: VehicleWithMedia[]) => {
+    // Build per-vehicle pages
+    const pages = vehiclesToPrint.map((vehicle) => {
+      const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim();
+      const vehicleColor = (vehicle as any).color || (vehicle as any).exteriorColor || 'N/A';
 
-            @page {
-              margin: 0.5in;
-              size: letter;
-              /* Remove headers and footers */
-              @top-left { content: none; }
-              @top-center { content: none; }
-              @top-right { content: none; }
-              @bottom-left { content: none; }
-              @bottom-center { content: none; }
-              @bottom-right { content: none; }
-              @top-left-corner { content: none; }
-              @top-right-corner { content: none; }
-              @bottom-left-corner { content: none; }
-              @bottom-right-corner { content: none; }
-            }
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            
-            body {
-              font-family: Arial, sans-serif;
-              padding: 20px;
-              background: white;
-              color: black;
-              line-height: 1.3;
-              max-width: 8.5in;
-              margin: 0 auto;
-            }
+      const MAX_FEATURES = 35;
+      const keyFeatures = (vehicle.features || []).slice(0, MAX_FEATURES);
+      const columns = 2;
+      const perCol = Math.ceil(keyFeatures.length / columns) || 1;
+      const chunkedFeatures: string[][] = [];
+      for (let i = 0; i < keyFeatures.length; i += perCol) {
+        chunkedFeatures.push(keyFeatures.slice(i, i + perCol));
+      }
 
-            /* Constrain to single printable page (10in after 0.5in margins) */
-            .page {
-              height: 10in;
-              overflow: hidden;
-              display: flex;
-              flex-direction: column;
-            }
+      const priceHtml = (() => {
+        const pd = (vehicle.pricingDetails || {} as Record<string, string>);
+        const sale = pd['Sale Price'] || pd['Sale price'] || pd['SALE PRICE'] || pd['SalePrice'];
+        if (sale) return sale;
+        const sp: any = (vehicle as any).salePrice;
+        if (sp) return typeof sp === 'number' ? `$${sp.toLocaleString()}` : sp;
+        const price: any = (vehicle as any).price;
+        if (price && price > 0) return `$${price.toLocaleString()}`;
+        return 'Contact for Price';
+      })();
 
-            .header {
-              display: flex;
-              align-items: center;
-              margin-bottom: 25px;
-              border-bottom: 3px solid #000;
-              padding-bottom: 15px;
-              page-break-inside: avoid;
-            }
-
-            .header img {
-              width: 220px;
-              height: auto;
-              margin-right: 30px;
-            }
-
-            .header-text {
-              flex: 1;
-            }
-
-            .vehicle-title {
-              font-size: 24px;
-              font-weight: bold;
-              margin: 0 0 8px 0;
-              color: #000;
-            }
-
-            .stock-info {
-              font-size: 16px;
-              margin: 3px 0;
-              color: #333;
-            }
-
-            .content-grid {
-              display: grid;
-              grid-template-columns: 2fr 1fr;
-              gap: 30px;
-              margin-bottom: 20px;
-              page-break-inside: avoid;
-            }
-
-            .basic-info {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 12px;
-              font-size: 14px;
-              margin-bottom: 25px;
-            }
-
-            .basic-info div {
-              display: flex;
-              justify-content: space-between;
-              border-bottom: 1px dotted #666;
-              padding-bottom: 4px;
-            }
-
-            .basic-info div span:first-child {
-              font-weight: bold;
-            }
-
-            .features-section { margin-bottom: 20px; }
-
-            .features-grid {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 15px;
-              max-height: 4in;
-              overflow: hidden;
-            }
-
-            .feature-column ul {
-              list-style: disc;
-              margin-left: 20px;
-              font-size: 12px;
-            }
-
-            .feature-column li {
-              margin-bottom: 3px;
-            }
-
-            .features-title {
-              font-size: 16px;
-              font-weight: bold;
-              margin-bottom: 12px;
-              text-decoration: underline;
-              color: #000;
-            }
-
-            .qr-section {
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-            }
-
-            .qr-codes {
-              display: flex;
-              gap: 20px;
-              margin-bottom: 15px;
-            }
-
-            .qr-code {
-              text-align: center;
-            }
-
-            .qr-code svg {
-              width: 100px !important;
-              height: 100px !important;
-            }
-
-            .qr-label {
-              margin-top: 5px;
-              font-weight: bold;
-              font-size: 12px;
-            }
-
-            .price-section {
-              text-align: center;
-              margin: 30px 0 20px 0;
-              padding: 20px;
-              border: 3px solid #000;
-              background: #f5f5f5;
-              page-break-inside: avoid;
-            }
-
-            .price-label {
-              font-size: 18px;
-              font-weight: bold;
-              margin-bottom: 10px;
-              color: #000;
-            }
-
-            .price-value {
-              font-size: 36px;
-              font-weight: bold;
-              color: #d4af37;
-              text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            }
-
-            .disclaimer {
-              font-size: 8px;
-              margin-top: 20px;
-              border-top: 1px solid #ccc;
-              padding-top: 10px;
-              text-align: justify;
-              line-height: 1.2;
-              max-height: 1.2in;
-              overflow: hidden;
-              page-break-inside: avoid;
-            }
-            
-            @media print {
-              /* Force remove all page headers and footers */
-              @page {
-                margin: 0.5in 0.5in 0.5in 0.5in;
-                size: letter;
-
-                /* Explicitly remove all header/footer content */
-                @top-left { content: ""; display: none; }
-                @top-center { content: ""; display: none; }
-                @top-right { content: ""; display: none; }
-                @bottom-left { content: ""; display: none; }
-                @bottom-center { content: ""; display: none; }
-                @bottom-right { content: ""; display: none; }
-                @top-left-corner { content: ""; display: none; }
-                @top-right-corner { content: ""; display: none; }
-                @bottom-left-corner { content: ""; display: none; }
-                @bottom-right-corner { content: ""; display: none; }
-              }
-
-              /* Override browser print defaults */
-              html {
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-
-              body {
-                padding: 0;
-                max-width: none;
-                min-height: auto;
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-
-              /* Hide any potential timestamp elements */
-              .timestamp, .print-date, .print-time,
-              [class*="timestamp"], [class*="date"], [class*="time"] {
-                display: none !important;
-                visibility: hidden !important;
-              }
-
-              .header img { width: 200px; }
-
-              .vehicle-title { font-size: 20px; }
-
-              .qr-code svg {
-                width: 85px !important;
-                height: 85px !important;
-              }
-
-              .price-value { font-size: 30px; }
-
-              .disclaimer { font-size: 7px; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="page">
+      return `
+        <div class="page">
           <div class="header">
             <img src="${window.location.origin}/Bentley-logo-groups.svg" alt="Bentley Logo" />
             <div class="header-text">
@@ -339,7 +98,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
               <div class="basic-info">
                 <div><span>Odometer:</span><span>${vehicle.mileage?.toLocaleString() || 'N/A'}</span></div>
                 <div><span>Engine:</span><span>${vehicle.engine || 'N/A'}</span></div>
-                <div><span>Color:</span><span>${vehicle.color}</span></div>
+                <div><span>Color:</span><span>${vehicleColor}</span></div>
                 <div><span>Transmission:</span><span>${vehicle.transmission || 'N/A'}</span></div>
               </div>
 
@@ -372,19 +131,71 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
           </div>
 
           <div class="price-section">
-            <div class="price-label">ASKING PRICE</div>
-            <div class="price-value">$${vehicle.price?.toLocaleString() || 'Contact for Price'}</div>
+            <div class="price-label">SALE PRICE</div>
+            <div class="price-value">${priceHtml}</div>
           </div>
 
           <div class="disclaimer">
             It is your responsibility to address any and all differences between information on this label and the actual vehicle specifications and/or any warranties offered prior to the sale of this vehicle. Vehicle data on this label is compiled from publicly available sources believed by the Publisher to be reliable. Vehicle data may change without notice. The Publisher assumes no responsibility for errors and/or omissions in this data, the compilation of this data or sticker placement, and makes no representations express or implied to any actual or prospective purchaser of the vehicle as to the condition of the vehicle, vehicle specifications, ownership, vehicle history, equipment/accessories, price or warranties. Actual mileage may vary.
           </div>
-          </div>
+        </div>
+      `;
+    }).join('\n');
 
+    // One aggregated document with one style and many pages
+    return `
+      <html>
+        <head>
+          <title>Window Stickers</title>
+          <style>
+            html, body { margin: 0; padding: 0; }
+            @page { margin: 0.5in; size: letter; }
+            * { box-sizing: border-box; }
+            body {
+              font-family: Arial, sans-serif;
+              background: white;
+              color: black;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .page {
+              height: 10in;
+              overflow: hidden;
+              display: flex;
+              flex-direction: column;
+              break-inside: avoid;
+              page-break-inside: avoid;
+            }
+            @media print {
+              .page { break-after: page; }
+              .page:last-child { break-after: auto; }
+            }
+            .header { display: flex; align-items: center; margin-bottom: 25px; border-bottom: 3px solid #000; padding-bottom: 15px; }
+            .header img { width: 220px; height: auto; margin-right: 30px; }
+            .vehicle-title { font-size: 24px; font-weight: bold; margin: 0 0 8px 0; color: #000; }
+            .stock-info { font-size: 16px; margin: 3px 0; color: #333; }
+            .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 20px; }
+            .basic-info { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; margin-bottom: 25px; }
+            .basic-info div { display: flex; justify-content: space-between; border-bottom: 1px dotted #666; padding-bottom: 4px; }
+            .basic-info div span:first-child { font-weight: bold; }
+            .features-section { margin-bottom: 20px; }
+            .features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-height: 5in; overflow: hidden; }
+            .feature-column ul { list-style: disc; margin-left: 20px; font-size: 12px; }
+            .feature-column li { margin-bottom: 3px; }
+            .qr-section { display: flex; flex-direction: column; align-items: center; }
+            .qr-codes { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 15px; }
+            .qr-code svg { width: 90px !important; height: 90px !important; }
+            .qr-label { margin-top: 5px; font-weight: bold; font-size: 12px; }
+            .price-section { text-align: center; margin: 30px 0 20px 0; padding: 20px; border: 3px solid #000; background: #f5f5f5; }
+            .price-label { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #000; }
+            .price-value { font-size: 36px; font-weight: bold; color: #d4af37; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+            .disclaimer { font-size: 8px; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; text-align: justify; line-height: 1.2; max-height: 1.2in; overflow: hidden; }
+          </style>
+        </head>
+        <body>
+          ${pages}
           <script>
-            window.onload = () => {
-              window.print();
-            };
+            window.onload = () => { window.print(); };
           </script>
         </body>
       </html>
@@ -407,36 +218,12 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
       console.log('First few vehicles:', selectedVehiclesList.slice(0, 3).map(v => ({ id: v.id, make: v.make, model: v.model })));
       
       if (printType === 'window-sticker') {
-        // Store all print windows to prevent garbage collection
-        const printWindows: Window[] = [];
-        
-        // First, open all windows and write HTML content
-        for (let i = 0; i < selectedVehiclesList.length; i++) {
-          const vehicle = selectedVehiclesList[i];
-          setProgress({ current: i + 1, total: selectedVehiclesList.length });
-          
-          const html = generateWindowStickerHTML(vehicle);
-          const printWindow = window.open('', '_blank');
-          if (printWindow) {
-            printWindow.document.write(html);
-            printWindow.document.close(); // Important: close the document to finish loading
-            printWindows.push(printWindow);
-          }
-          
-          // Small delay between opening windows to prevent browser blocking
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-        
-        // Wait a bit to ensure all windows have loaded their content
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Now trigger print for each window
-        for (const printWindow of printWindows) {
-          try {
-            printWindow.print();
-          } catch (e) {
-            console.error('Error printing window:', e);
-          }
+        // Open a single print window with multiple one-page stickers
+        const html = generateBatchWindowStickersHTML(selectedVehiclesList);
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
         }
       } else {
         // Store all PDF URLs to prevent garbage collection
