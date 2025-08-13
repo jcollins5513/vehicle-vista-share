@@ -57,11 +57,14 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
   const generateWindowStickerHTML = (vehicle: VehicleWithMedia) => {
     const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim();
     
-    // Select only most important features for compact display
-    const keyFeatures = vehicle.features?.slice(0, 12) || [];
-    const chunkedFeatures = [];
-    for (let i = 0; i < keyFeatures.length; i += 6) {
-      chunkedFeatures.push(keyFeatures.slice(i, i + 6));
+    // Select only most important features for compact display and single-page fit
+    const MAX_FEATURES = 18;
+    const keyFeatures = (vehicle.features || []).slice(0, MAX_FEATURES);
+    const chunkedFeatures = [] as string[][];
+    const columns = 2;
+    const perCol = Math.ceil(keyFeatures.length / columns) || 1;
+    for (let i = 0; i < keyFeatures.length; i += perCol) {
+      chunkedFeatures.push(keyFeatures.slice(i, i + perCol));
     }
 
     return `
@@ -104,7 +107,14 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
               line-height: 1.3;
               max-width: 8.5in;
               margin: 0 auto;
-              min-height: 11in;
+            }
+
+            /* Constrain to single printable page (10in after 0.5in margins) */
+            .page {
+              height: 10in;
+              overflow: hidden;
+              display: flex;
+              flex-direction: column;
             }
 
             .header {
@@ -113,10 +123,11 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
               margin-bottom: 25px;
               border-bottom: 3px solid #000;
               padding-bottom: 15px;
+              page-break-inside: avoid;
             }
 
             .header img {
-              width: 250px;
+              width: 220px;
               height: auto;
               margin-right: 30px;
             }
@@ -142,7 +153,8 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
               display: grid;
               grid-template-columns: 2fr 1fr;
               gap: 30px;
-              margin-bottom: 25px;
+              margin-bottom: 20px;
+              page-break-inside: avoid;
             }
 
             .basic-info {
@@ -164,14 +176,14 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
               font-weight: bold;
             }
 
-            .features-section {
-              margin-bottom: 25px;
-            }
+            .features-section { margin-bottom: 20px; }
 
             .features-grid {
               display: grid;
               grid-template-columns: 1fr 1fr;
               gap: 15px;
+              max-height: 4in;
+              overflow: hidden;
             }
 
             .feature-column ul {
@@ -225,6 +237,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
               padding: 20px;
               border: 3px solid #000;
               background: #f5f5f5;
+              page-break-inside: avoid;
             }
 
             .price-label {
@@ -248,6 +261,9 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
               padding-top: 10px;
               text-align: justify;
               line-height: 1.2;
+              max-height: 1.2in;
+              overflow: hidden;
+              page-break-inside: avoid;
             }
             
             @media print {
@@ -277,7 +293,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
               }
 
               body {
-                padding: 15px;
+                padding: 0;
                 max-width: none;
                 min-height: auto;
                 -webkit-print-color-adjust: exact !important;
@@ -292,30 +308,23 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
                 visibility: hidden !important;
               }
 
-              .header img {
-                width: 200px;
-              }
+              .header img { width: 200px; }
 
-              .vehicle-title {
-                font-size: 20px;
-              }
+              .vehicle-title { font-size: 20px; }
 
               .qr-code svg {
                 width: 85px !important;
                 height: 85px !important;
               }
 
-              .price-value {
-                font-size: 30px;
-              }
+              .price-value { font-size: 30px; }
 
-              .disclaimer {
-                font-size: 7px;
-              }
+              .disclaimer { font-size: 7px; }
             }
           </style>
         </head>
         <body>
+          <div class="page">
           <div class="header">
             <img src="${window.location.origin}/Bentley-logo-groups.svg" alt="Bentley Logo" />
             <div class="header-text">
@@ -369,6 +378,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
 
           <div class="disclaimer">
             It is your responsibility to address any and all differences between information on this label and the actual vehicle specifications and/or any warranties offered prior to the sale of this vehicle. Vehicle data on this label is compiled from publicly available sources believed by the Publisher to be reliable. Vehicle data may change without notice. The Publisher assumes no responsibility for errors and/or omissions in this data, the compilation of this data or sticker placement, and makes no representations express or implied to any actual or prospective purchaser of the vehicle as to the condition of the vehicle, vehicle specifications, ownership, vehicle history, equipment/accessories, price or warranties. Actual mileage may vary.
+          </div>
           </div>
 
           <script>
