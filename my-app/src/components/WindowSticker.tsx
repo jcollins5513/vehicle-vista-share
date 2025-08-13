@@ -53,11 +53,14 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
 
     // Select only most important features for compact display
     const allFeatures = vehicle.features || [];
+    // Cap features to guarantee single-page fit
+    const MAX_FEATURES = 18;
+    const selectedFeatures = allFeatures.slice(0, MAX_FEATURES);
     const chunkedFeatures = [];
     const columns = 2;
-    const perCol = Math.ceil(allFeatures.length / columns) || 1;
-    for (let i = 0; i < allFeatures.length; i += perCol) {
-      chunkedFeatures.push(allFeatures.slice(i, i + perCol));
+    const perCol = Math.ceil(selectedFeatures.length / columns) || 1;
+    for (let i = 0; i < selectedFeatures.length; i += perCol) {
+      chunkedFeatures.push(selectedFeatures.slice(i, i + perCol));
     }
 
     printWindow.document.write(`
@@ -102,7 +105,14 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               line-height: 1.3;
               max-width: 8.5in;
               margin: 0 auto;
-              min-height: 11in;
+            }
+
+            /* Constrain to single printable page (10in after 0.5in page margins) */
+            .page {
+              height: 10in;
+              overflow: hidden;
+              display: flex;
+              flex-direction: column;
             }
 
             .header {
@@ -111,10 +121,11 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               margin-bottom: 25px;
               border-bottom: 3px solid #000;
               padding-bottom: 15px;
+              page-break-inside: avoid;
             }
 
             .header img {
-              width: 250px;
+              width: 220px;
               height: auto;
               margin-right: 30px;
             }
@@ -140,7 +151,8 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               display: grid;
               grid-template-columns: 2fr 1fr;
               gap: 30px;
-              margin-bottom: 25px;
+              margin-bottom: 20px;
+              page-break-inside: avoid;
             }
 
             .basic-info {
@@ -163,13 +175,15 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
             }
 
             .features-section {
-              margin-bottom: 25px;
+              margin-bottom: 20px;
             }
 
             .features-grid {
               display: grid;
               grid-template-columns: 1fr 1fr;
               gap: 15px;
+              max-height: 4in;
+              overflow: hidden;
             }
 
             .feature-column ul {
@@ -223,6 +237,7 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               padding: 20px;
               border: 3px solid #000;
               background: #f5f5f5;
+              page-break-inside: avoid;
             }
 
             .price-label {
@@ -246,6 +261,9 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               padding-top: 10px;
               text-align: justify;
               line-height: 1.2;
+              max-height: 1.2in;
+              overflow: hidden;
+              page-break-inside: avoid;
             }
             
             @media print {
@@ -275,7 +293,7 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
               }
 
               body {
-                padding: 15px;
+                padding: 0;
                 max-width: none;
                 min-height: auto;
                 -webkit-print-color-adjust: exact !important;
@@ -290,30 +308,23 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
                 visibility: hidden !important;
               }
 
-              .header img {
-                width: 200px;
-              }
+              .header img { width: 200px; }
 
-              .vehicle-title {
-                font-size: 20px;
-              }
+              .vehicle-title { font-size: 20px; }
 
               .qr-code svg {
                 width: 85px !important;
                 height: 85px !important;
               }
 
-              .price-value {
-                font-size: 30px;
-              }
+              .price-value { font-size: 30px; }
 
-              .disclaimer {
-                font-size: 7px;
-              }
+              .disclaimer { font-size: 7px; }
             }
           </style>
         </head>
         <body>
+          <div class="page">
           <div class="header">
             <img src="/Bentley-logo-groups.svg" alt="Bentley Logo" />
             <div class="header-text">
@@ -332,7 +343,7 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
                 <div><span>Transmission:</span><span>${vehicle.transmission || 'N/A'}</span></div>
               </div>
 
-              ${allFeatures.length > 0 ? `
+              ${selectedFeatures.length > 0 ? `
                 <div class="features-section">
                   <div class="features-title">Key Features</div>
                   <div class="features-grid">
@@ -378,6 +389,7 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
 
           <div class="disclaimer">
             It is your responsibility to address any and all differences between information on this label and the actual vehicle specifications and/or any warranties offered prior to the sale of this vehicle. Vehicle data on this label is compiled from publicly available sources believed by the Publisher to be reliable. Vehicle data may change without notice. The Publisher assumes no responsibility for errors and/or omissions in this data, the compilation of this data or sticker placement, and makes no representations express or implied to any actual or prospective purchaser of the vehicle as to the condition of the vehicle, vehicle specifications, ownership, vehicle history, equipment/accessories, price or warranties. Actual mileage may vary.
+          </div>
           </div>
 
           <script>
