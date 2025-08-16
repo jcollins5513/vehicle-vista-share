@@ -16,6 +16,8 @@ type Vehicle = {
   make: string;
   model: string;
   price: number;
+  salePrice?: number | string;
+  pricingDetails?: Record<string, string>;
   mileage: number;
   color: string;
   images: string[];
@@ -28,7 +30,17 @@ interface VehicleCardProps {
 
 export default function VehicleCard({ vehicle, onClick }: VehicleCardProps) {
   const title = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
-  const description = `$${vehicle.price.toLocaleString()}`;
+  const getDisplayPrice = (): string => {
+    const pd = vehicle.pricingDetails || {};
+    const sale = pd['Sale Price'] || pd['Sale price'] || pd['SALE PRICE'] || pd['SalePrice'];
+    if (sale && typeof sale === 'string') return sale.replace(/\s/g, '');
+    if (vehicle.salePrice) {
+      return typeof vehicle.salePrice === 'number' ? `$${vehicle.salePrice.toLocaleString()}` : vehicle.salePrice;
+    }
+    if (typeof vehicle.price === 'number' && vehicle.price > 0) return `$${vehicle.price.toLocaleString()}`;
+    return 'Contact for Price';
+  };
+  const description = getDisplayPrice();
 
   return (
     <Card
@@ -40,12 +52,13 @@ export default function VehicleCard({ vehicle, onClick }: VehicleCardProps) {
     >
       <CardHeader className="p-0 relative h-48 w-full">
         <Image
-          src={vehicle.images[0]}
+          src={vehicle.images[0] || "/placeholder.svg"}
           alt={title}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover rounded-t-lg"
           priority={false}
+          unoptimized={vehicle.images[0]?.includes('bentleysupercenter.com')}
         />
       </CardHeader>
       <CardContent className="p-4">

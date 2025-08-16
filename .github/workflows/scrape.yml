@@ -1,0 +1,42 @@
+name: Run Vehicle Scraper
+
+on:
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+  schedule:
+    - cron: '0 8 * * *' # Runs every day at 8 AM UTC
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: my-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./my-app
+        run: npm install
+
+      - name: Run scraper script
+        working-directory: ./my-app
+        run: node scripts/scrape.js
+        env:
+          NODE_ENV: production
+
+      - name: Upload scrape results
+        uses: actions/upload-artifact@v4
+        if: always() # Always run this step to upload logs even if the script fails
+        with:
+          name: scrape-results
+          path: |
+            my-app/vehicle-data.json
+            my-app/error-*.png
+            my-app/error-*.html
+          if-no-files-found: ignore # Don't error if no files are found

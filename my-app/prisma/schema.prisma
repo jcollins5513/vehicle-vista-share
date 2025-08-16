@@ -15,24 +15,37 @@ datasource db {
 }
 
 model Vehicle {
-  id            String   @id @default(uuid())
-  stockNumber   String   @unique
-  make          String
-  model         String
-  year          Int
-  price         Float
-  mileage       Int
-  exteriorColor String?
-  vin           String?  @unique
-  trim          String?
-  engine        String?
-  transmission  String?
-  bodyStyle     String?
-  status        String   @default("available")
-  sourceUrl     String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  photos        String[]
+  id              String   @id @default(uuid())
+  stockNumber     String   @unique
+  make            String
+  model           String
+  year            Int
+  price           Float
+  salePrice       String?
+  mileage         Int?
+  exteriorColor   String?
+  interiorColor   String?
+  vin             String?  @unique
+  trim            String?
+  engine          String?
+  transmission    String?
+  fuelType        String?
+  bodyStyle       String?
+  modelCode       String?
+  condition       String?
+  mpgCity         Int?
+  mpgHwy          Int?
+  inStock         Boolean  @default(true)
+  status          String   @default("available")
+  sourceUrl       String?
+  features        String[]
+  images          String[]
+  pricingDetails  Json?
+  carfaxHighlights String[]
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  photos          String[]
   
   @@map("vehicles")
 }

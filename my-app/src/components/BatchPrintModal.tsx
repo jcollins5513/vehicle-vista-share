@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, PrinterIcon, FileText } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { VehicleWithMedia } from '@/types';
 import { generateBuyersGuidePDF, createPDFBlobUrl } from '@/lib/pdf-service';
 
@@ -18,295 +19,78 @@ interface BatchPrintModalProps {
 }
 
 export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrintModalProps) {
-  const [selectedVehicles, setSelectedVehicles] = useState<Set<string>>(new Set());
+  // Using an array instead of a Set for better React state management
+  const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
   const [printType, setPrintType] = useState<'window-sticker' | 'buyers-guide'>('window-sticker');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
 
   // Toggle selection of a vehicle
   const toggleVehicleSelection = (vehicleId: string) => {
-    const newSelection = new Set(selectedVehicles);
-    if (newSelection.has(vehicleId)) {
-      newSelection.delete(vehicleId);
-    } else {
-      newSelection.add(vehicleId);
-    }
-    setSelectedVehicles(newSelection);
+    setSelectedVehicleIds(prev => {
+      const isSelected = prev.includes(vehicleId);
+      const newSelection = isSelected 
+        ? prev.filter(id => id !== vehicleId)
+        : [...prev, vehicleId];
+      
+      console.log('Vehicle toggled:', vehicleId, 'Selected:', !isSelected);
+      console.log('New selection size:', newSelection.length);
+      console.log('Selection contents:', newSelection);
+      
+      return newSelection;
+    });
   };
 
   // Select or deselect all vehicles
   const toggleSelectAll = (select: boolean) => {
     if (select) {
-      const allIds = new Set(vehicles.map(v => v.id));
-      setSelectedVehicles(allIds);
+      const allIds = vehicles.map(v => v.id);
+      console.log('Selecting all vehicles:', allIds.length, 'vehicles');
+      console.log('All IDs:', allIds);
+      setSelectedVehicleIds(allIds);
     } else {
-      setSelectedVehicles(new Set());
+      console.log('Deselecting all vehicles');
+      setSelectedVehicleIds([]);
     }
   };
 
-  // Generate window sticker HTML for a vehicle
-  const generateWindowStickerHTML = (vehicle: VehicleWithMedia) => {
-    const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim();
-    
-    // Select only most important features for compact display
-    const keyFeatures = vehicle.features?.slice(0, 12) || [];
-    const chunkedFeatures = [];
-    for (let i = 0; i < keyFeatures.length; i += 6) {
-      chunkedFeatures.push(keyFeatures.slice(i, i + 6));
-    }
+  const getCarfaxUrl = (vin: string) => 
+    `https://www.carfax.com/VehicleHistory/p/Report.cfx?partner=DVW_1&vin=${vin}`;
 
-    return `
-      <html>
-        <head>
-          <title>${vehicleTitle} - Window Sticker</title>
-          <style>
-            /* Reset and override all browser defaults */
-            html, body, div, span, h1, h2, h3, h4, h5, h6, p {
-              margin: 0;
-              padding: 0;
-            }
+  // Removed obsolete per-vehicle single-window template
 
-            @page {
-              margin: 0.5in;
-              size: letter;
-              /* Remove headers and footers */
-              @top-left { content: none; }
-              @top-center { content: none; }
-              @top-right { content: none; }
-              @bottom-left { content: none; }
-              @bottom-center { content: none; }
-              @bottom-right { content: none; }
-              @top-left-corner { content: none; }
-              @top-right-corner { content: none; }
-              @bottom-left-corner { content: none; }
-              @bottom-right-corner { content: none; }
-            }
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            
-            body {
-              font-family: Arial, sans-serif;
-              padding: 20px;
-              background: white;
-              color: black;
-              line-height: 1.3;
-              max-width: 8.5in;
-              margin: 0 auto;
-              min-height: 11in;
-            }
+  // Generate a single print window that contains multiple one-page stickers
+  const generateBatchWindowStickersHTML = (vehiclesToPrint: VehicleWithMedia[]) => {
+    // Build per-vehicle pages
+    const pages = vehiclesToPrint.map((vehicle) => {
+      const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim();
+      const vehicleColor = (vehicle as any).color || (vehicle as any).exteriorColor || 'N/A';
 
-            .header {
-              display: flex;
-              align-items: center;
-              margin-bottom: 25px;
-              border-bottom: 3px solid #000;
-              padding-bottom: 15px;
-            }
+      const sourceSvg = document.getElementById(`batch-source-qr-${vehicle.id}`)?.querySelector('svg')?.outerHTML || '';
+      const carfaxSvg = document.getElementById(`batch-carfax-qr-${vehicle.id}`)?.querySelector('svg')?.outerHTML || '';
 
-            .header img {
-              width: 250px;
-              height: auto;
-              margin-right: 30px;
-            }
+      const MAX_FEATURES = 35;
+      const keyFeatures = (vehicle.features || []).slice(0, MAX_FEATURES);
+      const columns = 2;
+      const perCol = Math.ceil(keyFeatures.length / columns) || 1;
+      const chunkedFeatures: string[][] = [];
+      for (let i = 0; i < keyFeatures.length; i += perCol) {
+        chunkedFeatures.push(keyFeatures.slice(i, i + perCol));
+      }
 
-            .header-text {
-              flex: 1;
-            }
+      const priceHtml = (() => {
+        const pd = (vehicle.pricingDetails || {} as Record<string, string>);
+        const sale = pd['Sale Price'] || pd['Sale price'] || pd['SALE PRICE'] || pd['SalePrice'];
+        if (sale) return sale;
+        const sp: any = (vehicle as any).salePrice;
+        if (sp) return typeof sp === 'number' ? `$${sp.toLocaleString()}` : sp;
+        const price: any = (vehicle as any).price;
+        if (price && price > 0) return `$${price.toLocaleString()}`;
+        return 'Contact for Price';
+      })();
 
-            .vehicle-title {
-              font-size: 24px;
-              font-weight: bold;
-              margin: 0 0 8px 0;
-              color: #000;
-            }
-
-            .stock-info {
-              font-size: 16px;
-              margin: 3px 0;
-              color: #333;
-            }
-
-            .content-grid {
-              display: grid;
-              grid-template-columns: 2fr 1fr;
-              gap: 30px;
-              margin-bottom: 25px;
-            }
-
-            .basic-info {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 12px;
-              font-size: 14px;
-              margin-bottom: 25px;
-            }
-
-            .basic-info div {
-              display: flex;
-              justify-content: space-between;
-              border-bottom: 1px dotted #666;
-              padding-bottom: 4px;
-            }
-
-            .basic-info div span:first-child {
-              font-weight: bold;
-            }
-
-            .features-section {
-              margin-bottom: 25px;
-            }
-
-            .features-grid {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 15px;
-            }
-
-            .feature-column ul {
-              list-style: disc;
-              margin-left: 20px;
-              font-size: 12px;
-            }
-
-            .feature-column li {
-              margin-bottom: 3px;
-            }
-
-            .features-title {
-              font-size: 16px;
-              font-weight: bold;
-              margin-bottom: 12px;
-              text-decoration: underline;
-              color: #000;
-            }
-
-            .qr-section {
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-            }
-
-            .qr-codes {
-              display: flex;
-              gap: 20px;
-              margin-bottom: 15px;
-            }
-
-            .qr-code {
-              text-align: center;
-            }
-
-            .qr-code svg {
-              width: 100px !important;
-              height: 100px !important;
-            }
-
-            .qr-label {
-              margin-top: 5px;
-              font-weight: bold;
-              font-size: 12px;
-            }
-
-            .price-section {
-              text-align: center;
-              margin: 30px 0 20px 0;
-              padding: 20px;
-              border: 3px solid #000;
-              background: #f5f5f5;
-            }
-
-            .price-label {
-              font-size: 18px;
-              font-weight: bold;
-              margin-bottom: 10px;
-              color: #000;
-            }
-
-            .price-value {
-              font-size: 36px;
-              font-weight: bold;
-              color: #d4af37;
-              text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            }
-
-            .disclaimer {
-              font-size: 8px;
-              margin-top: 20px;
-              border-top: 1px solid #ccc;
-              padding-top: 10px;
-              text-align: justify;
-              line-height: 1.2;
-            }
-            
-            @media print {
-              /* Force remove all page headers and footers */
-              @page {
-                margin: 0.5in 0.5in 0.5in 0.5in;
-                size: letter;
-
-                /* Explicitly remove all header/footer content */
-                @top-left { content: ""; display: none; }
-                @top-center { content: ""; display: none; }
-                @top-right { content: ""; display: none; }
-                @bottom-left { content: ""; display: none; }
-                @bottom-center { content: ""; display: none; }
-                @bottom-right { content: ""; display: none; }
-                @top-left-corner { content: ""; display: none; }
-                @top-right-corner { content: ""; display: none; }
-                @bottom-left-corner { content: ""; display: none; }
-                @bottom-right-corner { content: ""; display: none; }
-              }
-
-              /* Override browser print defaults */
-              html {
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-
-              body {
-                padding: 15px;
-                max-width: none;
-                min-height: auto;
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-
-              /* Hide any potential timestamp elements */
-              .timestamp, .print-date, .print-time,
-              [class*="timestamp"], [class*="date"], [class*="time"] {
-                display: none !important;
-                visibility: hidden !important;
-              }
-
-              .header img {
-                width: 200px;
-              }
-
-              .vehicle-title {
-                font-size: 20px;
-              }
-
-              .qr-code svg {
-                width: 85px !important;
-                height: 85px !important;
-              }
-
-              .price-value {
-                font-size: 30px;
-              }
-
-              .disclaimer {
-                font-size: 7px;
-              }
-            }
-          </style>
-        </head>
-        <body>
+      return `
+        <div class="page">
           <div class="header">
             <img src="${window.location.origin}/Bentley-logo-groups.svg" alt="Bentley Logo" />
             <div class="header-text">
@@ -321,7 +105,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
               <div class="basic-info">
                 <div><span>Odometer:</span><span>${vehicle.mileage?.toLocaleString() || 'N/A'}</span></div>
                 <div><span>Engine:</span><span>${vehicle.engine || 'N/A'}</span></div>
-                <div><span>Color:</span><span>${vehicle.color}</span></div>
+                <div><span>Color:</span><span>${vehicleColor}</span></div>
                 <div><span>Transmission:</span><span>${vehicle.transmission || 'N/A'}</span></div>
               </div>
 
@@ -342,11 +126,13 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
             </div>
 
             <div class="qr-section">
-              <div class="qr-codes">
+            <div class="qr-codes">
                 <div class="qr-code">
+                  ${sourceSvg}
                   <div class="qr-label">Vehicle Details</div>
                 </div>
                 <div class="qr-code">
+                  ${carfaxSvg}
                   <div class="qr-label">CARFAX Report</div>
                 </div>
               </div>
@@ -354,18 +140,71 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
           </div>
 
           <div class="price-section">
-            <div class="price-label">ASKING PRICE</div>
-            <div class="price-value">$${vehicle.price?.toLocaleString() || 'Contact for Price'}</div>
+            <div class="price-label">SALE PRICE</div>
+            <div class="price-value">${priceHtml}</div>
           </div>
 
           <div class="disclaimer">
             It is your responsibility to address any and all differences between information on this label and the actual vehicle specifications and/or any warranties offered prior to the sale of this vehicle. Vehicle data on this label is compiled from publicly available sources believed by the Publisher to be reliable. Vehicle data may change without notice. The Publisher assumes no responsibility for errors and/or omissions in this data, the compilation of this data or sticker placement, and makes no representations express or implied to any actual or prospective purchaser of the vehicle as to the condition of the vehicle, vehicle specifications, ownership, vehicle history, equipment/accessories, price or warranties. Actual mileage may vary.
           </div>
+        </div>
+      `;
+    }).join('\n');
 
+    // One aggregated document with one style and many pages
+    return `
+      <html>
+        <head>
+          <title>Window Stickers</title>
+          <style>
+            html, body { margin: 0; padding: 0; }
+            @page { margin: 0.5in; size: letter; }
+            * { box-sizing: border-box; }
+            body {
+              font-family: Arial, sans-serif;
+              background: white;
+              color: black;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .page {
+              height: 10in;
+              overflow: hidden;
+              display: flex;
+              flex-direction: column;
+              break-inside: avoid;
+              page-break-inside: avoid;
+            }
+            @media print {
+              .page { break-after: page; }
+              .page:last-child { break-after: auto; }
+            }
+            .header { display: flex; align-items: center; margin-bottom: 25px; border-bottom: 3px solid #000; padding-bottom: 15px; }
+            .header img { width: 220px; height: auto; margin-right: 30px; }
+            .vehicle-title { font-size: 24px; font-weight: bold; margin: 0 0 8px 0; color: #000; }
+            .stock-info { font-size: 16px; margin: 3px 0; color: #333; }
+            .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 20px; }
+            .basic-info { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; margin-bottom: 25px; }
+            .basic-info div { display: flex; justify-content: space-between; border-bottom: 1px dotted #666; padding-bottom: 4px; }
+            .basic-info div span:first-child { font-weight: bold; }
+            .features-section { margin-bottom: 20px; }
+            .features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-height: 5in; overflow: hidden; }
+            .feature-column ul { list-style: disc; margin-left: 20px; font-size: 12px; }
+            .feature-column li { margin-bottom: 3px; }
+            .qr-section { display: flex; flex-direction: column; align-items: center; }
+            .qr-codes { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-bottom: 20px; }
+            .qr-code svg { width: 110px !important; height: 110px !important; }
+            .qr-label { margin-top: 5px; font-weight: bold; font-size: 12px; }
+            .price-section { text-align: center; margin: 30px 0 20px 0; padding: 20px; border: 3px solid #000; background: #f5f5f5; }
+            .price-label { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #000; }
+            .price-value { font-size: 36px; font-weight: bold; color: #d4af37; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+            .disclaimer { font-size: 8px; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; text-align: justify; line-height: 1.2; max-height: 1.2in; overflow: hidden; }
+          </style>
+        </head>
+        <body>
+          ${pages}
           <script>
-            window.onload = () => {
-              window.print();
-            };
+            window.onload = () => { window.print(); };
           </script>
         </body>
       </html>
@@ -374,45 +213,26 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
 
   // Handle batch printing
   const handleBatchPrint = async () => {
-    if (selectedVehicles.size === 0) return;
+    if (selectedVehicleIds.length === 0) return;
+    
+    console.log('Starting batch print with', selectedVehicleIds.length, 'vehicles selected');
+    console.log('Selected vehicle IDs:', selectedVehicleIds);
     
     setIsGenerating(true);
-    setProgress({ current: 0, total: selectedVehicles.size });
+    setProgress({ current: 0, total: selectedVehicleIds.length });
     
     try {
-      const selectedVehiclesList = vehicles.filter(v => selectedVehicles.has(v.id));
+      const selectedVehiclesList = vehicles.filter(v => selectedVehicleIds.includes(v.id));
+      console.log('Filtered vehicle list length:', selectedVehiclesList.length);
+      console.log('First few vehicles:', selectedVehiclesList.slice(0, 3).map(v => ({ id: v.id, make: v.make, model: v.model })));
       
       if (printType === 'window-sticker') {
-        // Store all print windows to prevent garbage collection
-        const printWindows: Window[] = [];
-        
-        // First, open all windows and write HTML content
-        for (let i = 0; i < selectedVehiclesList.length; i++) {
-          const vehicle = selectedVehiclesList[i];
-          setProgress({ current: i + 1, total: selectedVehiclesList.length });
-          
-          const html = generateWindowStickerHTML(vehicle);
-          const printWindow = window.open('', '_blank');
-          if (printWindow) {
-            printWindow.document.write(html);
-            printWindow.document.close(); // Important: close the document to finish loading
-            printWindows.push(printWindow);
-          }
-          
-          // Small delay between opening windows to prevent browser blocking
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-        
-        // Wait a bit to ensure all windows have loaded their content
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Now trigger print for each window
-        for (const printWindow of printWindows) {
-          try {
-            printWindow.print();
-          } catch (e) {
-            console.error('Error printing window:', e);
-          }
+        // Open a single print window with multiple one-page stickers
+        const html = generateBatchWindowStickersHTML(selectedVehiclesList);
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
         }
       } else {
         // Store all PDF URLs to prevent garbage collection
@@ -476,7 +296,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
         
         <div className="flex justify-between items-center mb-2">
           <div className="text-sm text-white/70">
-            {selectedVehicles.size} of {vehicles.length} vehicles selected
+            {selectedVehicleIds.length} of {vehicles.length} vehicles selected
           </div>
           <div className="flex space-x-2">
             <Button 
@@ -507,8 +327,9 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
               >
                 <Checkbox 
                   id={`vehicle-${vehicle.id}`} 
-                  checked={selectedVehicles.has(vehicle.id)}
+                  checked={selectedVehicleIds.includes(vehicle.id)}
                   onCheckedChange={() => toggleVehicleSelection(vehicle.id)}
+                  onClick={(e) => e.stopPropagation()} // Prevent event bubbling
                 />
                 <Label 
                   htmlFor={`vehicle-${vehicle.id}`}
@@ -521,6 +342,25 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
                     Stock #{vehicle.stockNumber} | VIN: {vehicle.vin}
                   </div>
                 </Label>
+                {/* Hidden QR codes for batch print HTML extraction */}
+                <div className="hidden">
+                  <div id={`batch-source-qr-${vehicle.id}`}>
+                    <QRCodeSVG
+                      value={vehicle.sourceUrl || `${window.location.origin}/customer/${vehicle.id}`}
+                      size={140}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+                  <div id={`batch-carfax-qr-${vehicle.id}`}>
+                    <QRCodeSVG
+                      value={getCarfaxUrl(vehicle.vin)}
+                      size={140}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -541,7 +381,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
           </Button>
           <Button 
             onClick={handleBatchPrint} 
-            disabled={selectedVehicles.size === 0 || isGenerating}
+            disabled={selectedVehicleIds.length === 0 || isGenerating}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {isGenerating ? (
@@ -552,7 +392,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
             ) : (
               <>
                 <PrinterIcon className="w-4 h-4 mr-2" />
-                Print {selectedVehicles.size} {printType === 'window-sticker' ? 'Window Stickers' : 'Buyers Guides'}
+                Print {selectedVehicleIds.length} {printType === 'window-sticker' ? 'Window Stickers' : 'Buyers Guides'}
               </>
             )}
           </Button>

@@ -12,10 +12,12 @@ interface RedisVehicle {
   stockNumber: string;
   make: string;
   model: string;
-  year: number;
-  price: number;
-  mileage: number;
-  color: string;
+  year: number | string;
+  price: number | string;
+  mileage: number | string;
+  color?: string;
+  exteriorColor?: string;
+  interiorColor?: string;
   vin: string;
   trim: string;
   engine: string;
@@ -33,6 +35,8 @@ interface RedisVehicle {
   isSold?: boolean;
   features?: string[];
   images?: string[];
+  salePrice?: string | number;
+  pricingDetails?: Record<string, string>;
   status?: 'available' | 'sold';
   lastUpdated?: string;
   createdAt?: string;
@@ -76,16 +80,43 @@ export async function GET() {
         .filter(isRedisVehicle) // Filter out any invalid vehicle data
         .map((vehicle: RedisVehicle) => {
           try {
+            const parseCurrencyToNumber = (value: unknown): number => {
+              if (typeof value === 'number') return value;
+              if (typeof value === 'string') {
+                const cleaned = value.replace(/[^\d]/g, '');
+                return cleaned ? parseInt(cleaned, 10) : 0;
+              }
+              return 0;
+            };
+
+            const parseMileage = (value: unknown): number => {
+              if (typeof value === 'number') return value;
+              if (typeof value === 'string') {
+                const cleaned = value.replace(/[^\d]/g, '');
+                return cleaned ? parseInt(cleaned, 10) : 0;
+              }
+              return 0;
+            };
+
+            const parseYear = (value: unknown): number => {
+              if (typeof value === 'number') return value;
+              if (typeof value === 'string') {
+                const cleaned = value.replace(/[^\d]/g, '');
+                return cleaned ? parseInt(cleaned, 10) : 0;
+              }
+              return 0;
+            };
+
             // Create a new object with all required Vehicle interface fields
             const vehicleData: Vehicle = {
               id: vehicle.id || vehicle.stockNumber,
               stockNumber: vehicle.stockNumber,
               make: vehicle.make,
               model: vehicle.model,
-              year: vehicle.year,
-              price: vehicle.price,
-              mileage: vehicle.mileage,
-              color: vehicle.color,
+              year: parseYear(vehicle.year),
+              price: parseCurrencyToNumber(vehicle.price),
+              mileage: parseMileage(vehicle.mileage),
+              color: vehicle.color || vehicle.exteriorColor || '',
               vin: vehicle.vin,
               trim: vehicle.trim,
               engine: vehicle.engine,
@@ -96,6 +127,8 @@ export async function GET() {
               images: Array.isArray(vehicle.images) ? vehicle.images : [],
               status: vehicle.status || 'available',
               // Optional fields
+              salePrice: vehicle.salePrice,
+              pricingDetails: vehicle.pricingDetails,
               isNew: vehicle.isNew,
               isFeatured: vehicle.isFeatured,
               isSold: vehicle.isSold,
