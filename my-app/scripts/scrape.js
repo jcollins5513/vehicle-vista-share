@@ -79,8 +79,11 @@ async function saveVehicle(vehicleData) {
       photos: vehicleData.images || []
     };
 
+    // Use VIN as the primary identifier if available, otherwise fall back to stockNumber
+    const whereClause = vehicleData.vin ? { vin: vehicleData.vin } : { stockNumber: vehicleData.stockNumber };
+    
     return await prisma.vehicle.upsert({
-      where: { stockNumber: vehicleData.stockNumber },
+      where: whereClause,
       update: {
         ...dbVehicleData,
         updatedAt: new Date()
@@ -92,6 +95,24 @@ async function saveVehicle(vehicleData) {
       }
     });
   } catch (error) {
+    if (error.code === 'P2002' && error.meta?.target?.includes('vin')) {
+      console.log(`[INFO] Vehicle with VIN ${vehicleData.vin} already exists, attempting to update by stockNumber instead`);
+      
+      // Try to update by stockNumber if VIN conflict occurs
+      try {
+        return await prisma.vehicle.update({
+          where: { stockNumber: vehicleData.stockNumber },
+          data: {
+            ...dbVehicleData,
+            updatedAt: new Date()
+          }
+        });
+      } catch (updateError) {
+        console.error('Error updating vehicle by stockNumber:', updateError);
+        return null;
+      }
+    }
+    
     console.error('Error saving vehicle:', error);
     return null;
   }
