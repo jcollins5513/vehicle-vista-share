@@ -179,7 +179,8 @@ export class BackgroundRemoverService {
   private async getVehicleFromRedis(stockNumber: string): Promise<VehicleData | null> {
     try {
       const data = await this.redis.get(`vehicle:${stockNumber}`);
-      return data as VehicleData;
+      if (!data) return null;
+      return typeof data === 'string' ? JSON.parse(data) : data as VehicleData;
     } catch (error) {
       console.error(`Error getting vehicle ${stockNumber} from Redis:`, error);
       return null;
@@ -197,7 +198,8 @@ export class BackgroundRemoverService {
       for (const key of keys) {
         const data = await this.redis.get(key);
         if (data) {
-          vehicles.push(data as VehicleData);
+          const vehicleData = typeof data === 'string' ? JSON.parse(data) : data as VehicleData;
+          vehicles.push(vehicleData);
         }
       }
 
@@ -219,7 +221,7 @@ export class BackgroundRemoverService {
       const vehicleData = await this.getVehicleFromRedis(stockNumber);
       if (vehicleData) {
         vehicleData.processedImages = processedImages;
-        await this.redis.set(`vehicle:${stockNumber}`, vehicleData);
+        await this.redis.set(`vehicle:${stockNumber}`, JSON.stringify(vehicleData));
       }
     } catch (error) {
       console.error(`Error updating vehicle ${stockNumber} with processed images:`, error);

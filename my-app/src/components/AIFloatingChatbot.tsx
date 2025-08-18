@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import {
-  MessageCircle,
   X,
   Send,
   Bot,
@@ -15,7 +14,6 @@ import {
   VolumeX,
   Car,
   Sparkles,
-  Zap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import type { VehicleWithMedia } from "@/types";

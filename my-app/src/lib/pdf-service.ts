@@ -60,7 +60,7 @@ export async function generateBuyersGuidePDF(vehicle: VehicleWithMedia): Promise
             console.log(`Successfully filled field: ${fieldName} with value: ${value}`);
             return true;
           }
-        } catch (error) {
+        } catch {
           // Field not found with this name, continue to next possible name
           // We intentionally don't log this error as it's expected for many field names
         }
