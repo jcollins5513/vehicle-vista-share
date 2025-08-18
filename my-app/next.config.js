@@ -13,22 +13,22 @@ const nextConfig = {
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
       { protocol: 'https', hostname: 'inv.assets.sincrod.com' },
       { protocol: 'https', hostname: '*.s3.*.amazonaws.com' },
-      { protocol: 'https', hostname: 'vehicle-vista-media.s3.us-east-2.amazonaws.com' },
+      { protocol: 'https', hostname: D: \vehicle- vista - share\my - app\postcss.config.mjs 'vehicle-vista-media.s3.us-east-2.amazonaws.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
-      { protocol: 'https', hostname: 'www.bentleysupercenter.com' },
-      { protocol: 'https', hostname: 'bentleysupercenter.com' },
+{ protocol: 'https', hostname: 'www.bentleysupercenter.com' },
+{ protocol: 'https', hostname: 'bentleysupercenter.com' },
     ],
   },
 
-  // ✅ Corrected: move this outside experimental
-  outputFileTracingRoot: join(__dirname, '..'),
+// ✅ Corrected: move this outside experimental
+outputFileTracingRoot: join(__dirname, '..'),
 
   // Experimental features
   experimental: {
-    disableOptimizedLoading: true,
+  disableOptimizedLoading: true,
   },
 
-  serverExternalPackages: [],
+serverExternalPackages: [],
 };
 
 process.env.NEXT_TELEMETRY_DISABLED = '1';

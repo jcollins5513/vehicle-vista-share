@@ -31,7 +31,7 @@ import { useParams, useRouter } from "next/navigation";
 export default function CustomerPage() {
   const params = useParams();
   const router = useRouter();
-  const vehicleId = params.id as string;
+  const vehicleId = params?.id as string;
 
   const [vehicles, setVehicles] = useState<VehicleWithMedia[]>([]);
   const [selectedVehicle, setSelectedVehicle] =
