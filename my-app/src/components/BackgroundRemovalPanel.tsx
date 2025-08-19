@@ -33,6 +33,21 @@ export function BackgroundRemovalPanel() {
     setCurrentOperation(stockNumber ? `Processing vehicle ${stockNumber}...` : 'Processing all vehicles...');
 
     try {
+      // First, let's debug the vehicle data
+      if (stockNumber) {
+        setCurrentOperation(`Checking vehicle data for ${stockNumber}...`);
+        const debugResponse = await fetch(`/api/debug-vehicle?stockNumber=${stockNumber}`);
+        const debugData = await debugResponse.json();
+
+        console.log('Debug vehicle data:', debugData);
+
+        if (!debugData.success || !debugData.hasImages) {
+          throw new Error(`Vehicle ${stockNumber} not found or has no images. Debug info: ${JSON.stringify(debugData)}`);
+        }
+
+        setCurrentOperation(`Found ${debugData.imagesLength} images for vehicle ${stockNumber}. Starting processing...`);
+      }
+
       const response = await fetch('/api/background-removal', {
         method: 'POST',
         headers: {
@@ -45,11 +60,12 @@ export function BackgroundRemovalPanel() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`);
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         setResults(data.results);
         setProgress(100);
@@ -126,8 +142,8 @@ export function BackgroundRemovalPanel() {
                 onChange={(e) => setStockNumber(e.target.value)}
                 disabled={isProcessing}
               />
-              <Button 
-                onClick={handleProcessSingle} 
+              <Button
+                onClick={handleProcessSingle}
                 disabled={isProcessing || !stockNumber.trim()}
                 className="flex items-center gap-2"
               >
@@ -141,11 +157,32 @@ export function BackgroundRemovalPanel() {
             </div>
           </div>
 
+          {/* Test Installation */}
+          <div className="space-y-2">
+            <Label>Test Installation</Label>
+            <Button
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/test-backgroundremover');
+                  const data = await response.json();
+                  alert(`Test Result:\n${data.message}\n\nPlatform: ${data.platform}\nTemp Dir: ${data.tempDir}\n\nDetails: ${JSON.stringify(data, null, 2)}`);
+                } catch (error) {
+                  alert(`Test failed: ${error}`);
+                }
+              }}
+              variant="outline"
+              className="w-full flex items-center gap-2"
+            >
+              <CheckCircle className="h-4 w-4" />
+              Test Background Remover Installation
+            </Button>
+          </div>
+
           {/* Process All Vehicles */}
           <div className="space-y-2">
             <Label>Process All Vehicles</Label>
-            <Button 
-              onClick={handleProcessAll} 
+            <Button
+              onClick={handleProcessAll}
               disabled={isProcessing}
               variant="outline"
               className="w-full flex items-center gap-2"

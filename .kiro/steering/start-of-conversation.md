@@ -1,5 +1,5 @@
 ---
-alwaysApply: false
+inclusion: manual
 ---
 I am continuing work on my existing project.
 

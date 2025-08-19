@@ -72,6 +72,22 @@ Your `.env` file already contains the required AWS and Redis configurations:
 
 ## Usage
 
+### Customer Showroom Integration
+
+1. **Individual Vehicle Processing**: Each vehicle card now has a "Remove BG" dropdown button with options to:
+   - Process all images for that vehicle
+   - Process individual images (up to 5 shown in dropdown)
+
+2. **Batch Processing**: Use the scissors icon (🔪) in the showroom header to:
+   - Select multiple vehicles
+   - Process the first image of each selected vehicle
+   - Monitor batch processing progress
+
+3. **Content Creation Library**: Click the image icon (🖼️) in the showroom header to:
+   - View all processed images organized by vehicle
+   - Download individual or multiple processed images
+   - Switch between grid and list views
+
 ### Web Interface
 
 1. Start your Next.js development server:
@@ -79,12 +95,11 @@ Your `.env` file already contains the required AWS and Redis configurations:
 npm run dev
 ```
 
-2. Navigate to: `http://localhost:3000/background-removal`
+2. Navigate to: `http://localhost:3000/customershowroom` for integrated experience
 
-3. Use the interface to:
-   - Process a single vehicle by stock number
-   - Process all vehicles at once
-   - Monitor progress and view results
+3. Or use the dedicated interface at: `http://localhost:3000/background-removal`
+
+4. Access processed images at: `http://localhost:3000/content-creation`
 
 ### Command Line Interface
 
@@ -98,16 +113,36 @@ Process all vehicles:
 npm run process-backgrounds
 ```
 
-### API Endpoint
+### API Endpoints
 
-Make POST requests to `/api/background-removal`:
+**Background Removal API** - POST `/api/background-removal`:
 
 ```javascript
-// Process single vehicle
+// Process single image
+fetch('/api/background-removal', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ 
+    stockNumber: 'S161', 
+    imageIndex: 0 
+  })
+});
+
+// Process all images for a vehicle
 fetch('/api/background-removal', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ stockNumber: 'S161' })
+});
+
+// Batch process first images only
+fetch('/api/background-removal', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ 
+    batchVehicleIds: ['S161', 'S162', 'S163'],
+    processFirstImageOnly: true 
+  })
 });
 
 // Process all vehicles
@@ -116,6 +151,17 @@ fetch('/api/background-removal', {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ processAll: true })
 });
+```
+
+**Processed Images API** - GET `/api/processed-images`:
+
+```javascript
+// Get all processed images for content creation
+fetch('/api/processed-images')
+  .then(response => response.json())
+  .then(data => {
+    console.log(data.processedImages); // Organized by vehicle stock number
+  });
 ```
 
 ### Programmatic Usage
@@ -134,15 +180,53 @@ const allResults = await service.processAllVehicleImages();
 
 ## How It Works
 
+### ⚠️ **IMPORTANT: Original Images Are Never Modified**
+
 1. **Data Retrieval**: Fetches vehicle data from Redis using the pattern `vehicle:*`
 2. **Image Download**: Downloads original images from URLs in the `images` array
-3. **Background Removal**: Uses Python backgroundremover to process each image
-4. **Cloud Storage**: Uploads processed images to AWS S3 in the `processed/` folder
-5. **Data Update**: Updates vehicle records with `processedImages` array containing:
-   - `originalUrl`: Original image URL
-   - `processedUrl`: S3 URL of processed image
+3. **Background Removal**: Uses Python backgroundremover to create NEW processed images
+4. **Cloud Storage**: Uploads NEW processed images to AWS S3 in the `processed/` folder
+5. **Data Update**: Adds a NEW `processedImages` array to vehicle records containing:
+   - `originalUrl`: **UNCHANGED** original image URL
+   - `processedUrl`: **NEW** S3 URL of processed image
    - `processedAt`: Processing timestamp
    - `status`: 'completed', 'failed', or 'processing'
+   - `imageIndex`: Which original image this corresponds to
+
+### 📊 **Data Structure After Processing**
+
+```typescript
+// Your vehicle data BEFORE processing
+{
+  stockNumber: "S161",
+  images: ["original-url-1.jpg", "original-url-2.jpg"], // ✅ UNCHANGED
+  // ... other vehicle data
+}
+
+// Your vehicle data AFTER processing
+{
+  stockNumber: "S161", 
+  images: ["original-url-1.jpg", "original-url-2.jpg"], // ✅ STILL UNCHANGED
+  processedImages: [  // ✅ NEW ARRAY ADDED
+    {
+      originalUrl: "original-url-1.jpg",           // Reference to original
+      processedUrl: "https://s3.../processed/...", // New processed image
+      imageIndex: 0,                               // Which original image
+      status: "completed",
+      processedAt: "2025-01-17T..."
+    }
+  ],
+  // ... other vehicle data (unchanged)
+}
+```
+
+### 🎯 **Content Creation Library Features**
+
+- **Side-by-side comparison**: Original vs processed images
+- **Both versions accessible**: View and download original OR processed
+- **Clear labeling**: "Original" and "Processed" badges
+- **Separate actions**: Different buttons for original vs processed images
+- **No data loss**: All original images remain exactly as they were
 
 ## File Structure
 
@@ -150,16 +234,26 @@ const allResults = await service.processAllVehicleImages();
 my-app/
 ├── src/
 │   ├── lib/
-│   │   └── backgroundRemover.ts      # Core service class
+│   │   └── backgroundRemover.ts           # Enhanced core service class
 │   ├── components/
-│   │   └── BackgroundRemovalPanel.tsx # React UI component
+│   │   ├── BackgroundRemovalPanel.tsx     # Original standalone UI
+│   │   ├── BackgroundRemovalButton.tsx    # Individual vehicle button
+│   │   ├── BatchBackgroundRemoval.tsx     # Batch processing modal
+│   │   └── ui/
+│   │       ├── dropdown-menu.tsx          # Dropdown menu component
+│   │       └── checkbox.tsx               # Checkbox component
 │   ├── pages/
 │   │   ├── api/
-│   │   │   └── background-removal.ts  # API endpoint
-│   │   └── background-removal.tsx     # Web interface page
+│   │   │   ├── background-removal.ts      # Enhanced API endpoint
+│   │   │   └── processed-images.ts        # Content creation API
+│   │   ├── background-removal.tsx         # Standalone interface
+│   │   └── content-creation.tsx           # Content library page
+│   └── app/
+│       └── customershowroom/
+│           └── page.tsx                   # Enhanced with BG removal
 └── scripts/
-    ├── setup-background-remover.js    # Setup script
-    └── process-backgrounds.js         # CLI script
+    ├── setup-background-remover.js        # Setup script
+    └── process-backgrounds.js             # CLI script
 ```
 
 ## Troubleshooting

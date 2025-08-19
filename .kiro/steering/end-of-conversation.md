@@ -1,5 +1,5 @@
 ---
-alwaysApply: false
+inclusion: manual
 ---
 We are closing this conversation and transitioning to the next session. Please do the following:
 

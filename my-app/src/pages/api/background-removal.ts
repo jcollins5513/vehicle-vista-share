@@ -7,10 +7,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { stockNumber, processAll } = req.body;
+    const { 
+      stockNumber, 
+      processAll, 
+      imageIndex, 
+      batchVehicleIds, 
+      processFirstImageOnly 
+    } = req.body;
+    
     const backgroundRemover = new BackgroundRemoverService();
 
-    if (processAll) {
+    if (batchVehicleIds && Array.isArray(batchVehicleIds)) {
+      // Batch process first images only
+      const results = await backgroundRemover.processBatchFirstImages(batchVehicleIds);
+      return res.status(200).json({
+        success: true,
+        message: `Background removal completed for ${batchVehicleIds.length} vehicles (first images only)`,
+        results
+      });
+    } else if (processAll) {
       // Process all vehicles
       const results = await backgroundRemover.processAllVehicleImages();
       return res.status(200).json({
@@ -18,8 +33,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         message: 'Background removal completed for all vehicles',
         results
       });
+    } else if (stockNumber && imageIndex !== undefined) {
+      // Process single image
+      const result = await backgroundRemover.processSingleImage(stockNumber, imageIndex);
+      return res.status(200).json({
+        success: true,
+        message: `Background removal completed for vehicle ${stockNumber}, image ${imageIndex}`,
+        result
+      });
     } else if (stockNumber) {
-      // Process specific vehicle
+      // Process specific vehicle (all images)
       const results = await backgroundRemover.processVehicleImages(stockNumber);
       return res.status(200).json({
         success: true,
@@ -28,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } else {
       return res.status(400).json({
-        error: 'Either stockNumber or processAll must be provided'
+        error: 'Invalid request parameters'
       });
     }
   } catch (error) {

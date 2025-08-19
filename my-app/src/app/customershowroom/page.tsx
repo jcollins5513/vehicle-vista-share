@@ -18,6 +18,8 @@ import {
   MessageSquare,
   MapPin,
   Printer,
+  Scissors,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,6 +28,8 @@ import Image from "next/image";
 import type { VehicleWithMedia } from "@/types";
 import WindowSticker from "@/components/WindowSticker";
 import BatchPrintModal from "@/components/BatchPrintModal";
+import { BackgroundRemovalButton } from "@/components/BackgroundRemovalButton";
+import { BatchBackgroundRemoval } from "@/components/BatchBackgroundRemoval";
 
 export default function CustomerShowroomPage() {
   const [vehicles, setVehicles] = useState<VehicleWithMedia[]>([]);
@@ -37,6 +41,8 @@ export default function CustomerShowroomPage() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [isBatchPrintModalOpen, setIsBatchPrintModalOpen] = useState(false);
+  const [isBatchBgRemovalOpen, setIsBatchBgRemovalOpen] = useState(false);
+  const [processingStatuses, setProcessingStatuses] = useState<{ [vehicleId: string]: string }>({});
   const [selectedFilters, setSelectedFilters] = useState({
     make: "",
     priceRange: "",
@@ -141,6 +147,13 @@ export default function CustomerShowroomPage() {
     alert(
       `Scheduling viewing for ${vehicle.year} ${vehicle.make} ${vehicle.model}. Calendar integration coming soon!`,
     );
+  };
+
+  const handleProcessingUpdate = (vehicleId: string, status: string) => {
+    setProcessingStatuses(prev => ({
+      ...prev,
+      [vehicleId]: status
+    }));
   };
 
   if (loading) {
@@ -251,6 +264,22 @@ export default function CustomerShowroomPage() {
                   {filteredVehicles.length} vehicles
                 </span>
               </div>
+              <Button
+                onClick={() => window.open('/content-creation', '_blank')}
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/10"
+                title="Content Creation Library"
+              >
+                <ImageIcon className="w-4 h-4" />
+              </Button>
+              <Button
+                onClick={() => setIsBatchBgRemovalOpen(true)}
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/10"
+                title="Batch Background Removal"
+              >
+                <Scissors className="w-4 h-4" />
+              </Button>
               <Button
                 onClick={() => setIsBatchPrintModalOpen(true)}
                 variant="outline"
@@ -450,7 +479,17 @@ export default function CustomerShowroomPage() {
                         Schedule
                       </Button>
                     </div>
-                    <WindowSticker vehicle={vehicle} />
+                    <div className="flex space-x-2">
+                      <div className="flex-1">
+                        <WindowSticker vehicle={vehicle} />
+                      </div>
+                      <div className="flex-1">
+                        <BackgroundRemovalButton 
+                          vehicle={vehicle} 
+                          onProcessingUpdate={handleProcessingUpdate}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -591,6 +630,12 @@ export default function CustomerShowroomPage() {
                         </a>
                       )}
                       <WindowSticker vehicle={vehicle} />
+                      <div className="w-full sm:w-auto">
+                        <BackgroundRemovalButton 
+                          vehicle={vehicle} 
+                          onProcessingUpdate={handleProcessingUpdate}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -629,6 +674,15 @@ export default function CustomerShowroomPage() {
           vehicles={filteredVehicles}
           isOpen={isBatchPrintModalOpen}
           onClose={() => setIsBatchPrintModalOpen(false)}
+        />
+      )}
+
+      {/* Batch Background Removal Modal */}
+      {isBatchBgRemovalOpen && (
+        <BatchBackgroundRemoval
+          vehicles={filteredVehicles}
+          isOpen={isBatchBgRemovalOpen}
+          onClose={() => setIsBatchBgRemovalOpen(false)}
         />
       )}
     </div>
