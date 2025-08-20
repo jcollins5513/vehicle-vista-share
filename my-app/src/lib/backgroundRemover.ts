@@ -41,6 +41,9 @@ export class BackgroundRemoverService {
       region: process.env.AWS_REGION!,
       bucket: process.env.VEHICLE_MEDIA_BUCKET!,
     };
+
+    // Fix OpenMP library conflict on Windows
+    process.env.KMP_DUPLICATE_LIB_OK = 'TRUE';
   }
 
   /**
@@ -269,7 +272,20 @@ export class BackgroundRemoverService {
       
       // Use shell: true on Windows to handle paths with spaces
       const isWindows = process.platform === 'win32';
-      const spawnOptions = isWindows ? { shell: true } : {};
+      const spawnOptions = isWindows ? { 
+        shell: true,
+        env: { 
+          ...process.env, 
+          KMP_DUPLICATE_LIB_OK: 'TRUE',
+          OMP_NUM_THREADS: '1' // Also limit OpenMP threads to prevent conflicts
+        }
+      } : {
+        env: { 
+          ...process.env, 
+          KMP_DUPLICATE_LIB_OK: 'TRUE',
+          OMP_NUM_THREADS: '1'
+        }
+      };
       
       const childProcess = spawn('backgroundremover', ['-i', inputPath, '-o', outputPath], spawnOptions);
       
@@ -288,17 +304,26 @@ export class BackgroundRemoverService {
       
       childProcess.on('close', (code: number) => {
         console.log(`backgroundremover process exited with code: ${code}`);
+        console.log(`Full stdout: ${stdout}`);
+        console.log(`Full stderr: ${stderr}`);
+        
         if (code === 0) {
           resolve();
         } else {
-          reject(new Error(`Background removal failed with code ${code}. Stdout: ${stdout}. Stderr: ${stderr}`));
+          reject(new Error(`Background removal failed with code ${code}. This might indicate:\n1. backgroundremover is not properly installed\n2. The input image format is not supported\n3. Insufficient memory or processing power\n4. Missing dependencies (torch, torchvision)\n\nStdout: ${stdout}\nStderr: ${stderr}`));
         }
       });
       
       childProcess.on('error', (error: Error) => {
         console.error(`Failed to start backgroundremover process:`, error);
-        reject(new Error(`Failed to start background removal process: ${error.message}. Make sure 'backgroundremover' is installed and in your PATH.`));
+        reject(new Error(`Failed to start background removal process: ${error.message}.\n\nTroubleshooting:\n1. Install backgroundremover: pip install backgroundremover\n2. Install PyTorch: pip install torch torchvision\n3. Ensure Python is in your PATH\n4. Try running 'backgroundremover --help' in your terminal`));
       });
+      
+      // Add timeout handling (2 minutes)
+      const timeout = setTimeout(() => {
+        childProcess.kill();
+        reject(new Error('Background removal process timed out after 2 minutes. The image might be too large or complex.'));
+      }, 120000);
     });
   }
 
@@ -483,14 +508,32 @@ export class BackgroundRemoverService {
     const fileBuffer = await fs.readFile(filePath);
     const fileName = `processed/${stockNumber}/${imageIndex !== undefined ? `img_${imageIndex}_` : ''}${Date.now()}.png`;
 
-    const command = new PutObjectCommand({
-      Bucket: this.s3Config.bucket,
-      Key: fileName,
-      Body: fileBuffer,
-      ContentType: 'image/png',
-    });
+    try {
+      // Try with public-read ACL first
+      const command = new PutObjectCommand({
+        Bucket: this.s3Config.bucket,
+        Key: fileName,
+        Body: fileBuffer,
+        ContentType: 'image/png',
+        ACL: 'public-read',
+      });
 
-    await s3Client.send(command);
+      await s3Client.send(command);
+      console.log(`Successfully uploaded with public-read ACL: ${fileName}`);
+    } catch (aclError) {
+      console.warn(`Failed to upload with public-read ACL, trying without ACL:`, aclError);
+      
+      // Fallback: upload without ACL (bucket policy should handle public access)
+      const commandWithoutACL = new PutObjectCommand({
+        Bucket: this.s3Config.bucket,
+        Key: fileName,
+        Body: fileBuffer,
+        ContentType: 'image/png',
+      });
+
+      await s3Client.send(commandWithoutACL);
+      console.log(`Successfully uploaded without ACL: ${fileName}`);
+    }
 
     return `https://${this.s3Config.bucket}.s3.${this.s3Config.region}.amazonaws.com/${fileName}`;
   }

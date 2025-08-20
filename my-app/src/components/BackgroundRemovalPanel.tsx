@@ -160,22 +160,48 @@ export function BackgroundRemovalPanel() {
           {/* Test Installation */}
           <div className="space-y-2">
             <Label>Test Installation</Label>
-            <Button
-              onClick={async () => {
-                try {
-                  const response = await fetch('/api/test-backgroundremover');
-                  const data = await response.json();
-                  alert(`Test Result:\n${data.message}\n\nPlatform: ${data.platform}\nTemp Dir: ${data.tempDir}\n\nDetails: ${JSON.stringify(data, null, 2)}`);
-                } catch (error) {
-                  alert(`Test failed: ${error}`);
-                }
-              }}
-              variant="outline"
-              className="w-full flex items-center gap-2"
-            >
-              <CheckCircle className="h-4 w-4" />
-              Test Background Remover Installation
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/test-backgroundremover');
+                    const data = await response.json();
+                    alert(`Test Result:\n${data.message}\n\nPlatform: ${data.platform}\nTemp Dir: ${data.tempDir}\n\nDetails: ${JSON.stringify(data, null, 2)}`);
+                  } catch (error) {
+                    alert(`Test failed: ${error}`);
+                  }
+                }}
+                variant="outline"
+                className="flex-1 flex items-center gap-2"
+              >
+                <CheckCircle className="h-4 w-4" />
+                Test Installation
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    setCurrentOperation('Testing with real image...');
+                    const testImageUrl = 'https://www.bentleysupercenter.com/inventoryphotos/21600/3czrm3h53cg700943/ip/1.jpg';
+                    const response = await fetch('/api/test-image-processing', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ imageUrl: testImageUrl })
+                    });
+                    const data = await response.json();
+                    setCurrentOperation('');
+                    alert(`Image Processing Test:\n${data.message}\n\nSuccess: ${data.testResult?.success}\nDetails: ${JSON.stringify(data.testResult, null, 2)}`);
+                  } catch (error) {
+                    setCurrentOperation('');
+                    alert(`Image test failed: ${error}`);
+                  }
+                }}
+                variant="outline"
+                className="flex-1 flex items-center gap-2"
+              >
+                <Image className="h-4 w-4" />
+                Test with Image
+              </Button>
+            </div>
           </div>
 
           {/* Process All Vehicles */}

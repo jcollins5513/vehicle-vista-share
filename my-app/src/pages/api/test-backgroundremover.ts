@@ -12,7 +12,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Test if backgroundremover is available
     return new Promise((resolve) => {
       const isWindows = process.platform === 'win32';
-      const spawnOptions = isWindows ? { shell: true } : {};
+      const spawnOptions = isWindows ? { 
+        shell: true,
+        env: { 
+          ...process.env, 
+          KMP_DUPLICATE_LIB_OK: 'TRUE',
+          OMP_NUM_THREADS: '1'
+        }
+      } : {
+        env: { 
+          ...process.env, 
+          KMP_DUPLICATE_LIB_OK: 'TRUE',
+          OMP_NUM_THREADS: '1'
+        }
+      };
       
       const process = spawn('backgroundremover', ['--help'], spawnOptions);
       

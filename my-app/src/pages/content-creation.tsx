@@ -114,13 +114,13 @@ export default function ContentCreationPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 flex items-center justify-center">
         <div className="text-center animate-fade-in">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center animate-pulse">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-full flex items-center justify-center animate-pulse">
             <ImageIcon className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-white text-xl font-bold mb-2">
-            Loading Processed Images
+            Loading Content Library
           </h2>
-          <p className="text-white/70">Fetching your content library...</p>
+          <p className="text-white/70">Preparing your processed images...</p>
         </div>
       </div>
     );
@@ -134,12 +134,12 @@ export default function ContentCreationPage() {
             <ImageIcon className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-white text-xl font-bold mb-2">
-            Error Loading Content
+            Content Library Unavailable
           </h2>
           <p className="text-white/70 mb-4">Error: {error}</p>
           <Button
             onClick={fetchProcessedImages}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           >
             Try Again
           </Button>
@@ -160,22 +160,31 @@ export default function ContentCreationPage() {
       <div className="relative z-10 bg-gradient-to-r from-black/40 to-black/20 backdrop-blur-xl border-b border-white/20">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-white text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent">
-                Content Creation Library
-              </h1>
-              <p className="text-white/70">
-                Manage and download your processed vehicle images
-              </p>
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-xl flex items-center justify-center">
+                <ImageIcon className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-white text-3xl font-bold bg-gradient-to-r from-white via-yellow-100 to-blue-100 bg-clip-text text-transparent">
+                  Content Creation Library
+                </h1>
+                <p className="text-white/70">
+                  Manage and download your processed vehicle images
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center space-x-3">
-              <Badge variant="secondary" className="bg-white/10 text-white">
-                {totalImages} processed images
-              </Badge>
-              <Badge variant="secondary" className="bg-white/10 text-white">
-                {Object.keys(processedImages).length} vehicles
-              </Badge>
+              <div className="bg-white/10 rounded-lg px-3 py-2">
+                <span className="text-white/70 text-sm">
+                  {totalImages} processed images
+                </span>
+              </div>
+              <div className="bg-white/10 rounded-lg px-3 py-2">
+                <span className="text-white/70 text-sm">
+                  {Object.keys(processedImages).length} vehicles
+                </span>
+              </div>
               <Button
                 onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
                 variant="outline"
@@ -201,7 +210,7 @@ export default function ContentCreationPage() {
             {selectedImages.size > 0 && (
               <Button
                 onClick={downloadSelectedImages}
-                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download Selected ({selectedImages.size})
@@ -224,20 +233,20 @@ export default function ContentCreationPage() {
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         {filteredImages.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-full flex items-center justify-center">
               <ImageIcon className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-white text-xl font-bold mb-2">
-              No Processed Images Found
+              Content Library Empty
             </h2>
             <p className="text-white/70 mb-4">
               Start processing vehicle images to build your content library
             </p>
             <Button
-              onClick={() => window.location.href = '/background-removal'}
+              onClick={() => window.location.href = '/customershowroom'}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
-              Process Images
+              Go to Showroom
             </Button>
           </div>
         ) : (
@@ -286,11 +295,10 @@ export default function ContentCreationPage() {
                               <div className="flex h-full">
                                 {/* Original Image */}
                                 <div className="w-1/2 relative border-r border-white/20">
-                                  <Image
+                                  <img
                                     src={image.originalUrl}
                                     alt={`Original image ${image.imageIndex + 1}`}
-                                    fill
-                                    className="object-cover"
+                                    className="w-full h-full object-cover"
                                   />
                                   <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
                                     Original
@@ -299,11 +307,10 @@ export default function ContentCreationPage() {
                                 
                                 {/* Processed Image */}
                                 <div className="w-1/2 relative">
-                                  <Image
+                                  <img
                                     src={image.processedUrl}
                                     alt={`Processed image ${image.imageIndex + 1}`}
-                                    fill
-                                    className="object-cover"
+                                    className="w-full h-full object-cover"
                                   />
                                   <div className="absolute bottom-1 right-1 bg-green-600/80 text-white text-xs px-2 py-1 rounded">
                                     Processed
@@ -399,20 +406,16 @@ export default function ContentCreationPage() {
                             {/* Before/After thumbnails */}
                             <div className="flex space-x-2">
                               <div className="w-16 h-12 rounded overflow-hidden border border-white/20">
-                                <Image
+                                <img
                                   src={image.originalUrl}
                                   alt={`Original image ${image.imageIndex + 1}`}
-                                  width={64}
-                                  height={48}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
                               <div className="w-16 h-12 rounded overflow-hidden border border-green-500/50">
-                                <Image
+                                <img
                                   src={image.processedUrl}
                                   alt={`Processed image ${image.imageIndex + 1}`}
-                                  width={64}
-                                  height={48}
                                   className="w-full h-full object-cover"
                                 />
                               </div>

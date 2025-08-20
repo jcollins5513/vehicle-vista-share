@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'vehicle-vista-media.s3.us-east-2.amazonaws.com', // Your specific S3 bucket
+      },
+      {
+        protocol: 'https',
         hostname: 'www.bentleysupercenter.com',
       },
       {
