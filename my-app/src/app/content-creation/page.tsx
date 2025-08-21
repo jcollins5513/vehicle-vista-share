@@ -98,6 +98,7 @@ export default function ContentCreationPage() {
   const [processedImages, setProcessedImages] = useState<ProcessedImagesData>({});
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<ContentTemplate | null>(null);
@@ -329,6 +330,20 @@ export default function ContentCreationPage() {
 
       {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
+            <p className="text-red-200 text-sm">
+              <strong>Error:</strong> {error}
+            </p>
+            <button
+              onClick={() => setError(null)}
+              className="mt-2 text-red-300 hover:text-red-100 text-xs underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+        
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 bg-white/10 backdrop-blur-xl border border-white/20">
             <TabsTrigger value="images" className="data-[state=active]:bg-white/20 text-white">
