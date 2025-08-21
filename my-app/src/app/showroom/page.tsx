@@ -113,6 +113,18 @@ export default async function ShowroomPage() {
       )}
 
       <InventoryCarousel vehicles={vehicles} />
+      {/* Navigation Links */}
+      <div className="fixed bottom-10 left-10 z-50 space-y-3">
+        <button
+          onClick={() => window.open('/content-creation', '_blank')}
+          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+          </svg>
+          <span>Content Studio</span>
+        </button>
+      </div>
     </>
   );
 }
