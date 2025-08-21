@@ -27,20 +27,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       };
       
-      const process = spawn('backgroundremover', ['--help'], spawnOptions);
+      const backgroundProcess = spawn('backgroundremover', ['--help'], spawnOptions);
       
       let stdout = '';
       let stderr = '';
       
-      process.stdout.on('data', (data: Buffer) => {
+      backgroundProcess.stdout.on('data', (data: Buffer) => {
         stdout += data.toString();
       });
       
-      process.stderr.on('data', (data: Buffer) => {
+      backgroundProcess.stderr.on('data', (data: Buffer) => {
         stderr += data.toString();
       });
       
-      process.on('close', (code: number) => {
+      backgroundProcess.on('close', (code: number) => {
         resolve(res.status(200).json({
           success: code === 0,
           platform: process.platform,
@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }));
       });
       
-      process.on('error', (error: Error) => {
+      backgroundProcess.on('error', (error: Error) => {
         resolve(res.status(200).json({
           success: false,
           platform: process.platform,
