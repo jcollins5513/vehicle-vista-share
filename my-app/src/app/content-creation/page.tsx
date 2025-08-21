@@ -200,7 +200,7 @@ export default function ContentCreationPage() {
     canvas.height = selectedTemplate.dimensions.height;
 
     // Load and draw the background image
-    const img = new Image();
+    const img = new window.Image();
     img.crossOrigin = 'anonymous';
     
     img.onload = () => {
