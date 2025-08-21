@@ -4,6 +4,7 @@ interface VehicleData {
   stockNumber: string;
   vin: string;
   images: string[];
+  processedImages?: ProcessedImage[];
   [key: string]: any;
 }
 
