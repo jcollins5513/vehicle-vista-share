@@ -26,13 +26,29 @@ export function BatchBackgroundRemoval({
   const [results, setResults] = useState<{ [vehicleId: string]: any }>({});
   const [currentOperation, setCurrentOperation] = useState('');
 
-  const toggleVehicleSelection = (vehicleId: string) => {
+  // Helper function to convert image URL to base64
+  const urlToBase64 = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+      });
+    } catch (error) {
+      throw new Error(`Failed to convert image to base64: ${error}`);
+    }
+  };
+
+  const toggleVehicleSelection = (stockNumber: string) => {
     setSelectedVehicles(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(vehicleId)) {
-        newSet.delete(vehicleId);
+      if (newSet.has(stockNumber)) {
+        newSet.delete(stockNumber);
       } else {
-        newSet.add(vehicleId);
+        newSet.add(stockNumber);
       }
       return newSet;
     });
@@ -57,27 +73,65 @@ export function BatchBackgroundRemoval({
 
     try {
       const vehicleIds = Array.from(selectedVehicles);
+      const results: Record<string, any> = {};
       
-      const response = await fetch('/api/background-removal', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          batchVehicleIds: vehicleIds,
-          processFirstImageOnly: true,
-        }),
-      });
+      // Process each vehicle's first image
+      for (let i = 0; i < vehicleIds.length; i++) {
+        const vehicleId = vehicleIds[i];
+        const vehicle = vehicles.find(v => v.id === vehicleId);
+        
+        if (!vehicle || !vehicle.images || vehicle.images.length === 0) {
+          results[vehicleId] = { status: 'failed', error: 'No images available' };
+          continue;
+        }
 
-      const data = await response.json();
+        try {
+          setCurrentOperation(`Processing ${vehicle.make} ${vehicle.model} (${i + 1}/${vehicleIds.length})...`);
+          setProgress(((i + 1) / vehicleIds.length) * 100);
 
-      if (data.success) {
-        setResults(data.results);
-        setProgress(100);
-        setCurrentOperation('Batch processing completed!');
-      } else {
-        throw new Error(data.message || 'Batch processing failed');
+          // Convert image URL to base64
+          const imageUrl = vehicle.images[0];
+          const base64 = await urlToBase64(imageUrl);
+          
+          // Use @imgly/background-removal for browser-based processing
+          const { removeBackground } = await import('@imgly/background-removal');
+          
+          const result = await removeBackground(base64, {
+            output: {
+              format: 'image/png',
+              quality: 0.8
+            }
+          });
+
+          // Handle the result
+          let processedImageUrl = result;
+          if (typeof result === 'string') {
+            processedImageUrl = result;
+          } else if (result instanceof Blob) {
+            processedImageUrl = URL.createObjectURL(result);
+          } else {
+            throw new Error('Unexpected result format from background removal');
+          }
+
+          results[vehicle.stockNumber] = {
+            status: 'completed',
+            originalUrl: imageUrl,
+            processedUrl: processedImageUrl,
+            vehicle: vehicle
+          };
+        } catch (error) {
+          console.error(`Error processing vehicle ${vehicle.stockNumber}:`, error);
+          results[vehicle.stockNumber] = {
+            status: 'failed',
+            error: error instanceof Error ? error.message : 'Unknown error',
+            vehicle: vehicle
+          };
+        }
       }
+
+      setResults(results);
+      setProgress(100);
+      setCurrentOperation('Batch processing completed!');
     } catch (error) {
       console.error('Error in batch processing:', error);
       setCurrentOperation(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);

@@ -47,6 +47,7 @@ my-app/
 ## Key Files Added/Modified
 - `filestructure.md` - Created to track project structure (2025-01-05)
 - `my-app/scripts/scrape.js` - Vehicle inventory scraper (photo link extraction fixed)
+- `my-app/src/app/background-removal-test/page.tsx` - Background removal method comparison test page (2025-01-05)
 
 ## Notes
 - ✅ Fixed: Photo URL extraction now uses correct format: `https://www.bentleysupercenter.com/inventoryphotos/{carId}/{vin}/ip/{imageNumber}.jpg`

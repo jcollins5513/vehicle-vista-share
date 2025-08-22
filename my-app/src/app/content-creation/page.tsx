@@ -309,6 +309,15 @@ export default function ContentCreationPage() {
                 <p className="text-white/70">
                   Create engaging marketing content with AI-powered templates
                 </p>
+                <div className="mt-2">
+                  <a 
+                    href="/background-removal-test" 
+                    className="text-blue-300 hover:text-blue-200 text-sm underline"
+                    target="_blank"
+                  >
+                    🧪 Test Background Removal Methods
+                  </a>
+                </div>
               </div>
             </div>
 

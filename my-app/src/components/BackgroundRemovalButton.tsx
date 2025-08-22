@@ -26,32 +26,64 @@ export function BackgroundRemovalButton({
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [processedImages, setProcessedImages] = useState<any[]>([]);
 
+  // Helper function to convert image URL to base64
+  const urlToBase64 = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+      });
+    } catch (error) {
+      throw new Error(`Failed to convert image to base64: ${error}`);
+    }
+  };
+
   const processImage = async (imageIndex: number) => {
     setIsProcessing(true);
     setProcessingStatus(`Processing image ${imageIndex + 1}...`);
     onProcessingUpdate?.(vehicle.id, 'processing');
 
     try {
-      const response = await fetch('/api/background-removal', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          stockNumber: vehicle.stockNumber,
-          imageIndex: imageIndex,
-        }),
+      // Get the image URL from the vehicle
+      const imageUrl = vehicle.images[imageIndex];
+      if (!imageUrl) {
+        throw new Error('Image not found');
+      }
+
+      // Convert image URL to base64
+      const base64 = await urlToBase64(imageUrl);
+      
+      // Use @imgly/background-removal for browser-based processing
+      const { removeBackground } = await import('@imgly/background-removal');
+      
+      const result = await removeBackground(base64, {
+        output: {
+          format: 'image/png',
+          quality: 0.8
+        }
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        setProcessingStatus('Processing completed!');
-        setProcessedImages(prev => [...prev, data.result]);
-        onProcessingUpdate?.(vehicle.id, 'completed');
+      // Handle the result
+      let processedImageUrl = result;
+      if (typeof result === 'string') {
+        processedImageUrl = result;
+      } else if (result instanceof Blob) {
+        processedImageUrl = URL.createObjectURL(result);
       } else {
-        throw new Error(data.message || 'Processing failed');
+        throw new Error('Unexpected result format from background removal');
       }
+
+      setProcessingStatus('Processing completed!');
+      setProcessedImages(prev => [...prev, { 
+        originalUrl: imageUrl, 
+        processedUrl: processedImageUrl,
+        imageIndex 
+      }]);
+      onProcessingUpdate?.(vehicle.id, 'completed');
     } catch (error) {
       console.error('Error processing image:', error);
       setProcessingStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -68,25 +100,48 @@ export function BackgroundRemovalButton({
     onProcessingUpdate?.(vehicle.id, 'processing');
 
     try {
-      const response = await fetch('/api/background-removal', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          stockNumber: vehicle.stockNumber,
-        }),
-      });
+      const results = [];
+      
+      // Process each image sequentially to avoid overwhelming the browser
+      for (let i = 0; i < vehicle.images.length; i++) {
+        setProcessingStatus(`Processing image ${i + 1} of ${vehicle.images.length}...`);
+        
+        try {
+          const imageUrl = vehicle.images[i];
+          const base64 = await urlToBase64(imageUrl);
+          
+          const { removeBackground } = await import('@imgly/background-removal');
+          
+          const result = await removeBackground(base64, {
+            output: {
+              format: 'image/png',
+              quality: 0.8
+            }
+          });
 
-      const data = await response.json();
+          let processedImageUrl = result;
+          if (typeof result === 'string') {
+            processedImageUrl = result;
+          } else if (result instanceof Blob) {
+            processedImageUrl = URL.createObjectURL(result);
+          } else {
+            throw new Error('Unexpected result format from background removal');
+          }
 
-      if (data.success) {
-        setProcessingStatus('All images processed!');
-        setProcessedImages(data.results);
-        onProcessingUpdate?.(vehicle.id, 'completed');
-      } else {
-        throw new Error(data.message || 'Processing failed');
+          results.push({
+            originalUrl: imageUrl,
+            processedUrl: processedImageUrl,
+            imageIndex: i
+          });
+        } catch (imageError) {
+          console.error(`Error processing image ${i + 1}:`, imageError);
+          // Continue with other images even if one fails
+        }
       }
+
+      setProcessingStatus('All images processed!');
+      setProcessedImages(results);
+      onProcessingUpdate?.(vehicle.id, 'completed');
     } catch (error) {
       console.error('Error processing images:', error);
       setProcessingStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);

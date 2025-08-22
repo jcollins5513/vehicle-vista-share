@@ -27,6 +27,38 @@ export function BackgroundRemovalPanel() {
   const [progress, setProgress] = useState(0);
   const [currentOperation, setCurrentOperation] = useState('');
 
+  // Helper function to convert image URL to base64
+  const urlToBase64 = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+      });
+    } catch (error) {
+      throw new Error(`Failed to convert image to base64: ${error}`);
+    }
+  };
+
+  // Process a single vehicle
+  const processSingleVehicle = async (stockNum: string) => {
+    // This would need to fetch vehicle data first
+    // For now, we'll show a placeholder
+    setCurrentOperation('Single vehicle processing not yet implemented');
+    setProgress(100);
+  };
+
+  // Process all vehicles
+  const processAllVehicles = async () => {
+    // This would need to fetch all vehicle data first
+    // For now, we'll show a placeholder
+    setCurrentOperation('All vehicles processing not yet implemented');
+    setProgress(100);
+  };
+
   const processVehicle = async (stockNumber?: string) => {
     setIsProcessing(true);
     setProgress(0);
@@ -48,30 +80,13 @@ export function BackgroundRemovalPanel() {
         setCurrentOperation(`Found ${debugData.imagesLength} images for vehicle ${stockNumber}. Starting processing...`);
       }
 
-      const response = await fetch('/api/background-removal', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          stockNumber: stockNumber || undefined,
-          processAll: !stockNumber,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        setResults(data.results);
-        setProgress(100);
-        setCurrentOperation('Processing completed!');
+      // Use browser-based background removal instead of API
+      if (stockNumber) {
+        // Process single vehicle
+        await processSingleVehicle(stockNumber);
       } else {
-        throw new Error(data.message || 'Processing failed');
+        // Process all vehicles
+        await processAllVehicles();
       }
     } catch (error) {
       console.error('Error processing images:', error);
