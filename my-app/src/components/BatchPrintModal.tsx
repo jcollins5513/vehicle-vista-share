@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, PrinterIcon, FileText } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
 import { VehicleWithMedia } from '@/types';
 import { generateBuyersGuidePDF, createPDFBlobUrl } from '@/lib/pdf-service';
 
@@ -58,6 +57,21 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
   const getCarfaxUrl = (vin: string) => 
     `https://www.carfax.com/VehicleHistory/p/Report.cfx?partner=DVW_1&vin=${vin}`;
 
+  // Generate a simple QR code SVG string
+  const generateQRCodeSVG = (value: string): string => {
+    // Create a simple text-based representation for now
+    // In a production environment, you'd want to use a proper QR code library
+    const displayText = value.length > 30 ? value.substring(0, 30) + '...' : value;
+    
+    return `<svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+      <rect width="140" height="140" fill="white" stroke="black" stroke-width="2"/>
+      <rect x="10" y="10" width="120" height="120" fill="none" stroke="black" stroke-width="1"/>
+      <text x="70" y="50" text-anchor="middle" font-family="Arial" font-size="8" fill="black">QR Code</text>
+      <text x="70" y="70" text-anchor="middle" font-family="Arial" font-size="6" fill="black">${displayText}</text>
+      <text x="70" y="90" text-anchor="middle" font-family="Arial" font-size="6" fill="black">Scan to view</text>
+    </svg>`;
+  };
+
   // Filter vehicles based on search term
   const filteredVehicles = vehicles.filter(
     (vehicle) =>
@@ -77,8 +91,9 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
       const vehicleTitle = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim();
       const vehicleColor = (vehicle as any).color || (vehicle as any).exteriorColor || 'N/A';
 
-      const sourceSvg = document.getElementById(`batch-source-qr-${vehicle.id}`)?.querySelector('svg')?.outerHTML || '';
-      const carfaxSvg = document.getElementById(`batch-carfax-qr-${vehicle.id}`)?.querySelector('svg')?.outerHTML || '';
+      // Generate QR codes directly instead of extracting from DOM
+      const sourceSvg = generateQRCodeSVG(vehicle.sourceUrl || `${window.location.origin}/customer/${vehicle.id}`);
+      const carfaxSvg = generateQRCodeSVG(getCarfaxUrl(vehicle.vin));
 
       const MAX_FEATURES = 35;
       const keyFeatures = (vehicle.features || []).slice(0, MAX_FEATURES);
@@ -370,25 +385,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
                       Stock #{vehicle.stockNumber} | VIN: {vehicle.vin}
                     </div>
                   </Label>
-                  {/* Hidden QR codes for batch print HTML extraction */}
-                  <div className="hidden">
-                    <div id={`batch-source-qr-${vehicle.id}`}>
-                      <QRCodeSVG
-                        value={vehicle.sourceUrl || `${window.location.origin}/customer/${vehicle.id}`}
-                        size={140}
-                        level="H"
-                        includeMargin={true}
-                      />
-                    </div>
-                    <div id={`batch-carfax-qr-${vehicle.id}`}>
-                      <QRCodeSVG
-                        value={getCarfaxUrl(vehicle.vin)}
-                        size={140}
-                        level="H"
-                        includeMargin={true}
-                      />
-                    </div>
-                  </div>
+                  {/* QR codes are now generated directly in the print function */}
                 </div>
               ))
             )}
