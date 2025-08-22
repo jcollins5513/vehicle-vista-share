@@ -76,7 +76,7 @@ export default function BackgroundRemovalTestPage() {
       console.log('Result constructor:', result?.constructor?.name);
       
       // The result should be a data URL or blob URL
-      let imageUrl = result;
+      let imageUrl: string;
       if (typeof result === 'string') {
         imageUrl = result;
       } else if (result instanceof Blob) {
