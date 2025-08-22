@@ -24,6 +24,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
   const [printType, setPrintType] = useState<'window-sticker' | 'buyers-guide'>('window-sticker');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Toggle selection of a vehicle
   const toggleVehicleSelection = (vehicleId: string) => {
@@ -44,8 +45,8 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
   // Select or deselect all vehicles
   const toggleSelectAll = (select: boolean) => {
     if (select) {
-      const allIds = vehicles.map(v => v.id);
-      console.log('Selecting all vehicles:', allIds.length, 'vehicles');
+      const allIds = filteredVehicles.map(v => v.id);
+      console.log('Selecting all filtered vehicles:', allIds.length, 'vehicles');
       console.log('All IDs:', allIds);
       setSelectedVehicleIds(allIds);
     } else {
@@ -56,6 +57,16 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
 
   const getCarfaxUrl = (vin: string) => 
     `https://www.carfax.com/VehicleHistory/p/Report.cfx?partner=DVW_1&vin=${vin}`;
+
+  // Filter vehicles based on search term
+  const filteredVehicles = vehicles.filter(
+    (vehicle) =>
+      vehicle.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicle.year.toString().includes(searchTerm) ||
+      vehicle.stockNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicle.vin?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Removed obsolete per-vehicle single-window template
 
@@ -296,7 +307,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
         
         <div className="flex justify-between items-center mb-2">
           <div className="text-sm text-white/70">
-            {selectedVehicleIds.length} of {vehicles.length} vehicles selected
+            {selectedVehicleIds.length} of {filteredVehicles.length} vehicles selected
           </div>
           <div className="flex space-x-2">
             <Button 
@@ -318,51 +329,69 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
           </div>
         </div>
         
+        {/* Search Input */}
+        <div className="relative mb-3">
+          <input
+            type="text"
+            placeholder="Search by make, model, year, stock #, or VIN..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        
         <ScrollArea className="h-[300px] border border-white/10 rounded-md p-2">
           <div className="space-y-2">
-            {vehicles.map((vehicle) => (
-              <div 
-                key={vehicle.id} 
-                className="flex items-center space-x-3 p-2 hover:bg-white/5 rounded-md"
-              >
-                <Checkbox 
-                  id={`vehicle-${vehicle.id}`} 
-                  checked={selectedVehicleIds.includes(vehicle.id)}
-                  onCheckedChange={() => toggleVehicleSelection(vehicle.id)}
-                  onClick={(e) => e.stopPropagation()} // Prevent event bubbling
-                />
-                <Label 
-                  htmlFor={`vehicle-${vehicle.id}`}
-                  className="flex-1 cursor-pointer"
+            {filteredVehicles.length === 0 ? (
+              <div className="text-center py-8 text-white/50">
+                <div className="text-lg mb-2">No vehicles found</div>
+                <div className="text-sm">Try adjusting your search terms</div>
+              </div>
+            ) : (
+              filteredVehicles.map((vehicle) => (
+                <div 
+                  key={vehicle.id} 
+                  className="flex items-center space-x-3 p-2 hover:bg-white/5 rounded-md"
                 >
-                  <div className="font-medium">
-                    {vehicle.year} {vehicle.make} {vehicle.model}
-                  </div>
-                  <div className="text-sm text-white/70">
-                    Stock #{vehicle.stockNumber} | VIN: {vehicle.vin}
-                  </div>
-                </Label>
-                {/* Hidden QR codes for batch print HTML extraction */}
-                <div className="hidden">
-                  <div id={`batch-source-qr-${vehicle.id}`}>
-                    <QRCodeSVG
-                      value={vehicle.sourceUrl || `${window.location.origin}/customer/${vehicle.id}`}
-                      size={140}
-                      level="H"
-                      includeMargin={true}
-                    />
-                  </div>
-                  <div id={`batch-carfax-qr-${vehicle.id}`}>
-                    <QRCodeSVG
-                      value={getCarfaxUrl(vehicle.vin)}
-                      size={140}
-                      level="H"
-                      includeMargin={true}
-                    />
+                  <Checkbox 
+                    id={`vehicle-${vehicle.id}`} 
+                    checked={selectedVehicleIds.includes(vehicle.id)}
+                    onCheckedChange={() => toggleVehicleSelection(vehicle.id)}
+                    onClick={(e) => e.stopPropagation()} // Prevent event bubbling
+                  />
+                  <Label 
+                    htmlFor={`vehicle-${vehicle.id}`}
+                    className="flex-1 cursor-pointer"
+                  >
+                    <div className="font-medium">
+                      {vehicle.year} {vehicle.make} {vehicle.model}
+                    </div>
+                    <div className="text-sm text-white/70">
+                      Stock #{vehicle.stockNumber} | VIN: {vehicle.vin}
+                    </div>
+                  </Label>
+                  {/* Hidden QR codes for batch print HTML extraction */}
+                  <div className="hidden">
+                    <div id={`batch-source-qr-${vehicle.id}`}>
+                      <QRCodeSVG
+                        value={vehicle.sourceUrl || `${window.location.origin}/customer/${vehicle.id}`}
+                        size={140}
+                        level="H"
+                        includeMargin={true}
+                      />
+                    </div>
+                    <div id={`batch-carfax-qr-${vehicle.id}`}>
+                      <QRCodeSVG
+                        value={getCarfaxUrl(vehicle.vin)}
+                        size={140}
+                        level="H"
+                        includeMargin={true}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </ScrollArea>
         

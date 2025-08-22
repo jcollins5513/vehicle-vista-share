@@ -93,7 +93,8 @@ export default function CustomerShowroomPage() {
       (vehicle) =>
         vehicle.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
         vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vehicle.year.toString().includes(searchTerm),
+        vehicle.year.toString().includes(searchTerm) ||
+        vehicle.stockNumber?.toLowerCase().includes(searchTerm.toLowerCase()),
     )
     .filter(
       (vehicle) =>
@@ -309,7 +310,7 @@ export default function CustomerShowroomPage() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
               <Input
-                placeholder="Search by make, model, or year..."
+                placeholder="Search by make, model, year, or stock #..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-white/10 border-white/20 text-white placeholder-white/50"
