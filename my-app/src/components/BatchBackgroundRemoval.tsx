@@ -104,7 +104,7 @@ export function BatchBackgroundRemoval({
           });
 
           // Handle the result
-          let processedImageUrl = result;
+          let processedImageUrl: string;
           if (typeof result === 'string') {
             processedImageUrl = result;
           } else if (result instanceof Blob) {
