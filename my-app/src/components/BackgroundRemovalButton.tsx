@@ -68,7 +68,7 @@ export function BackgroundRemovalButton({
       });
 
       // Handle the result
-      let processedImageUrl = result;
+      let processedImageUrl: string;
       if (typeof result === 'string') {
         processedImageUrl = result;
       } else if (result instanceof Blob) {
@@ -119,7 +119,7 @@ export function BackgroundRemovalButton({
             }
           });
 
-          let processedImageUrl = result;
+          let processedImageUrl: string;
           if (typeof result === 'string') {
             processedImageUrl = result;
           } else if (result instanceof Blob) {
