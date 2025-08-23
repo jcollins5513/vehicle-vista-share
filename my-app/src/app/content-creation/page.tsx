@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import type { Vehicle } from '@/types';
+import { AssetManager } from '@/components/AssetManager';
 
 interface ProcessedImage {
   originalUrl: string;
@@ -53,6 +54,15 @@ interface GeneratedContent {
   callToAction: string;
   hashtags: string[];
   features: string[];
+}
+
+interface Asset {
+  key: string;
+  url: string;
+  fileName: string;
+  category: string;
+  lastModified?: Date;
+  size?: number;
 }
 
 const contentTemplates: ContentTemplate[] = [
@@ -106,6 +116,7 @@ export default function ContentCreationPage() {
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('images');
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
 
   useEffect(() => {
     Promise.all([fetchProcessedImages(), fetchVehicles()]);
@@ -114,11 +125,13 @@ export default function ContentCreationPage() {
   const fetchProcessedImages = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/processed-images');
+      // Use the new endpoint that fetches ALL images from S3, not just cached ones
+      const response = await fetch('/api/processed-images/all');
       const data = await response.json();
 
       if (data.success) {
         setProcessedImages(data.processedImages);
+        console.log(`Loaded ${data.totalImages} processed images from ${data.totalVehicles} vehicles (source: ${data.source})`);
       } else {
         throw new Error('Failed to fetch processed images');
       }
@@ -354,10 +367,14 @@ export default function ContentCreationPage() {
         )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white/10 backdrop-blur-xl border border-white/20">
+          <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-xl border border-white/20">
             <TabsTrigger value="images" className="data-[state=active]:bg-white/20 text-white">
               <ImageIcon className="w-4 h-4 mr-2" />
               Vehicle Images
+            </TabsTrigger>
+            <TabsTrigger value="assets" className="data-[state=active]:bg-white/20 text-white">
+              <Car className="w-4 h-4 mr-2" />
+              Assets
             </TabsTrigger>
             <TabsTrigger value="templates" className="data-[state=active]:bg-white/20 text-white">
               <Layout className="w-4 h-4 mr-2" />
@@ -487,6 +504,14 @@ export default function ContentCreationPage() {
             )}
           </TabsContent>
 
+          {/* Assets Tab */}
+          <TabsContent value="assets" className="space-y-6">
+            <AssetManager 
+              onAssetSelect={setSelectedAsset}
+              selectedAsset={selectedAsset}
+            />
+          </TabsContent>
+
           {/* Create Content Tab */}
           <TabsContent value="create" className="space-y-6">
             {!selectedVehicle || !selectedTemplate ? (
@@ -604,30 +629,64 @@ export default function ContentCreationPage() {
                         Select Image
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      {processedImages[selectedVehicle.stockNumber] ? (
-                        <div className="grid grid-cols-2 gap-3">
-                          {processedImages[selectedVehicle.stockNumber].map((image, index) => (
-                            <div
-                              key={index}
-                              className={`aspect-video rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
-                                selectedImage === image ? 'border-blue-500' : 'border-white/20 hover:border-white/40'
-                              }`}
-                              onClick={() => setSelectedImage(image)}
-                            >
-                              <Image
-                                src={image.processedUrl}
-                                alt={`Vehicle ${index + 1}`}
-                                width={200}
-                                height={150}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ))}
+                    <CardContent className="space-y-4">
+                      {/* Vehicle Images */}
+                      {processedImages[selectedVehicle.stockNumber] && (
+                        <div>
+                          <h4 className="text-white font-medium mb-2">Vehicle Images</h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            {processedImages[selectedVehicle.stockNumber].map((image, index) => (
+                              <div
+                                key={`vehicle-${index}`}
+                                className={`aspect-video rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                                  selectedImage === image ? 'border-blue-500' : 'border-white/20 hover:border-white/40'
+                                }`}
+                                onClick={() => setSelectedImage(image)}
+                              >
+                                <Image
+                                  src={image.processedUrl}
+                                  alt={`Vehicle ${index + 1}`}
+                                  width={200}
+                                  height={150}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ) : (
+                      )}
+
+                      {/* Selected Asset */}
+                      {selectedAsset && (
+                        <div>
+                          <h4 className="text-white font-medium mb-2">Selected Asset</h4>
+                          <div
+                            className={`aspect-video rounded-lg overflow-hidden border-2 cursor-pointer transition-all max-w-xs ${
+                              selectedImage?.processedUrl === selectedAsset.url ? 'border-blue-500' : 'border-white/20 hover:border-white/40'
+                            }`}
+                            onClick={() => setSelectedImage({
+                              originalUrl: selectedAsset.url,
+                              processedUrl: selectedAsset.url,
+                              processedAt: new Date().toISOString(),
+                              status: 'completed',
+                              imageIndex: 0
+                            })}
+                          >
+                            <Image
+                              src={selectedAsset.url}
+                              alt={selectedAsset.fileName}
+                              width={200}
+                              height={150}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <p className="text-white/70 text-sm mt-2">{selectedAsset.fileName}</p>
+                        </div>
+                      )}
+
+                      {!processedImages[selectedVehicle.stockNumber] && !selectedAsset && (
                         <p className="text-white/70 text-center py-8">
-                          No processed images available for this vehicle
+                          No processed images available for this vehicle. Select an asset from the Assets tab or process vehicle images first.
                         </p>
                       )}
                     </CardContent>

@@ -21,7 +21,6 @@ async function uploadToS3(file: Buffer, fileName: string, contentType: string) {
     Key: `360-images/${fileName}`,
     Body: file,
     ContentType: contentType,
-    ACL: 'public-read',
   });
 
   try {
