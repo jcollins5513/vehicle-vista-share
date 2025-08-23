@@ -101,7 +101,7 @@ async function updateVehicleWithProcessedImage(
     );
     
     if (vehicleIndex !== -1) {
-      const vehicle = vehicles[vehicleIndex];
+      const vehicle = vehicles[vehicleIndex] as any;
       
       if (!vehicle.processedImages) {
         vehicle.processedImages = [];
