@@ -60,6 +60,7 @@ export interface IRedisService {
   getShowroomData(useCache?: boolean): Promise<ShowroomData>;
   getInventoryData(): Promise<InventoryData>;
   cacheInventoryData(vehicles: unknown[], lastUpdated?: string): Promise<void>;
+  setInventoryData(inventoryData: InventoryData, ttlSeconds?: number): Promise<void>;
 }
 
 // Implement the Redis service
@@ -401,25 +402,36 @@ class RedisService implements IRedisService {
         cachedAt: new Date().toISOString()
       };
       
+      await this.setInventoryData(dataToCache, ttlSeconds);
+    } catch (error) {
+      console.error('[Redis] Error in cacheInventoryData:', error);
+      throw error;
+    }
+  }
+
+  async setInventoryData(inventoryData: InventoryData, ttlSeconds?: number): Promise<void> {
+    try {
+      console.log(`[Redis] Setting inventory data with ${inventoryData.vehicles.length} vehicles`);
+      
       // Store with TTL if provided, otherwise make it persistent
       if (ttlSeconds && ttlSeconds > 0) {
-        await redisClient.set(DEALERSHIP_INVENTORY_KEY, dataToCache, { ex: ttlSeconds });
-        console.log(`[Redis] Inventory data cached with TTL of ${ttlSeconds} seconds`);
+        await redisClient.set(DEALERSHIP_INVENTORY_KEY, inventoryData, { ex: ttlSeconds });
+        console.log(`[Redis] Inventory data set with TTL of ${ttlSeconds} seconds`);
       } else {
         // Store without TTL for persistent storage
-        await redisClient.set(DEALERSHIP_INVENTORY_KEY, dataToCache);
+        await redisClient.set(DEALERSHIP_INVENTORY_KEY, inventoryData);
         
         // Ensure the key is marked as persistent
         await ensurePersistent(DEALERSHIP_INVENTORY_KEY);
-        console.log('[Redis] Inventory data cached with no TTL (persistent)');
+        console.log('[Redis] Inventory data set with no TTL (persistent)');
       }
       
       // Also update the vehicles sorted set
       await redisClient.del(VEHICLES_KEY); // Clear existing set
       
-      if (vehicles.length > 0) {
+      if (inventoryData.vehicles.length > 0) {
         // Safely extract vehicle IDs with type checking
-        const vehicleIds = vehicles
+        const vehicleIds = inventoryData.vehicles
           .filter((v): v is { id?: string; stockNumber?: string } => 
             typeof v === 'object' && v !== null
           )
@@ -433,7 +445,7 @@ class RedisService implements IRedisService {
         }
       }
     } catch (error) {
-      console.error('[Redis] Error in cacheInventoryData:', error);
+      console.error('[Redis] Error in setInventoryData:', error);
       throw error;
     }
   }

@@ -10,9 +10,7 @@
     "lint": "next lint",
     "test": "jest",
     "postinstall": "prisma generate",
-    "scrape": "node scripts/scrape.js",
-    "setup-bg-remover": "node scripts/setup-background-remover.js",
-    "process-backgrounds": "node scripts/process-backgrounds.js"
+    "scrape": "node scripts/scrape.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.835.0",

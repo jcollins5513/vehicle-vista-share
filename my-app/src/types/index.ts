@@ -6,6 +6,17 @@
  * Represents a vehicle in the inventory.
  * Based on the Prisma schema and component usage.
  */
+/**
+ * Represents a processed image with background removed
+ */
+export interface ProcessedImage {
+  originalUrl: string;
+  processedUrl: string;
+  processedAt: Date;
+  status: 'processing' | 'completed' | 'failed';
+  imageIndex: number;
+}
+
 export interface Vehicle {
   id: string;
   stockNumber: string;
@@ -42,6 +53,8 @@ export interface Vehicle {
   media?: Media[];
   threeSixtyImageUrl?: string | null;
   lastUpdated?: Date;
+  /** Background-removed processed images */
+  processedImages?: ProcessedImage[];
 }
 
 /**

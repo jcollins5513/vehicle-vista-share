@@ -24,12 +24,23 @@ export function BackgroundRemovalButton({
 }: BackgroundRemovalButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
-  const [processedImages, setProcessedImages] = useState<any[]>([]);
+  const [processedImages, setProcessedImages] = useState<Array<{
+    originalUrl: string;
+    processedUrl: string;
+    imageIndex: number;
+  }>>([]);
 
-  // Helper function to convert image URL to base64
+  // Helper function to convert image URL to base64 using proxy to avoid CORS issues
   const urlToBase64 = async (url: string): Promise<string> => {
     try {
-      const response = await fetch(url);
+      // Use our proxy endpoint to avoid CORS issues
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image via proxy: ${response.status} ${response.statusText}`);
+      }
+      
       const blob = await response.blob();
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -38,8 +49,33 @@ export function BackgroundRemovalButton({
         reader.onerror = error => reject(error);
       });
     } catch (error) {
-      throw new Error(`Failed to convert image to base64: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to convert image to base64: ${errorMessage}`);
     }
+  };
+
+  // Helper function to upload processed image to S3
+  const uploadProcessedImageToS3 = async (
+    imageBlob: Blob, 
+    originalUrl: string, 
+    imageIndex: number
+  ): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', imageBlob);
+    formData.append('originalUrl', originalUrl);
+    formData.append('imageIndex', imageIndex.toString());
+
+    const response = await fetch(`/api/vehicles/${vehicle.id}/processed-images`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to upload processed image: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.processedImage.processedUrl;
   };
 
   const processImage = async (imageIndex: number) => {
@@ -58,6 +94,7 @@ export function BackgroundRemovalButton({
       const base64 = await urlToBase64(imageUrl);
       
       // Use @imgly/background-removal for browser-based processing
+      setProcessingStatus(`Removing background from image ${imageIndex + 1}...`);
       const { removeBackground } = await import('@imgly/background-removal');
       
       const result = await removeBackground(base64, {
@@ -67,22 +104,30 @@ export function BackgroundRemovalButton({
         }
       });
 
-      // Handle the result
-      let processedImageUrl: string;
-      if (typeof result === 'string') {
-        processedImageUrl = result;
-      } else if (result instanceof Blob) {
-        processedImageUrl = URL.createObjectURL(result);
+      // Convert result to blob for upload
+      let imageBlob: Blob;
+      if (result instanceof Blob) {
+        imageBlob = result;
+      } else if (typeof result === 'string') {
+        // Convert data URL to blob
+        const response = await fetch(result);
+        imageBlob = await response.blob();
       } else {
         throw new Error('Unexpected result format from background removal');
       }
 
-      setProcessingStatus('Processing completed!');
-      setProcessedImages(prev => [...prev, { 
-        originalUrl: imageUrl, 
-        processedUrl: processedImageUrl,
-        imageIndex 
+      // Upload to S3 and update vehicle data
+      setProcessingStatus(`Uploading processed image ${imageIndex + 1} to S3...`);
+      const s3Url = await uploadProcessedImageToS3(imageBlob, imageUrl, imageIndex);
+
+      // Update local state
+      setProcessedImages(prev => [...prev, {
+        originalUrl: imageUrl,
+        processedUrl: s3Url,
+        imageIndex
       }]);
+
+      setProcessingStatus('Processing completed!');
       onProcessingUpdate?.(vehicle.id, 'completed');
     } catch (error) {
       console.error('Error processing image:', error);
@@ -101,6 +146,7 @@ export function BackgroundRemovalButton({
 
     try {
       const results = [];
+      const { removeBackground } = await import('@imgly/background-removal');
       
       // Process each image sequentially to avoid overwhelming the browser
       for (let i = 0; i < vehicle.images.length; i++) {
@@ -110,8 +156,8 @@ export function BackgroundRemovalButton({
           const imageUrl = vehicle.images[i];
           const base64 = await urlToBase64(imageUrl);
           
-          const { removeBackground } = await import('@imgly/background-removal');
-          
+          // Remove background
+          setProcessingStatus(`Removing background from image ${i + 1} of ${vehicle.images.length}...`);
           const result = await removeBackground(base64, {
             output: {
               format: 'image/png',
@@ -119,18 +165,25 @@ export function BackgroundRemovalButton({
             }
           });
 
-          let processedImageUrl: string;
-          if (typeof result === 'string') {
-            processedImageUrl = result;
-          } else if (result instanceof Blob) {
-            processedImageUrl = URL.createObjectURL(result);
+          // Convert result to blob for upload
+          let imageBlob: Blob;
+          if (result instanceof Blob) {
+            imageBlob = result;
+          } else if (typeof result === 'string') {
+            // Convert data URL to blob
+            const response = await fetch(result);
+            imageBlob = await response.blob();
           } else {
             throw new Error('Unexpected result format from background removal');
           }
 
+          // Upload to S3 and update vehicle data
+          setProcessingStatus(`Uploading processed image ${i + 1} to S3...`);
+          const s3Url = await uploadProcessedImageToS3(imageBlob, imageUrl, i);
+
           results.push({
             originalUrl: imageUrl,
-            processedUrl: processedImageUrl,
+            processedUrl: s3Url,
             imageIndex: i
           });
         } catch (imageError) {
@@ -139,8 +192,9 @@ export function BackgroundRemovalButton({
         }
       }
 
-      setProcessingStatus('All images processed!');
+      // Update local state with all results
       setProcessedImages(results);
+      setProcessingStatus(`Processed and uploaded ${results.length} of ${vehicle.images.length} images!`);
       onProcessingUpdate?.(vehicle.id, 'completed');
     } catch (error) {
       console.error('Error processing images:', error);

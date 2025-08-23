@@ -8,13 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Image, CheckCircle, XCircle, Play } from 'lucide-react';
-
-interface ProcessedImage {
-  originalUrl: string;
-  processedUrl: string;
-  processedAt: Date;
-  status: 'processing' | 'completed' | 'failed';
-}
+import type { ProcessedImage } from '@/types';
 
 interface ProcessingResult {
   [stockNumber: string]: ProcessedImage[];
@@ -27,10 +21,17 @@ export function BackgroundRemovalPanel() {
   const [progress, setProgress] = useState(0);
   const [currentOperation, setCurrentOperation] = useState('');
 
-  // Helper function to convert image URL to base64
+  // Helper function to convert image URL to base64 using proxy to avoid CORS issues
   const urlToBase64 = async (url: string): Promise<string> => {
     try {
-      const response = await fetch(url);
+      // Use our proxy endpoint to avoid CORS issues
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image via proxy: ${response.status} ${response.statusText}`);
+      }
+
       const blob = await response.blob();
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -39,71 +40,218 @@ export function BackgroundRemovalPanel() {
         reader.onerror = error => reject(error);
       });
     } catch (error) {
-      throw new Error(`Failed to convert image to base64: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to convert image to base64: ${errorMessage}`);
     }
+  };
+
+  // Helper function to upload processed image to S3
+  const uploadProcessedImageToS3 = async (
+    imageBlob: Blob,
+    originalUrl: string,
+    imageIndex: number,
+    vehicleId: string
+  ): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', imageBlob);
+    formData.append('originalUrl', originalUrl);
+    formData.append('imageIndex', imageIndex.toString());
+
+    const response = await fetch(`/api/vehicles/${vehicleId}/processed-images`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to upload processed image: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.processedImage.processedUrl;
+  };
+
+  // Process background removal using browser-based @imgly/background-removal
+  const processImageWithBrowserRemoval = async (
+    imageUrl: string,
+    imageIndex: number,
+    vehicleId: string
+  ): Promise<string> => {
+    const { removeBackground } = await import('@imgly/background-removal');
+
+    // Convert image URL to base64
+    const base64Image = await urlToBase64(imageUrl);
+
+    // Remove background using browser-based processing
+    const result = await removeBackground(base64Image, {
+      output: {
+        format: 'image/png',
+        quality: 0.8
+      }
+    });
+
+    // Convert result to blob for upload
+    let imageBlob: Blob;
+    if (result instanceof Blob) {
+      imageBlob = result;
+    } else if (typeof result === 'string') {
+      // Convert data URL to blob
+      const response = await fetch(result);
+      imageBlob = await response.blob();
+    } else {
+      throw new Error('Unexpected result format from background removal');
+    }
+
+    // Upload to S3 and return the S3 URL
+    return await uploadProcessedImageToS3(imageBlob, imageUrl, imageIndex, vehicleId);
   };
 
   // Process a single vehicle
   const processSingleVehicle = async (stockNum: string) => {
-    // This would need to fetch vehicle data first
-    // For now, we'll show a placeholder
-    setCurrentOperation('Single vehicle processing not yet implemented');
-    setProgress(100);
+    try {
+      setCurrentOperation(`Fetching vehicle data for ${stockNum}...`);
+
+      // Get vehicle data from Redis cache
+      const response = await fetch(`/api/vehicles/${stockNum}`);
+      if (!response.ok) {
+        throw new Error(`Vehicle ${stockNum} not found`);
+      }
+
+      const vehicleData = await response.json();
+      if (!vehicleData.images || vehicleData.images.length === 0) {
+        throw new Error(`No images found for vehicle ${stockNum}`);
+      }
+
+      const processedImages: ProcessedImage[] = [];
+      const totalImages = vehicleData.images.length;
+
+      for (let i = 0; i < totalImages; i++) {
+        setCurrentOperation(`Processing image ${i + 1} of ${totalImages} for vehicle ${stockNum}...`);
+        setProgress(Math.round((i / totalImages) * 100));
+
+        try {
+          const processedUrl = await processImageWithBrowserRemoval(
+            vehicleData.images[i],
+            i,
+            vehicleData.stockNumber || vehicleData.id
+          );
+
+          processedImages.push({
+            originalUrl: vehicleData.images[i],
+            processedUrl,
+            processedAt: new Date(),
+            status: 'completed',
+            imageIndex: i
+          });
+        } catch (error) {
+          console.error(`Failed to process image ${i + 1}:`, error);
+          processedImages.push({
+            originalUrl: vehicleData.images[i],
+            processedUrl: '',
+            processedAt: new Date(),
+            status: 'failed',
+            imageIndex: i
+          });
+        }
+      }
+
+      setResults(prev => ({
+        ...prev,
+        [stockNum]: processedImages
+      }));
+
+      setProgress(100);
+      setCurrentOperation(`Completed processing ${processedImages.filter(img => img.status === 'completed').length} of ${totalImages} images for vehicle ${stockNum}`);
+    } catch (error) {
+      console.error('Error processing vehicle:', error);
+      setCurrentOperation(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   // Process all vehicles
   const processAllVehicles = async () => {
-    // This would need to fetch all vehicle data first
-    // For now, we'll show a placeholder
-    setCurrentOperation('All vehicles processing not yet implemented');
-    setProgress(100);
-  };
-
-  const processVehicle = async (stockNumber?: string) => {
-    setIsProcessing(true);
-    setProgress(0);
-    setCurrentOperation(stockNumber ? `Processing vehicle ${stockNumber}...` : 'Processing all vehicles...');
-
     try {
-      // First, let's debug the vehicle data
-      if (stockNumber) {
-        setCurrentOperation(`Checking vehicle data for ${stockNumber}...`);
-        const debugResponse = await fetch(`/api/debug-vehicle?stockNumber=${stockNumber}`);
-        const debugData = await debugResponse.json();
+      setCurrentOperation('Fetching all vehicles...');
 
-        console.log('Debug vehicle data:', debugData);
+      // Get all vehicles from Redis cache
+      const response = await fetch('/api/vehicles');
+      if (!response.ok) {
+        throw new Error('Failed to fetch vehicles');
+      }
 
-        if (!debugData.success || !debugData.hasImages) {
-          throw new Error(`Vehicle ${stockNumber} not found or has no images. Debug info: ${JSON.stringify(debugData)}`);
+      const vehicles = await response.json();
+
+      if (vehicles.length === 0) {
+        throw new Error('No vehicles found');
+      }
+
+      const allResults: ProcessingResult = {};
+
+      for (let vehicleIndex = 0; vehicleIndex < vehicles.length; vehicleIndex++) {
+        const vehicle = vehicles[vehicleIndex];
+        const stockNum = vehicle.stockNumber;
+
+        setCurrentOperation(`Processing vehicle ${vehicleIndex + 1} of ${vehicles.length}: ${stockNum}...`);
+        setProgress(Math.round((vehicleIndex / vehicles.length) * 100));
+
+        if (!vehicle.images || vehicle.images.length === 0) {
+          console.warn(`No images found for vehicle ${stockNum}`);
+          continue;
         }
 
-        setCurrentOperation(`Found ${debugData.imagesLength} images for vehicle ${stockNumber}. Starting processing...`);
+        const processedImages: ProcessedImage[] = [];
+
+        // Process only the first image of each vehicle to avoid overwhelming the browser
+        try {
+          const processedUrl = await processImageWithBrowserRemoval(
+            vehicle.images[0],
+            0,
+            vehicle.stockNumber || vehicle.id
+          );
+
+          processedImages.push({
+            originalUrl: vehicle.images[0],
+            processedUrl,
+            processedAt: new Date(),
+            status: 'completed',
+            imageIndex: 0
+          });
+        } catch (error) {
+          console.error(`Failed to process first image for vehicle ${stockNum}:`, error);
+          processedImages.push({
+            originalUrl: vehicle.images[0],
+            processedUrl: '',
+            processedAt: new Date(),
+            status: 'failed',
+            imageIndex: 0
+          });
+        }
+
+        allResults[stockNum] = processedImages;
       }
 
-      // Use browser-based background removal instead of API
-      if (stockNumber) {
-        // Process single vehicle
-        await processSingleVehicle(stockNumber);
-      } else {
-        // Process all vehicles
-        await processAllVehicles();
-      }
+      setResults(allResults);
+      setProgress(100);
+      setCurrentOperation(`Completed processing ${vehicles.length} vehicles`);
     } catch (error) {
-      console.error('Error processing images:', error);
+      console.error('Error processing all vehicles:', error);
       setCurrentOperation(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsProcessing(false);
     }
   };
 
-  const handleProcessSingle = () => {
-    if (stockNumber.trim()) {
-      processVehicle(stockNumber.trim());
-    }
+  const handleProcessSingle = async () => {
+    if (!stockNumber.trim()) return;
+
+    setIsProcessing(true);
+    setProgress(0);
+    await processSingleVehicle(stockNumber.trim());
+    setIsProcessing(false);
   };
 
-  const handleProcessAll = () => {
-    processVehicle();
+  const handleProcessAll = async () => {
+    setIsProcessing(true);
+    setProgress(0);
+    await processAllVehicles();
+    setIsProcessing(false);
   };
 
   const getStatusIcon = (status: string) => {
@@ -172,49 +320,63 @@ export function BackgroundRemovalPanel() {
             </div>
           </div>
 
-          {/* Test Installation */}
+          {/* Test Browser-based Background Removal */}
           <div className="space-y-2">
-            <Label>Test Installation</Label>
+            <Label>Test Browser Background Removal</Label>
             <div className="flex gap-2">
               <Button
                 onClick={async () => {
                   try {
-                    const response = await fetch('/api/test-backgroundremover');
-                    const data = await response.json();
-                    alert(`Test Result:\n${data.message}\n\nPlatform: ${data.platform}\nTemp Dir: ${data.tempDir}\n\nDetails: ${JSON.stringify(data, null, 2)}`);
-                  } catch (error) {
-                    alert(`Test failed: ${error}`);
-                  }
-                }}
-                variant="outline"
-                className="flex-1 flex items-center gap-2"
-              >
-                <CheckCircle className="h-4 w-4" />
-                Test Installation
-              </Button>
-              <Button
-                onClick={async () => {
-                  try {
-                    setCurrentOperation('Testing with real image...');
+                    setCurrentOperation('Testing browser-based background removal...');
                     const testImageUrl = 'https://www.bentleysupercenter.com/inventoryphotos/21600/3czrm3h53cg700943/ip/1.jpg';
-                    const response = await fetch('/api/test-image-processing', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ imageUrl: testImageUrl })
+
+                    // For test, we'll just process locally without uploading to S3
+                    const { removeBackground } = await import('@imgly/background-removal');
+                    const base64Image = await urlToBase64(testImageUrl);
+                    const result = await removeBackground(base64Image, {
+                      output: {
+                        format: 'image/png',
+                        quality: 0.8
+                      }
                     });
-                    const data = await response.json();
+
+                    let processedUrl: string;
+                    if (typeof result === 'string') {
+                      processedUrl = result;
+                    } else if (result instanceof Blob) {
+                      processedUrl = URL.createObjectURL(result);
+                    } else {
+                      throw new Error('Unexpected result format from background removal');
+                    }
+
                     setCurrentOperation('');
-                    alert(`Image Processing Test:\n${data.message}\n\nSuccess: ${data.testResult?.success}\nDetails: ${JSON.stringify(data.testResult, null, 2)}`);
+
+                    // Create a temporary result to show
+                    const testResult = {
+                      originalUrl: testImageUrl,
+                      processedUrl,
+                      processedAt: new Date(),
+                      status: 'completed' as const,
+                      imageIndex: 0
+                    };
+
+                    setResults({ 'TEST': [testResult] });
+                    alert('Browser-based background removal test completed successfully! Check the results below.');
                   } catch (error) {
                     setCurrentOperation('');
-                    alert(`Image test failed: ${error}`);
+                    alert(`Browser test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
                   }
                 }}
                 variant="outline"
-                className="flex-1 flex items-center gap-2"
+                className="w-full flex items-center gap-2"
+                disabled={isProcessing}
               >
-                <Image className="h-4 w-4" />
-                Test with Image
+                {isProcessing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Image className="h-4 w-4" />
+                )}
+                Test Browser Background Removal
               </Button>
             </div>
           </div>
