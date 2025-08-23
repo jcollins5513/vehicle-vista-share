@@ -30,6 +30,9 @@ export function BackgroundRemovalButton({
     imageIndex: number;
   }>>([]);
 
+  // Show processed images count in the UI
+  const processedCount = processedImages.length;
+
   // Helper function to convert image URL to base64 using proxy to avoid CORS issues
   const urlToBase64 = async (url: string): Promise<string> => {
     try {
@@ -240,7 +243,9 @@ export function BackgroundRemovalButton({
             className="border-white/30 text-white hover:bg-white/10 w-full"
           >
             {getStatusIcon()}
-            <span className="ml-1">Remove BG</span>
+            <span className="ml-1">
+              Remove BG{processedCount > 0 && ` (${processedCount})`}
+            </span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56 bg-slate-800 border-slate-700">

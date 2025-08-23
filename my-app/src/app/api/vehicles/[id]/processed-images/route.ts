@@ -13,10 +13,10 @@ interface ProcessedImageData {
 // POST /api/vehicles/[id]/processed-images
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await context.params;
     const formData = await request.formData();
     
     const imageBlob = formData.get('image') as Blob;

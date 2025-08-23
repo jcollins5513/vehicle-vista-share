@@ -40,10 +40,10 @@ interface RedisVehicle {
 // GET /api/vehicles/[id] - id can be stockNumber or vehicle id
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await context.params;
     console.log(`[API] Fetching vehicle data for id: ${id}`);
     
     // Get the complete inventory data from Redis
