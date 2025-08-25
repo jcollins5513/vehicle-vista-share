@@ -16,27 +16,7 @@ import {
   Scissors
 } from 'lucide-react';
 import Image from 'next/image';
-
-
-interface Vehicle {
-  id: string;
-  stockNumber: string;
-  year: number;
-  make: string;
-  model: string;
-  color?: string;
-  price?: number;
-  mileage?: number;
-  features: string[];
-  images?: string[];
-  processedImages?: Array<{
-    originalUrl: string;
-    processedUrl: string;
-    processedAt: string;
-    status: string;
-    imageIndex: number;
-  }>;
-}
+import type { Vehicle } from '@/types';
 
 interface ManualVehiclePhotoUploadProps {
   vehicles: Vehicle[];
@@ -65,12 +45,13 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
   const [isProcessingVehicleImage, setIsProcessingVehicleImage] = useState<boolean>(false);
 
   const handleFileUpload = async (files: FileList) => {
-    if (!selectedVehicle && !stockNumberInput.trim()) {
+    // For general assets mode, don't require vehicle selection
+    if (uploadMode === 'vehicle' && !selectedVehicle && !stockNumberInput.trim()) {
       alert('Please select a vehicle or enter a stock number first');
       return;
     }
 
-    const stockNumber = selectedVehicle || stockNumberInput.trim();
+    const stockNumber = uploadMode === 'vehicle' ? (selectedVehicle || stockNumberInput.trim()) : '';
     setIsUploading(true);
 
     try {
@@ -318,9 +299,8 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
       alert(`Added ${completedPhotos.length} photos to vehicle ${stockNumber}`);
     }
     
-    // Reset form
-    setSelectedVehicle('');
-    setStockNumberInput('');
+    // Don't reset form - keep selected vehicle for both modes
+    // Only clear uploaded photos
     setUploadedPhotos([]);
   };
 

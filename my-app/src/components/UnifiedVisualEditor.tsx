@@ -7,6 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Layers, 
   Download,
@@ -26,6 +27,7 @@ import {
   Scissors
 } from 'lucide-react';
 import Image from 'next/image';
+import type { Vehicle } from '@/types';
 
 
 interface ContentLayer {
@@ -64,22 +66,12 @@ interface Asset {
   isMarketingAsset?: boolean;
 }
 
-interface Vehicle {
-  id: string;
-  stockNumber: string;
-  year: number;
-  make: string;
-  model: string;
-  color?: string;
-  price?: number;
-  mileage?: number;
-  features: string[];
-}
+
 
 interface ProcessedImage {
   originalUrl: string;
   processedUrl: string;
-  processedAt: string;
+  processedAt: Date;
   status: string;
   imageIndex: number;
   isMarketingAsset?: boolean;
@@ -90,7 +82,11 @@ interface UnifiedVisualEditorProps {
   selectedVehicle: Vehicle;
   vehicleImages: ProcessedImage[];
   assets: Asset[];
+  allVehicles?: Vehicle[];
+  allProcessedImages?: { [stockNumber: string]: ProcessedImage[] };
   onContentGenerated?: (content: any) => void;
+  onAssetsUploaded?: (assets: { originalUrl: string; processedUrl?: string; name: string; isMarketingAsset?: boolean; category?: string }[]) => void;
+  onVehicleSelect?: (vehicle: Vehicle) => void;
 }
 
 const contentTemplates: ContentTemplate[] = [
@@ -145,17 +141,39 @@ export function UnifiedVisualEditor({
   selectedVehicle, 
   vehicleImages, 
   assets,
-  onContentGenerated 
+  allVehicles = [],
+  allProcessedImages = {},
+  onContentGenerated,
+  onAssetsUploaded,
+  onVehicleSelect
 }: UnifiedVisualEditorProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<ContentTemplate | null>(null);
   const [layers, setLayers] = useState<ContentLayer[]>([]);
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeHandle, setResizeHandle] = useState<'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w' | null>(null);
   const [manualAssets, setManualAssets] = useState<ManualAsset[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<any>(null);
+  
+  // Asset upload states
+  const [uploadedAssets, setUploadedAssets] = useState<Array<{
+    id: string;
+    file: File;
+    originalUrl: string;
+    processedUrl?: string;
+    status: 'uploaded' | 'processing' | 'completed' | 'failed';
+    isMarketingAsset?: boolean;
+    category?: string;
+  }>>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [assetCategory, setAssetCategory] = useState<string>('general');
+  const [markAsMarketingAsset, setMarkAsMarketingAsset] = useState<boolean>(false);
+  
   const canvasRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canvasWidth = selectedTemplate?.dimensions.width || 1080;
   const canvasHeight = selectedTemplate?.dimensions.height || 1080;
@@ -330,6 +348,144 @@ export function UnifiedVisualEditor({
     }
   };
 
+  // Helper function to get blob from any URL type
+  const getBlobFromUrl = async (url: string): Promise<Blob> => {
+    if (url.startsWith('data:')) {
+      // Handle data URLs
+      const response = await fetch(url);
+      return await response.blob();
+    } else if (url.startsWith('blob:')) {
+      // Handle blob URLs
+      const response = await fetch(url);
+      return await response.blob();
+    } else {
+      // Handle regular HTTP URLs - use proxy to avoid CORS issues
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image via proxy: ${response.status} ${response.statusText}`);
+      }
+      
+      return await response.blob();
+    }
+  };
+
+  // Handle file upload for asset library
+  const handleFileUpload = async (files: FileList) => {
+    setIsUploading(true);
+    
+    try {
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith('image/')) {
+          alert(`${file.name} is not an image file`);
+          continue;
+        }
+
+        const assetId = `asset-${Date.now()}-${Math.random()}`;
+        const originalUrl = URL.createObjectURL(file);
+
+        // Add to uploaded assets
+        const newAsset = {
+          id: assetId,
+          file,
+          originalUrl,
+          status: 'uploaded' as const,
+          isMarketingAsset: markAsMarketingAsset,
+          category: assetCategory
+        };
+
+        setUploadedAssets(prev => [...prev, newAsset]);
+
+        // Process for background removal
+        try {
+          setUploadedAssets(prev => prev.map(asset => 
+            asset.id === assetId ? { ...asset, status: 'processing' } : asset
+          ));
+
+          const { removeBackground } = await import('@imgly/background-removal');
+          const response = await fetch(originalUrl);
+          const blob = await response.blob();
+          const processedBlob = await removeBackground(blob);
+          const processedUrl = URL.createObjectURL(processedBlob);
+          
+          setUploadedAssets(prev => prev.map(asset => 
+            asset.id === assetId ? { ...asset, processedUrl, status: 'completed' } : asset
+          ));
+        } catch (error) {
+          console.error('Background removal failed:', error);
+          setUploadedAssets(prev => prev.map(asset => 
+            asset.id === assetId ? { ...asset, status: 'failed' } : asset
+          ));
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      alert('Failed to upload files');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Save asset to library
+  const saveAssetToLibrary = async (asset: typeof uploadedAssets[0]) => {
+    if (!asset.processedUrl) {
+      alert('Asset must be processed before saving to library');
+      return;
+    }
+
+    try {
+      // Upload original
+      const originalFormData = new FormData();
+      const originalBlob = await getBlobFromUrl(asset.originalUrl);
+      originalFormData.append('file', originalBlob, asset.file.name);
+      originalFormData.append('category', asset.category || 'general');
+      originalFormData.append('isMarketingAsset', (asset.isMarketingAsset || false).toString());
+
+      await fetch('/api/assets/upload', {
+        method: 'POST',
+        body: originalFormData
+      });
+
+      // Upload processed
+      const processedFormData = new FormData();
+      const processedBlob = await getBlobFromUrl(asset.processedUrl);
+      const processedName = asset.file.name.replace(/\.[^/.]+$/, '_processed.png');
+      processedFormData.append('file', processedBlob, processedName);
+      processedFormData.append('category', asset.category || 'general');
+      processedFormData.append('isMarketingAsset', (asset.isMarketingAsset || false).toString());
+
+      await fetch('/api/assets/upload', {
+        method: 'POST',
+        body: processedFormData
+      });
+
+      // Remove from uploaded assets
+      setUploadedAssets(prev => prev.filter(a => a.id !== asset.id));
+      
+      // Notify parent component
+      if (onAssetsUploaded) {
+        onAssetsUploaded([{
+          originalUrl: asset.originalUrl,
+          processedUrl: asset.processedUrl,
+          name: asset.file.name,
+          isMarketingAsset: asset.isMarketingAsset,
+          category: asset.category
+        }]);
+      }
+
+      alert(`Asset "${asset.file.name}" saved to library!`);
+    } catch (error) {
+      console.error('Error saving asset to library:', error);
+      alert('Failed to save asset to library');
+    }
+  };
+
+  // Remove asset from upload queue
+  const removeAsset = (assetId: string) => {
+    setUploadedAssets(prev => prev.filter(asset => asset.id !== assetId));
+  };
+
   // Generate AI content
   const generateContent = async () => {
     if (!selectedTemplate) {
@@ -450,8 +606,16 @@ export function UnifiedVisualEditor({
     setDragStart({ x: e.clientX, y: e.clientY });
   }, []);
 
+  const handleResizeStart = useCallback((e: React.MouseEvent, handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w') => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeHandle(handle);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  }, []);
+
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || !selectedLayer) return;
+    if (!isDragging && !isResizing || !selectedLayer) return;
 
     const currentLayer = layers.find(l => l.id === selectedLayer);
     if (!currentLayer) return;
@@ -462,19 +626,66 @@ export function UnifiedVisualEditor({
     // Calculate scale factor (canvas is displayed at 50% size)
     const scaleFactor = 2;
 
-    const newX = Math.max(0, Math.min(canvasWidth - currentLayer.width, currentLayer.x + (deltaX * scaleFactor)));
-    const newY = Math.max(0, Math.min(canvasHeight - currentLayer.height, currentLayer.y + (deltaY * scaleFactor)));
+    if (isDragging) {
+      // Unrestricted movement - allow going beyond canvas boundaries
+      const newX = currentLayer.x + (deltaX * scaleFactor);
+      const newY = currentLayer.y + (deltaY * scaleFactor);
 
-    updateLayer(selectedLayer, {
-      x: newX,
-      y: newY
-    });
+      updateLayer(selectedLayer, {
+        x: newX,
+        y: newY
+      });
+    } else if (isResizing && resizeHandle) {
+      // Handle resizing
+      const updates: Partial<ContentLayer> = {};
+      
+      switch (resizeHandle) {
+        case 'nw':
+          updates.x = currentLayer.x + (deltaX * scaleFactor);
+          updates.y = currentLayer.y + (deltaY * scaleFactor);
+          updates.width = Math.max(20, currentLayer.width - (deltaX * scaleFactor));
+          updates.height = Math.max(20, currentLayer.height - (deltaY * scaleFactor));
+          break;
+        case 'ne':
+          updates.y = currentLayer.y + (deltaY * scaleFactor);
+          updates.width = Math.max(20, currentLayer.width + (deltaX * scaleFactor));
+          updates.height = Math.max(20, currentLayer.height - (deltaY * scaleFactor));
+          break;
+        case 'sw':
+          updates.x = currentLayer.x + (deltaX * scaleFactor);
+          updates.width = Math.max(20, currentLayer.width - (deltaX * scaleFactor));
+          updates.height = Math.max(20, currentLayer.height + (deltaY * scaleFactor));
+          break;
+        case 'se':
+          updates.width = Math.max(20, currentLayer.width + (deltaX * scaleFactor));
+          updates.height = Math.max(20, currentLayer.height + (deltaY * scaleFactor));
+          break;
+        case 'n':
+          updates.y = currentLayer.y + (deltaY * scaleFactor);
+          updates.height = Math.max(20, currentLayer.height - (deltaY * scaleFactor));
+          break;
+        case 's':
+          updates.height = Math.max(20, currentLayer.height + (deltaY * scaleFactor));
+          break;
+        case 'e':
+          updates.width = Math.max(20, currentLayer.width + (deltaX * scaleFactor));
+          break;
+        case 'w':
+          updates.x = currentLayer.x + (deltaX * scaleFactor);
+          updates.width = Math.max(20, currentLayer.width - (deltaX * scaleFactor));
+          break;
+      }
+
+      updateLayer(selectedLayer, updates);
+    }
 
     setDragStart({ x: e.clientX, y: e.clientY });
-  }, [isDragging, selectedLayer, dragStart, canvasWidth, canvasHeight, layers, updateLayer]);
+  }, [isDragging, isResizing, selectedLayer, dragStart, resizeHandle, canvasWidth, canvasHeight, layers, updateLayer]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    setIsResizing(false);
+    setResizeHandle(null);
   }, []);
 
   const selectedLayerData = selectedLayer ? layers.find(l => l.id === selectedLayer) : null;
@@ -496,16 +707,13 @@ export function UnifiedVisualEditor({
     asset.fileName.toLowerCase().includes('sale')
   );
 
-  // Get all assets by category for better organization
-  const assetsByCategory = {
-    backgrounds: assets.filter(asset => asset.category === 'backgrounds'),
-    logos: assets.filter(asset => asset.category === 'logos'),
-    badges: assets.filter(asset => asset.category === 'badges'),
-    textures: assets.filter(asset => asset.category === 'textures'),
-    overlays: assets.filter(asset => asset.category === 'overlays'),
-    marketing: assets.filter(asset => asset.isMarketingAsset),
-    general: assets.filter(asset => asset.category === 'general')
-  };
+     // Get all assets by category for better organization
+   const assetsByCategory = {
+     backgrounds: assets.filter(asset => asset.category === 'backgrounds'),
+     logos: assets.filter(asset => asset.category === 'logos'),
+     badges: assets.filter(asset => asset.category === 'badges'),
+     marketing: assets.filter(asset => asset.isMarketingAsset)
+   };
 
   return (
     <div className="space-y-6">
@@ -578,37 +786,78 @@ export function UnifiedVisualEditor({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div
-                  ref={canvasRef}
-                  className="relative bg-white rounded-lg overflow-hidden cursor-crosshair"
-                  style={{ 
-                    width: Math.min(600, canvasWidth / 2), 
-                    height: Math.min(600, canvasHeight / 2),
-                    aspectRatio: `${canvasWidth}/${canvasHeight}`
-                  }}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                >
+                                 <div
+                   ref={canvasRef}
+                   className="relative bg-white rounded-lg cursor-crosshair"
+                   style={{ 
+                     width: Math.min(600, canvasWidth / 2), 
+                     height: Math.min(600, canvasHeight / 2),
+                     aspectRatio: `${canvasWidth}/${canvasHeight}`,
+                     overflow: 'visible'
+                   }}
+                   onMouseMove={handleMouseMove}
+                   onMouseUp={handleMouseUp}
+                   onMouseLeave={handleMouseUp}
+                 >
                   {layers
                     .sort((a, b) => a.zIndex - b.zIndex)
                     .map((layer) => (
-                      <div
-                        key={layer.id}
-                        className={`absolute cursor-move ${
-                          selectedLayer === layer.id ? 'ring-2 ring-blue-500' : ''
-                        } ${!layer.visible ? 'opacity-50' : ''}`}
-                        style={{
-                          left: (layer.x / canvasWidth) * 100 + '%',
-                          top: (layer.y / canvasHeight) * 100 + '%',
-                          width: (layer.width / canvasWidth) * 100 + '%',
-                          height: (layer.height / canvasHeight) * 100 + '%',
-                          transform: `rotate(${layer.rotation}deg)`,
-                          opacity: layer.opacity,
-                          zIndex: layer.zIndex,
-                        }}
-                        onMouseDown={(e) => handleMouseDown(e, layer.id)}
-                      >
+                                             <div
+                         key={layer.id}
+                         className={`absolute cursor-move ${
+                           selectedLayer === layer.id ? 'ring-2 ring-blue-500' : ''
+                         } ${!layer.visible ? 'opacity-50' : ''}`}
+                         style={{
+                           left: (layer.x / canvasWidth) * 100 + '%',
+                           top: (layer.y / canvasHeight) * 100 + '%',
+                           width: (layer.width / canvasWidth) * 100 + '%',
+                           height: (layer.height / canvasHeight) * 100 + '%',
+                           transform: `rotate(${layer.rotation}deg)`,
+                           opacity: layer.opacity,
+                           zIndex: layer.zIndex,
+                         }}
+                         onMouseDown={(e) => handleMouseDown(e, layer.id)}
+                       >
+                         {/* Resize handles - only show when selected */}
+                         {selectedLayer === layer.id && (
+                           <>
+                             {/* Corner handles */}
+                             <div
+                               className="absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-nw-resize -top-1.5 -left-1.5"
+                               onMouseDown={(e) => handleResizeStart(e, 'nw')}
+                             />
+                             <div
+                               className="absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-ne-resize -top-1.5 -right-1.5"
+                               onMouseDown={(e) => handleResizeStart(e, 'ne')}
+                             />
+                             <div
+                               className="absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-sw-resize -bottom-1.5 -left-1.5"
+                               onMouseDown={(e) => handleResizeStart(e, 'sw')}
+                             />
+                             <div
+                               className="absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-se-resize -bottom-1.5 -right-1.5"
+                               onMouseDown={(e) => handleResizeStart(e, 'se')}
+                             />
+                             
+                             {/* Edge handles */}
+                             <div
+                               className="absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-n-resize -top-1.5 left-1/2 transform -translate-x-1/2"
+                               onMouseDown={(e) => handleResizeStart(e, 'n')}
+                             />
+                             <div
+                               className="absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-s-resize -bottom-1.5 left-1/2 transform -translate-x-1/2"
+                               onMouseDown={(e) => handleResizeStart(e, 's')}
+                             />
+                             <div
+                               className="absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-e-resize top-1/2 transform -translate-y-1/2 -right-1.5"
+                               onMouseDown={(e) => handleResizeStart(e, 'e')}
+                             />
+                             <div
+                               className="absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-w-resize top-1/2 transform -translate-y-1/2 -left-1.5"
+                               onMouseDown={(e) => handleResizeStart(e, 'w')}
+                             />
+                           </>
+                         )}
                         {layer.type === 'text' && layer.content ? (
                           <div
                             className="text-white font-bold text-center flex items-center justify-center h-full bg-black/50 rounded"
@@ -716,68 +965,52 @@ export function UnifiedVisualEditor({
               </CardContent>
             </Card>
 
-            {/* Asset Selection Tabs */}
-            <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white text-lg">Add Assets</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="backgrounds" className="w-full">
-                  <TabsList className="grid w-full grid-cols-5 bg-white/10">
-                    <TabsTrigger value="backgrounds" className="data-[state=active]:bg-white/20 text-white text-xs">
-                      Backgrounds
-                    </TabsTrigger>
-                    <TabsTrigger value="vehicles" className="data-[state=active]:bg-white/20 text-white text-xs">
-                      Vehicles
-                    </TabsTrigger>
-                    <TabsTrigger value="marketing" className="data-[state=active]:bg-white/20 text-white text-xs">
-                      Marketing
-                    </TabsTrigger>
-                    <TabsTrigger value="assets" className="data-[state=active]:bg-white/20 text-white text-xs">
-                      All Assets
-                    </TabsTrigger>
-                    <TabsTrigger value="manual" className="data-[state=active]:bg-white/20 text-white text-xs">
-                      Manual
-                    </TabsTrigger>
-                  </TabsList>
+                         {/* Asset Selection Tabs */}
+             <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20">
+               <CardHeader>
+                 <CardTitle className="text-white text-lg">Add Assets</CardTitle>
+               </CardHeader>
+               <CardContent>
+                                   <Tabs defaultValue="backgrounds" className="w-full">
+                    <TabsList className="flex flex-wrap w-full bg-white/10 gap-1 p-1">
+                      <TabsTrigger value="backgrounds" className="data-[state=active]:bg-gray-500/20 text-gray-300 text-xs flex-1 min-w-0 border-gray-500/30">
+                        Backgrounds
+                      </TabsTrigger>
+                      <TabsTrigger value="marketing" className="data-[state=active]:bg-orange-500/20 text-orange-300 text-xs flex-1 min-w-0 border-orange-500/30">
+                        Marketing
+                      </TabsTrigger>
+                      <TabsTrigger value="logos" className="data-[state=active]:bg-purple-500/20 text-purple-300 text-xs flex-1 min-w-0 border-purple-500/30">
+                        Logos
+                      </TabsTrigger>
+                      <TabsTrigger value="badges" className="data-[state=active]:bg-yellow-500/20 text-yellow-300 text-xs flex-1 min-w-0 border-yellow-500/30">
+                        Badges
+                      </TabsTrigger>
+                      <TabsTrigger value="manual" className="data-[state=active]:bg-blue-500/20 text-blue-300 text-xs border-blue-500/30 flex-1 min-w-0">
+                        Manual
+                      </TabsTrigger>
+                      <TabsTrigger value="vehicles" className="data-[state=active]:bg-green-500/20 text-green-300 text-xs border-green-500/30 flex-1 min-w-0">
+                        Vehicles
+                      </TabsTrigger>
+                    </TabsList>
                   
-                  <TabsContent value="backgrounds" className="space-y-2 max-h-60 overflow-y-auto">
-                    {backgroundAssets.map((asset) => (
-                      <div
-                        key={asset.key}
-                        className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 cursor-pointer"
-                        onClick={() => addBackground(asset)}
-                      >
-                        <Image
-                          src={asset.url}
-                          alt={asset.fileName}
-                          width={40}
-                          height={40}
-                          className="rounded object-cover"
-                        />
-                        <span className="text-white text-sm truncate">{asset.fileName}</span>
-                      </div>
-                    ))}
-                  </TabsContent>
-                  
-                  <TabsContent value="vehicles" className="space-y-2 max-h-60 overflow-y-auto">
-                    {vehicleImages.map((image, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 cursor-pointer"
-                        onClick={() => addVehicleImage(image)}
-                      >
-                        <Image
-                          src={image.processedUrl}
-                          alt="Vehicle"
-                          width={40}
-                          height={40}
-                          className="rounded object-cover"
-                        />
-                        <span className="text-white text-sm">Image {index + 1}</span>
-                      </div>
-                    ))}
-                  </TabsContent>
+                                     <TabsContent value="backgrounds" className="space-y-2 max-h-60 overflow-y-auto">
+                     {assetsByCategory.backgrounds.map((asset) => (
+                       <div
+                         key={asset.key}
+                         className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 cursor-pointer"
+                         onClick={() => addBackground(asset)}
+                       >
+                         <Image
+                           src={asset.url}
+                           alt={asset.fileName}
+                           width={40}
+                           height={40}
+                           className="rounded object-cover"
+                         />
+                         <span className="text-white text-sm truncate">{asset.fileName}</span>
+                       </div>
+                     ))}
+                   </TabsContent>
                   
                   <TabsContent value="marketing" className="space-y-2 max-h-60 overflow-y-auto">
                     {assetsByCategory.marketing.length > 0 ? (
@@ -816,8 +1049,8 @@ export function UnifiedVisualEditor({
                     )}
                   </TabsContent>
                   
-                  <TabsContent value="assets" className="space-y-2 max-h-60 overflow-y-auto">
-                    {marketingAssets.map((asset) => (
+                  <TabsContent value="logos" className="space-y-2 max-h-60 overflow-y-auto">
+                    {assetsByCategory.logos.map((asset) => (
                       <div
                         key={asset.key}
                         className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 cursor-pointer"
@@ -830,44 +1063,92 @@ export function UnifiedVisualEditor({
                           height={40}
                           className="rounded object-cover"
                         />
-                        <div className="flex-1">
-                          <span className="text-white text-sm truncate">{asset.fileName}</span>
-                          <div className="flex gap-1 mt-1">
-                            {asset.isMarketingAsset && (
-                              <Badge variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
-                                Marketing
-                              </Badge>
-                            )}
-                            {asset.category && (
-                              <Badge variant="outline" className="text-xs">
-                                {asset.category}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
+                        <span className="text-white text-sm truncate">{asset.fileName}</span>
                       </div>
                     ))}
-                    
-                    {manualAssets.filter(a => a.status === 'completed').map((asset) => (
+                  </TabsContent>
+                  
+                  <TabsContent value="badges" className="space-y-2 max-h-60 overflow-y-auto">
+                    {assetsByCategory.badges.map((asset) => (
                       <div
-                        key={asset.id}
+                        key={asset.key}
                         className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 cursor-pointer"
                         onClick={() => addMarketingAsset(asset)}
                       >
                         <Image
-                          src={asset.processedUrl!}
-                          alt={asset.name}
+                          src={asset.url}
+                          alt={asset.fileName}
                           width={40}
                           height={40}
                           className="rounded object-cover"
                         />
-                        <div className="flex-1">
-                          <span className="text-white text-sm truncate">{asset.name}</span>
-                          <Badge variant="outline" className="ml-2 text-xs">Manual</Badge>
-                        </div>
+                        <span className="text-white text-sm truncate">{asset.fileName}</span>
                       </div>
                     ))}
                   </TabsContent>
+                  
+                  
+                  
+                                     <TabsContent value="vehicles" className="space-y-2 max-h-60 overflow-y-auto">
+                     {allVehicles
+                       .filter(vehicle => {
+                         const vehicleImages = allProcessedImages[vehicle.stockNumber] || [];
+                         return vehicleImages.length > 0; // Only show vehicles with processed images
+                       })
+                       .map((vehicle) => {
+                         const vehicleImages = allProcessedImages[vehicle.stockNumber] || [];
+                         return (
+                           <div key={vehicle.stockNumber} className="space-y-2">
+                             <div className="flex items-center gap-2 p-2 rounded bg-green-500/10 border border-green-500/20">
+                               <span className="text-green-300 text-sm font-medium">
+                                 {vehicle.year} {vehicle.make} {vehicle.model}
+                               </span>
+                               <span className="text-green-300/70 text-xs">
+                                 ({vehicleImages.length} processed)
+                               </span>
+                               {selectedVehicle.stockNumber === vehicle.stockNumber && (
+                                 <Badge variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
+                                   Current
+                                 </Badge>
+                               )}
+                             </div>
+                             <div className="grid grid-cols-3 gap-1 ml-4">
+                               {vehicleImages.slice(0, 3).map((image, index) => (
+                                 <div
+                                   key={index}
+                                   className="flex items-center gap-1 p-1 rounded bg-white/5 hover:bg-white/10 cursor-pointer"
+                                   onClick={() => {
+                                     if (onVehicleSelect) {
+                                       onVehicleSelect(vehicle);
+                                     }
+                                     addVehicleImage(image);
+                                   }}
+                                 >
+                                   <Image
+                                     src={image.processedUrl}
+                                     alt={`${vehicle.stockNumber} - Image ${index + 1}`}
+                                     width={30}
+                                     height={30}
+                                     className="rounded object-cover"
+                                   />
+                                   <span className="text-white text-xs">#{index + 1}</span>
+                                 </div>
+                               ))}
+                             </div>
+                           </div>
+                         );
+                       })}
+                     {allVehicles.filter(vehicle => {
+                       const vehicleImages = allProcessedImages[vehicle.stockNumber] || [];
+                       return vehicleImages.length === 0;
+                     }).length > 0 && (
+                       <div className="text-center py-4">
+                         <p className="text-white/50 text-xs">
+                           Some vehicles have no processed images yet
+                         </p>
+                       </div>
+                     )}
+                   </TabsContent>
                   
                   <TabsContent value="manual" className="space-y-4">
                     {/* Manual Asset Upload */}
@@ -917,6 +1198,120 @@ export function UnifiedVisualEditor({
                           )}
                         </div>
                       ))}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="library" className="space-y-4">
+                    {/* Asset Upload Section */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+                          className="hidden"
+                          id="asset-library-upload"
+                        />
+                        <label
+                          htmlFor="asset-library-upload"
+                          className="flex items-center justify-center w-full h-16 border-2 border-dashed border-white/30 rounded-lg cursor-pointer hover:bg-white/10"
+                        >
+                          <div className="text-center">
+                            <Upload className="w-5 h-5 mx-auto mb-1 text-white" />
+                            <p className="text-white text-xs">Upload Assets</p>
+                          </div>
+                        </label>
+                      </div>
+                      
+                      {/* Asset Options */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-white text-xs">Category</Label>
+                          <Select value={assetCategory} onValueChange={setAssetCategory}>
+                            <SelectTrigger className="w-full bg-white/10 border-white/20 text-white text-xs">
+                              <SelectValue placeholder="Choose category..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="general">General</SelectItem>
+                              <SelectItem value="logos">Logos & Branding</SelectItem>
+                              <SelectItem value="backgrounds">Backgrounds</SelectItem>
+                              <SelectItem value="badges">Badges & Icons</SelectItem>
+                              <SelectItem value="textures">Textures & Patterns</SelectItem>
+                              <SelectItem value="overlays">Overlays & Effects</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-end">
+                          <label className="flex items-center gap-2 text-white text-xs">
+                            <input
+                              type="checkbox"
+                              checked={markAsMarketingAsset}
+                              onChange={(e) => setMarkAsMarketingAsset(e.target.checked)}
+                              className="rounded"
+                            />
+                            Mark for Marketing
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Uploaded Assets List */}
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {uploadedAssets.length === 0 ? (
+                        <p className="text-white/70 text-sm text-center py-4">
+                          No assets uploaded yet
+                        </p>
+                      ) : (
+                        uploadedAssets.map((asset) => (
+                          <div key={asset.id} className="flex items-center gap-2 p-2 bg-white/5 rounded">
+                            <Image
+                              src={asset.processedUrl || asset.originalUrl}
+                              alt={asset.file.name}
+                              width={30}
+                              height={30}
+                              className="rounded object-cover"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white text-xs truncate">{asset.file.name}</p>
+                              <div className="flex gap-1 mt-1">
+                                <Badge variant="outline" className="text-xs">
+                                  {asset.status}
+                                </Badge>
+                                {asset.isMarketingAsset && (
+                                  <Badge variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
+                                    Marketing
+                                  </Badge>
+                                )}
+                                {asset.category && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {asset.category}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              {asset.status === 'completed' && (
+                                <Button
+                                  onClick={() => saveAssetToLibrary(asset)}
+                                  size="sm"
+                                  className="h-6 text-xs bg-green-600 hover:bg-green-700"
+                                >
+                                  Save
+                                </Button>
+                              )}
+                              <Button
+                                onClick={() => removeAsset(asset.id)}
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 text-red-400 hover:text-red-300"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </TabsContent>
                 </Tabs>

@@ -13,22 +13,18 @@ import {
   Upload
 } from 'lucide-react';
 import Image from 'next/image';
-import type { Vehicle } from '@/types';
+import type { Vehicle, ProcessedImage } from '@/types';
 import { ManualVehiclePhotoUpload } from '@/components/ManualVehiclePhotoUpload';
 import { UnifiedVisualEditor } from '@/components/UnifiedVisualEditor';
 
-interface ProcessedImage {
-  originalUrl: string;
-  processedUrl: string;
-  processedAt: string;
-  status: string;
-  imageIndex: number;
+interface ExtendedProcessedImage extends Omit<ProcessedImage, 'processedAt'> {
+  processedAt: Date;
   isMarketingAsset?: boolean;
   category?: string;
 }
 
 interface ProcessedImagesData {
-  [stockNumber: string]: ProcessedImage[];
+  [stockNumber: string]: ExtendedProcessedImage[];
 }
 
 interface Asset {
@@ -68,26 +64,51 @@ export default function ContentCreationPage() {
     }
   };
 
-  const handleManualPhotosUploaded = (stockNumber: string, photos: { originalUrl: string; processedUrl?: string; isMarketingAsset?: boolean; category?: string }[]) => {
+  const handleManualPhotosUploaded = async (stockNumber: string, photos: { originalUrl: string; processedUrl?: string; isMarketingAsset?: boolean; category?: string }[]) => {
+    // Create processed image data
+    const processedImagesData = photos.map((photo, index) => ({
+      originalUrl: photo.originalUrl,
+      processedUrl: photo.processedUrl || photo.originalUrl,
+      processedAt: new Date(),
+      status: 'completed' as const,
+      imageIndex: index,
+      isMarketingAsset: photo.isMarketingAsset || false,
+      category: photo.category || 'vehicle-photos'
+    }));
+
+    // Save to Redis so they persist
+    try {
+      const response = await fetch('/api/processed-images/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          stockNumber,
+          processedImages: processedImagesData
+        })
+      });
+
+      if (!response.ok) {
+        console.error('Failed to save processed images to Redis');
+      } else {
+        console.log('Successfully saved processed images to Redis');
+      }
+    } catch (error) {
+      console.error('Error saving processed images to Redis:', error);
+    }
+
     // Add the photos to the processedImages state
     setProcessedImages(prev => ({
       ...prev,
       [stockNumber]: [
         ...(prev[stockNumber] || []),
-        ...photos.map((photo, index) => ({
-          originalUrl: photo.originalUrl,
-          processedUrl: photo.processedUrl || photo.originalUrl,
-          processedAt: new Date().toISOString(),
-          status: 'completed',
-          imageIndex: (prev[stockNumber]?.length || 0) + index,
-          isMarketingAsset: photo.isMarketingAsset || false,
-          category: photo.category || 'vehicle-photos'
-        }))
+        ...processedImagesData
       ]
     }));
     
-    // Switch to vehicle selection tab
-    setActiveTab('vehicle-selection');
+    // Don't switch tabs - stay on manual upload tab for continued asset upload
+    // setActiveTab('vehicle-selection');
   };
 
   const fetchProcessedImages = async () => {
@@ -330,7 +351,23 @@ export default function ContentCreationPage() {
                 selectedVehicle={selectedVehicle}
                 vehicleImages={processedImages[selectedVehicle.stockNumber]}
                 assets={assets}
+                allVehicles={vehicles}
+                allProcessedImages={processedImages}
                 onContentGenerated={(content) => setGeneratedContent(content)}
+                onAssetsUploaded={(assets) => {
+                  console.log('Assets uploaded from Visual Editor:', assets);
+                  // Refresh assets list
+                  fetchAssets();
+                  // Show success message with marketing asset info
+                  const marketingAssets = assets.filter(asset => asset.isMarketingAsset);
+                  const message = marketingAssets.length > 0 
+                    ? `Successfully uploaded ${assets.length} assets! ${marketingAssets.length} marked for future marketing use.`
+                    : `Successfully uploaded ${assets.length} assets to general library!`;
+                  alert(message);
+                }}
+                onVehicleSelect={(vehicle) => {
+                  setSelectedVehicle(vehicle);
+                }}
               />
             ) : (
               <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 backdrop-blur-xl border-yellow-500/20">

@@ -91,4 +91,38 @@ my-app/
 - ✅ **NEW**: Seamless integration with existing vehicle selection workflow
 - ✅ **IMPROVED**: Enhanced user experience with automatic processing on vehicle selection
 - ✅ **FIXED**: CORS issues in background removal by using existing proxy endpoint for external image fetching
-- ✅ **FIXED**: Asset upload failures by properly handling blob URLs and data URLs in save functionality 
+- ✅ **FIXED**: Asset upload failures by properly handling blob URLs and data URLs in save functionality
+
+## Visual Editor Asset Library Enhancement
+- ✅ **NEW**: Asset Library tab in Visual Editor for direct asset upload and management
+- ✅ **NEW**: Asset categorization and marketing asset marking within Visual Editor
+- ✅ **NEW**: "Save to Library" functionality for individual assets
+- ✅ **NEW**: Real-time background removal processing for uploaded assets
+- ✅ **IMPROVED**: Seamless integration between auto-processed vehicle images and asset library
+- ✅ **IMPROVED**: Enhanced workflow allowing asset management during content creation
+
+## Processed Images Persistence Fix
+- ✅ **NEW**: API endpoint `/api/processed-images/save` to save processed images to Redis
+- ✅ **FIXED**: Auto-processed vehicles from Manual Upload now persist and appear in Vehicle Selection tab
+- ✅ **FIXED**: Type compatibility issues between Vehicle interfaces
+- ✅ **IMPROVED**: Seamless integration between Manual Upload and Vehicle Selection workflows
+
+## Manual Upload Workflow Enhancement
+- ✅ **FIXED**: Manual Upload tab now maintains selected vehicle when switching between vehicle photos and general assets
+- ✅ **FIXED**: General assets upload no longer requires vehicle selection validation
+- ✅ **IMPROVED**: Users can now upload general assets without re-selecting vehicle after processing vehicle photos
+- ✅ **IMPROVED**: Enhanced workflow allowing seamless switching between vehicle and asset upload modes
+
+## Visual Editor Asset Library Fix
+- ✅ **FIXED**: Replaced HTML select with proper shadcn/ui Select component for better functionality
+- ✅ **FIXED**: Asset category dropdown now shows all available options (General, Logos & Branding, Backgrounds, Badges & Icons, Textures & Patterns, Overlays & Effects)
+- ✅ **IMPROVED**: Enhanced dropdown styling and user experience in Visual Editor Asset Library
+
+## Visual Editor Major Enhancement
+- ✅ **NEW**: Organized asset tabs by category (Backgrounds, Overlays & Effects, Textures & Patterns, Marketing, Logos & Branding, Badges & Icons, General)
+- ✅ **NEW**: Color-coded tabs (Manual Upload in blue, Vehicles in green, others in white)
+- ✅ **NEW**: Vehicles tab shows all stored vehicles with image previews and ability to switch vehicles on-the-fly
+- ✅ **NEW**: Enhanced canvas with unrestricted movement - assets can move beyond canvas boundaries
+- ✅ **NEW**: Resize functionality with 8 resize handles (corners and edges) for precise asset sizing
+- ✅ **IMPROVED**: Manual Upload tab no longer switches to next tab after saving vehicle photos
+- ✅ **IMPROVED**: Better asset organization and workflow efficiency 
