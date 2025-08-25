@@ -20,9 +20,13 @@ interface ContentGenerationRequest {
 }
 
 export async function POST(request: Request) {
+  let vehicleData: any = null;
+  let templateType: string | null = null;
+  
   try {
     const body: ContentGenerationRequest = await request.json();
-    const { vehicleData, templateType } = body;
+    vehicleData = body.vehicleData;
+    templateType = body.templateType;
 
     if (!vehicleData || !templateType) {
       return NextResponse.json(
@@ -74,7 +78,7 @@ export async function POST(request: Request) {
     console.error('Error generating content:', error);
     
     // Return fallback content instead of failing completely
-    const fallbackContent = createFallbackContent(body?.vehicleData);
+    const fallbackContent = createFallbackContent(vehicleData);
     
     return NextResponse.json({
       success: true,
