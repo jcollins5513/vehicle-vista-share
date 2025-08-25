@@ -1,6 +1,6 @@
 // my-app/src/app/actions/index.ts
 
-export async function getShowroomDataAction() {
+export async function getShowroomDataAction(): Promise<{ vehicles: any[]; error: string | null }> {
     try {
       const res = await fetch("/api/vehicles", {
         method: "GET",
