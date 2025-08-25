@@ -1,6 +1,7 @@
 // my-app/src/app/actions/index.ts
+import type { VehicleWithMedia } from "@/types";
 
-export async function getShowroomDataAction(): Promise<{ vehicles: any[]; error: string | null }> {
+export async function getShowroomDataAction(): Promise<{ vehicles: VehicleWithMedia[]; error: string | null }> {
     try {
       const res = await fetch("/api/vehicles", {
         method: "GET",

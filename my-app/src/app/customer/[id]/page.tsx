@@ -74,7 +74,7 @@ export default function CustomerPage() {
         } else {
           setVehicles(fetchedVehicles);
           // Find the selected vehicle by ID
-          const vehicle = fetchedVehicles.find((v) => v.id === vehicleId);
+          const vehicle = fetchedVehicles.find((v: VehicleWithMedia) => v.id === vehicleId);
           if (vehicle) {
             setSelectedVehicle(vehicle);
           } else {
