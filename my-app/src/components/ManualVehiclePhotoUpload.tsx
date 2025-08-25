@@ -13,7 +13,8 @@ import {
   CheckCircle,
   AlertCircle,
   X,
-  Scissors
+  Scissors,
+  Image as ImageIcon
 } from 'lucide-react';
 import Image from 'next/image';
 import type { Vehicle } from '@/types';
@@ -39,13 +40,13 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
   const [stockNumberInput, setStockNumberInput] = useState<string>('');
   const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadMode, setUploadMode] = useState<'vehicle' | 'assets'>('vehicle');
+  const [uploadMode, setUploadMode] = useState<'vehicle' | 'assets' | 'direct-assets'>('vehicle');
   const [assetCategory, setAssetCategory] = useState<string>('general');
   const [markAsMarketingAsset, setMarkAsMarketingAsset] = useState<boolean>(false);
   const [isProcessingVehicleImage, setIsProcessingVehicleImage] = useState<boolean>(false);
 
   const handleFileUpload = async (files: FileList) => {
-    // For general assets mode, don't require vehicle selection
+    // For general assets mode and direct assets mode, don't require vehicle selection
     if (uploadMode === 'vehicle' && !selectedVehicle && !stockNumberInput.trim()) {
       alert('Please select a vehicle or enter a stock number first');
       return;
@@ -64,13 +65,18 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
         // Create object URL for preview
         const originalUrl = URL.createObjectURL(file);
         
+        // For direct assets mode, mark as completed immediately (no background removal needed)
+        const status = uploadMode === 'direct-assets' ? 'completed' : 'uploaded';
+        const processedUrl = uploadMode === 'direct-assets' ? originalUrl : undefined;
+        
         const photo: UploadedPhoto = {
           id: photoId,
           file,
           originalUrl,
-          status: 'uploaded',
-          isMarketingAsset: uploadMode === 'assets' ? markAsMarketingAsset : false,
-          category: uploadMode === 'assets' ? assetCategory : undefined
+          processedUrl,
+          status,
+          isMarketingAsset: (uploadMode === 'assets' || uploadMode === 'direct-assets') ? markAsMarketingAsset : false,
+          category: (uploadMode === 'assets' || uploadMode === 'direct-assets') ? assetCategory : undefined
         };
 
         newPhotos.push(photo);
@@ -221,15 +227,18 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
   const handleSavePhotos = async () => {
     const completedPhotos = uploadedPhotos.filter(p => p.status === 'completed');
     
-    if (completedPhotos.length === 0) {
+    if (completedPhotos.length === 0 && uploadMode !== 'direct-assets') {
       alert('Please process at least one photo with background removal');
       return;
     }
 
-    if (uploadMode === 'assets') {
+    // For direct assets mode, use all uploaded photos (they're already marked as completed)
+    const photosToSave = uploadMode === 'direct-assets' ? uploadedPhotos : completedPhotos;
+
+    if (uploadMode === 'assets' || uploadMode === 'direct-assets') {
       // Save as general assets
       if (onAssetsUploaded) {
-        const assetData = completedPhotos.map(photo => ({
+        const assetData = photosToSave.map(photo => ({
           originalUrl: photo.originalUrl,
           processedUrl: photo.processedUrl!,
           name: photo.file.name,
@@ -254,8 +263,8 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
               body: originalFormData
             });
 
-            // Upload processed
-            if (asset.processedUrl) {
+            // For direct assets mode, don't upload processed version (it's the same as original)
+            if (uploadMode === 'assets' && asset.processedUrl && asset.processedUrl !== asset.originalUrl) {
               const processedFormData = new FormData();
               const processedBlob = await getBlobFromUrl(asset.processedUrl);
               const processedName = asset.name.replace(/\.[^/.]+$/, '_processed.png');
@@ -270,8 +279,9 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
             }
           }
 
+          const modeText = uploadMode === 'direct-assets' ? 'direct upload' : 'general';
           onAssetsUploaded(assetData);
-          alert(`Added ${completedPhotos.length} assets to general library`);
+          alert(`Added ${photosToSave.length} assets to ${modeText} library`);
         } catch (error) {
           console.error('Error uploading assets:', error);
           alert('Failed to upload assets');
@@ -288,7 +298,7 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
         return;
       }
 
-      const photoData = completedPhotos.map(photo => ({
+      const photoData = photosToSave.map(photo => ({
         originalUrl: photo.originalUrl,
         processedUrl: photo.processedUrl!,
         isMarketingAsset: photo.isMarketingAsset || false,
@@ -296,7 +306,7 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
       }));
 
       onPhotosUploaded(stockNumber, photoData);
-      alert(`Added ${completedPhotos.length} photos to vehicle ${stockNumber}`);
+      alert(`Added ${photosToSave.length} photos to vehicle ${stockNumber}`);
     }
     
     // Don't reset form - keep selected vehicle for both modes
@@ -360,6 +370,15 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
                 <Upload className="w-3 h-3 mr-1" />
                 General Assets
               </Button>
+              <Button
+                size="sm"
+                variant={uploadMode === 'direct-assets' ? 'default' : 'outline'}
+                onClick={() => setUploadMode('direct-assets')}
+                className="text-xs"
+              >
+                <ImageIcon className="w-3 h-3 mr-1" />
+                Direct Upload
+              </Button>
             </div>
           </div>
 
@@ -402,6 +421,60 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
                     className="rounded border-white/20 bg-white/10"
                   />
                   <Label htmlFor="marketing-asset" className="text-white text-sm">
+                    Mark for future marketing use
+                  </Label>
+                </div>
+              </div>
+              
+              {markAsMarketingAsset && (
+                <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <p className="text-blue-200 text-xs">
+                    ✅ This asset will be saved to your marketing library for future content creation
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {uploadMode === 'direct-assets' && (
+            <div className="space-y-4">
+              <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                <p className="text-purple-200 text-sm font-medium mb-1">
+                  🚀 Direct Asset Upload Mode
+                </p>
+                <p className="text-purple-200/70 text-xs">
+                  Images will be saved directly to your asset library without background removal. Perfect for backgrounds, textures, and assets that don't need processing.
+                </p>
+              </div>
+              
+              {/* Asset Category Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-white text-sm">Asset Category</Label>
+                  <Select value={assetCategory} onValueChange={setAssetCategory}>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Choose category..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="logos">Logos & Branding</SelectItem>
+                      <SelectItem value="backgrounds">Backgrounds</SelectItem>
+                      <SelectItem value="badges">Badges & Icons</SelectItem>
+                      <SelectItem value="textures">Textures & Patterns</SelectItem>
+                      <SelectItem value="overlays">Overlays & Effects</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="marketing-asset-direct"
+                    checked={markAsMarketingAsset}
+                    onChange={(e) => setMarkAsMarketingAsset(e.target.checked)}
+                    className="rounded border-white/20 bg-white/10"
+                  />
+                  <Label htmlFor="marketing-asset-direct" className="text-white text-sm">
                     Mark for future marketing use
                   </Label>
                 </div>
@@ -494,6 +567,11 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
                 ⚠️ Please select a vehicle or enter a stock number first
               </p>
             )}
+            {uploadMode === 'direct-assets' && (
+              <p className="text-purple-400 text-xs mt-1">
+                ✅ Assets will be saved directly to your library without processing
+              </p>
+            )}
             <div className="mt-2">
               <input
                 type="file"
@@ -519,10 +597,13 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
                     <Upload className="w-8 h-8 mx-auto mb-2 text-white" />
                   )}
                   <p className="text-white text-sm">
-                    {isUploading ? 'Uploading...' : 'Click to upload photos'}
+                    {isUploading ? 'Uploading...' : uploadMode === 'direct-assets' ? 'Click to upload assets' : 'Click to upload photos'}
                   </p>
                   <p className="text-white/70 text-xs">
-                    Supports multiple images (JPG, PNG)
+                    {uploadMode === 'direct-assets' 
+                      ? 'Assets will be saved directly to library' 
+                      : 'Supports multiple images (JPG, PNG)'
+                    }
                   </p>
                 </div>
               </label>
@@ -535,9 +616,14 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
       {uploadedPhotos.length > 0 && (
         <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20">
           <CardHeader>
-            <CardTitle className="text-white text-lg">Uploaded Photos</CardTitle>
+            <CardTitle className="text-white text-lg">
+              {uploadMode === 'direct-assets' ? 'Uploaded Assets' : 'Uploaded Photos'}
+            </CardTitle>
             <CardDescription className="text-white/70">
-              Remove backgrounds and save to vehicle
+              {uploadMode === 'direct-assets' 
+                ? 'Upload assets directly to library' 
+                : 'Remove backgrounds and save to vehicle'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -609,7 +695,7 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
             </div>
 
             {/* Save Button */}
-            {uploadedPhotos.some(p => p.status === 'completed') && (
+            {(uploadedPhotos.some(p => p.status === 'completed') || uploadMode === 'direct-assets') && (
               <div className="mt-6 text-center">
                 <Button
                   onClick={handleSavePhotos}
@@ -623,6 +709,8 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
                   )}
                   {uploadMode === 'assets' 
                     ? 'Save as General Assets' 
+                    : uploadMode === 'direct-assets'
+                    ? 'Save as Direct Assets'
                     : 'Save Photos to Vehicle'
                   }
                 </Button>
