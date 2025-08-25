@@ -6,6 +6,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const category = formData.get('category') as string || 'manual-uploads';
+    const isMarketingAsset = formData.get('isMarketingAsset') === 'true';
 
     if (!file) {
       return NextResponse.json(
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
       fileName: file.name,
       mimeType: file.type,
       category,
+      isMarketingAsset,
     });
 
     return NextResponse.json({
@@ -52,6 +54,8 @@ export async function POST(request: Request) {
         fileName: file.name,
         size: file.size,
         type: file.type,
+        category,
+        isMarketingAsset,
         uploadedAt: new Date().toISOString(),
       },
     });

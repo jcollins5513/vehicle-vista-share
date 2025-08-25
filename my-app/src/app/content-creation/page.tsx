@@ -23,6 +23,8 @@ interface ProcessedImage {
   processedAt: string;
   status: string;
   imageIndex: number;
+  isMarketingAsset?: boolean;
+  category?: string;
 }
 
 interface ProcessedImagesData {
@@ -66,7 +68,7 @@ export default function ContentCreationPage() {
     }
   };
 
-  const handleManualPhotosUploaded = (stockNumber: string, photos: { originalUrl: string; processedUrl?: string }[]) => {
+  const handleManualPhotosUploaded = (stockNumber: string, photos: { originalUrl: string; processedUrl?: string; isMarketingAsset?: boolean; category?: string }[]) => {
     // Add the photos to the processedImages state
     setProcessedImages(prev => ({
       ...prev,
@@ -77,7 +79,9 @@ export default function ContentCreationPage() {
           processedUrl: photo.processedUrl || photo.originalUrl,
           processedAt: new Date().toISOString(),
           status: 'completed',
-          imageIndex: (prev[stockNumber]?.length || 0) + index
+          imageIndex: (prev[stockNumber]?.length || 0) + index,
+          isMarketingAsset: photo.isMarketingAsset || false,
+          category: photo.category || 'vehicle-photos'
         }))
       ]
     }));
@@ -215,8 +219,12 @@ export default function ContentCreationPage() {
                 console.log('Assets uploaded:', assets);
                 // Refresh assets list
                 fetchAssets();
-                // Show success message
-                alert(`Successfully uploaded ${assets.length} assets to general library!`);
+                // Show success message with marketing asset info
+                const marketingAssets = assets.filter(asset => asset.isMarketingAsset);
+                const message = marketingAssets.length > 0 
+                  ? `Successfully uploaded ${assets.length} assets! ${marketingAssets.length} marked for future marketing use.`
+                  : `Successfully uploaded ${assets.length} assets to general library!`;
+                alert(message);
               }}
             />
           </TabsContent>

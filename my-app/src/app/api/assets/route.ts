@@ -37,11 +37,19 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      assets: assets.map(asset => ({
-        ...asset,
-        fileName: asset.key.split('/').pop() || asset.key,
-        category: asset.key.split('/')[0] || 'uncategorized',
-      })),
+      assets: assets.map(asset => {
+        const keyParts = asset.key.split('/');
+        const fileName = keyParts.pop() || asset.key;
+        const category = keyParts[1] || 'uncategorized'; // category is the second part after marketing/general
+        const isMarketingAsset = keyParts[0] === 'marketing';
+        
+        return {
+          ...asset,
+          fileName,
+          category,
+          isMarketingAsset,
+        };
+      }),
       total: assets.length,
     });
 

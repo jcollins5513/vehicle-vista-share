@@ -149,10 +149,12 @@ export async function uploadFileToAssets(opts: {
   fileName: string;
   mimeType: string;
   category?: string;
+  isMarketingAsset?: boolean;
 }): Promise<{ url: string; key: string }> {
-  const { buffer, fileName, mimeType, category = "manual-uploads" } = opts;
+  const { buffer, fileName, mimeType, category = "manual-uploads", isMarketingAsset = false } = opts;
   const timestamp = new Date().toISOString().split('T')[0];
-  const key = `${category}/${timestamp}/${fileName}`;
+  const marketingPrefix = isMarketingAsset ? 'marketing' : 'general';
+  const key = `${marketingPrefix}/${category}/${timestamp}/${fileName}`;
 
   // Get the correct region for the assets bucket
   const bucketRegion = await getBucketRegion(ASSETS_BUCKET!);

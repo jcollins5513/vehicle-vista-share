@@ -61,6 +61,7 @@ interface Asset {
   category: string;
   lastModified?: Date;
   size?: number;
+  isMarketingAsset?: boolean;
 }
 
 interface Vehicle {
@@ -81,6 +82,8 @@ interface ProcessedImage {
   processedAt: string;
   status: string;
   imageIndex: number;
+  isMarketingAsset?: boolean;
+  category?: string;
 }
 
 interface UnifiedVisualEditorProps {
@@ -481,15 +484,28 @@ export function UnifiedVisualEditor({
     asset.category === 'backgrounds' || asset.fileName.toLowerCase().includes('background')
   );
 
-  // Get marketing assets (logos, badges, etc.)
+  // Get marketing assets (logos, badges, etc.) - prioritize marked marketing assets
   const marketingAssets = assets.filter(asset => 
+    asset.isMarketingAsset || 
     asset.category === 'logos' || 
     asset.category === 'badges' || 
-    asset.category === 'text' ||
+    asset.category === 'overlays' ||
+    asset.category === 'textures' ||
     asset.fileName.toLowerCase().includes('logo') ||
     asset.fileName.toLowerCase().includes('badge') ||
     asset.fileName.toLowerCase().includes('sale')
   );
+
+  // Get all assets by category for better organization
+  const assetsByCategory = {
+    backgrounds: assets.filter(asset => asset.category === 'backgrounds'),
+    logos: assets.filter(asset => asset.category === 'logos'),
+    badges: assets.filter(asset => asset.category === 'badges'),
+    textures: assets.filter(asset => asset.category === 'textures'),
+    overlays: assets.filter(asset => asset.category === 'overlays'),
+    marketing: assets.filter(asset => asset.isMarketingAsset),
+    general: assets.filter(asset => asset.category === 'general')
+  };
 
   return (
     <div className="space-y-6">
@@ -707,15 +723,18 @@ export function UnifiedVisualEditor({
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="backgrounds" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 bg-white/10">
+                  <TabsList className="grid w-full grid-cols-5 bg-white/10">
                     <TabsTrigger value="backgrounds" className="data-[state=active]:bg-white/20 text-white text-xs">
                       Backgrounds
                     </TabsTrigger>
                     <TabsTrigger value="vehicles" className="data-[state=active]:bg-white/20 text-white text-xs">
                       Vehicles
                     </TabsTrigger>
-                    <TabsTrigger value="assets" className="data-[state=active]:bg-white/20 text-white text-xs">
+                    <TabsTrigger value="marketing" className="data-[state=active]:bg-white/20 text-white text-xs">
                       Marketing
+                    </TabsTrigger>
+                    <TabsTrigger value="assets" className="data-[state=active]:bg-white/20 text-white text-xs">
+                      All Assets
                     </TabsTrigger>
                     <TabsTrigger value="manual" className="data-[state=active]:bg-white/20 text-white text-xs">
                       Manual
@@ -760,6 +779,43 @@ export function UnifiedVisualEditor({
                     ))}
                   </TabsContent>
                   
+                  <TabsContent value="marketing" className="space-y-2 max-h-60 overflow-y-auto">
+                    {assetsByCategory.marketing.length > 0 ? (
+                      assetsByCategory.marketing.map((asset) => (
+                        <div
+                          key={asset.key}
+                          className="flex items-center gap-2 p-2 rounded bg-white/5 hover:bg-white/10 cursor-pointer"
+                          onClick={() => addMarketingAsset(asset)}
+                        >
+                          <Image
+                            src={asset.url}
+                            alt={asset.fileName}
+                            width={40}
+                            height={40}
+                            className="rounded object-cover"
+                          />
+                          <div className="flex-1">
+                            <span className="text-white text-sm truncate">{asset.fileName}</span>
+                            <div className="flex gap-1 mt-1">
+                              <Badge variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
+                                Marketing
+                              </Badge>
+                              {asset.category && (
+                                <Badge variant="outline" className="text-xs">
+                                  {asset.category}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-white/70 text-sm text-center py-4">
+                        No marketing assets available. Upload assets and mark them for future marketing use.
+                      </p>
+                    )}
+                  </TabsContent>
+                  
                   <TabsContent value="assets" className="space-y-2 max-h-60 overflow-y-auto">
                     {marketingAssets.map((asset) => (
                       <div
@@ -774,7 +830,21 @@ export function UnifiedVisualEditor({
                           height={40}
                           className="rounded object-cover"
                         />
-                        <span className="text-white text-sm truncate">{asset.fileName}</span>
+                        <div className="flex-1">
+                          <span className="text-white text-sm truncate">{asset.fileName}</span>
+                          <div className="flex gap-1 mt-1">
+                            {asset.isMarketingAsset && (
+                              <Badge variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
+                                Marketing
+                              </Badge>
+                            )}
+                            {asset.category && (
+                              <Badge variant="outline" className="text-xs">
+                                {asset.category}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     ))}
                     

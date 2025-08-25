@@ -28,12 +28,20 @@ interface Vehicle {
   price?: number;
   mileage?: number;
   features: string[];
+  images?: string[];
+  processedImages?: Array<{
+    originalUrl: string;
+    processedUrl: string;
+    processedAt: string;
+    status: string;
+    imageIndex: number;
+  }>;
 }
 
 interface ManualVehiclePhotoUploadProps {
   vehicles: Vehicle[];
-  onPhotosUploaded: (stockNumber: string, photos: { originalUrl: string; processedUrl?: string }[]) => void;
-  onAssetsUploaded?: (assets: { originalUrl: string; processedUrl?: string; name: string }[]) => void;
+  onPhotosUploaded: (stockNumber: string, photos: { originalUrl: string; processedUrl?: string; isMarketingAsset?: boolean; category?: string }[]) => void;
+  onAssetsUploaded?: (assets: { originalUrl: string; processedUrl?: string; name: string; isMarketingAsset?: boolean; category?: string }[]) => void;
 }
 
 interface UploadedPhoto {
@@ -42,6 +50,8 @@ interface UploadedPhoto {
   originalUrl: string;
   processedUrl?: string;
   status: 'uploaded' | 'processing' | 'completed' | 'failed';
+  isMarketingAsset?: boolean; // Mark for future marketing use
+  category?: string; // Asset category for organization
 }
 
 export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsUploaded }: ManualVehiclePhotoUploadProps) {
@@ -50,6 +60,9 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
   const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMode, setUploadMode] = useState<'vehicle' | 'assets'>('vehicle');
+  const [assetCategory, setAssetCategory] = useState<string>('general');
+  const [markAsMarketingAsset, setMarkAsMarketingAsset] = useState<boolean>(false);
+  const [isProcessingVehicleImage, setIsProcessingVehicleImage] = useState<boolean>(false);
 
   const handleFileUpload = async (files: FileList) => {
     if (!selectedVehicle && !stockNumberInput.trim()) {
@@ -74,7 +87,9 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
           id: photoId,
           file,
           originalUrl,
-          status: 'uploaded'
+          status: 'uploaded',
+          isMarketingAsset: uploadMode === 'assets' ? markAsMarketingAsset : false,
+          category: uploadMode === 'assets' ? assetCategory : undefined
         };
 
         newPhotos.push(photo);
@@ -114,19 +129,112 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
     }
   };
 
+  // Helper function to get blob from any URL type
+  const getBlobFromUrl = async (url: string): Promise<Blob> => {
+    if (url.startsWith('data:')) {
+      // Handle data URLs
+      const response = await fetch(url);
+      return await response.blob();
+    } else if (url.startsWith('blob:')) {
+      // Handle blob URLs
+      const response = await fetch(url);
+      return await response.blob();
+    } else {
+      // Handle regular HTTP URLs - use proxy to avoid CORS issues
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image via proxy: ${response.status} ${response.statusText}`);
+      }
+      
+      return await response.blob();
+    }
+  };
+
   const removeBackground = async (imageUrl: string): Promise<string> => {
     // Import background removal library
     const { removeBackground: removeBg } = await import('@imgly/background-removal');
     
-    // Convert to blob if needed
-    const response = await fetch(imageUrl);
-    const blob = await response.blob();
+    try {
+      // Get blob from URL using helper function
+      const blob = await getBlobFromUrl(imageUrl);
+      
+      // Remove background
+      const processedBlob = await removeBg(blob);
+      
+      // Create object URL for processed image
+      return URL.createObjectURL(processedBlob);
+    } catch (error) {
+      console.error('Error in removeBackground:', error);
+      throw error;
+    }
+  };
+
+  // Function to automatically process the first image of a selected vehicle
+  const processVehicleFirstImage = async (vehicle: Vehicle) => {
+    if (!vehicle.images || vehicle.images.length === 0) {
+      console.log('No images available for vehicle:', vehicle.stockNumber);
+      return;
+    }
+
+    // Check if vehicle already has processed images
+    if (vehicle.processedImages && vehicle.processedImages.length > 0) {
+      console.log('Vehicle already has processed images:', vehicle.stockNumber);
+      return;
+    }
+
+    setIsProcessingVehicleImage(true);
     
-    // Remove background
-    const processedBlob = await removeBg(blob);
-    
-    // Create object URL for processed image
-    return URL.createObjectURL(processedBlob);
+    try {
+      console.log('Processing first image for vehicle:', vehicle.stockNumber);
+      
+      // Get the first image URL
+      const firstImageUrl = vehicle.images[0];
+      console.log('Image URL type:', firstImageUrl.substring(0, 20) + '...');
+      
+      // Validate the image URL
+      if (!firstImageUrl || firstImageUrl.trim() === '') {
+        throw new Error('Invalid image URL: URL is empty or undefined');
+      }
+      
+      // Process the image for background removal
+      const processedUrl = await removeBackground(firstImageUrl);
+      
+      // Create a processed image object
+      const processedImage = {
+        originalUrl: firstImageUrl,
+        processedUrl: processedUrl,
+        processedAt: new Date().toISOString(),
+        status: 'completed',
+        imageIndex: 0,
+        isMarketingAsset: false,
+        category: 'vehicle-photos'
+      };
+
+      // Add to uploaded photos for display
+      const photoId = `vehicle-${vehicle.stockNumber}-${Date.now()}`;
+      const vehiclePhoto: UploadedPhoto = {
+        id: photoId,
+        file: new File([], `vehicle-${vehicle.stockNumber}.jpg`), // Placeholder file
+        originalUrl: firstImageUrl,
+        processedUrl: processedUrl,
+        status: 'completed',
+        isMarketingAsset: false,
+        category: 'vehicle-photos'
+      };
+
+      setUploadedPhotos(prev => [...prev, vehiclePhoto]);
+      
+      console.log('Successfully processed first image for vehicle:', vehicle.stockNumber);
+      
+    } catch (error) {
+      console.error('Error processing vehicle first image:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to process first image for vehicle ${vehicle.stockNumber}: ${errorMessage}`);
+    } finally {
+      setIsProcessingVehicleImage(false);
+    }
   };
 
   const handleSavePhotos = async () => {
@@ -143,7 +251,9 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
         const assetData = completedPhotos.map(photo => ({
           originalUrl: photo.originalUrl,
           processedUrl: photo.processedUrl!,
-          name: photo.file.name
+          name: photo.file.name,
+          isMarketingAsset: photo.isMarketingAsset || false,
+          category: photo.category || 'general'
         }));
 
         // Upload to S3 as general assets
@@ -153,10 +263,10 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
           for (const asset of assetData) {
             // Upload original
             const originalFormData = new FormData();
-            const originalResponse = await fetch(asset.originalUrl);
-            const originalBlob = await originalResponse.blob();
+            const originalBlob = await getBlobFromUrl(asset.originalUrl);
             originalFormData.append('file', originalBlob, asset.name);
-            originalFormData.append('category', 'manual-uploads');
+            originalFormData.append('category', asset.category);
+            originalFormData.append('isMarketingAsset', asset.isMarketingAsset.toString());
 
             await fetch('/api/assets/upload', {
               method: 'POST',
@@ -166,11 +276,11 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
             // Upload processed
             if (asset.processedUrl) {
               const processedFormData = new FormData();
-              const processedResponse = await fetch(asset.processedUrl);
-              const processedBlob = await processedResponse.blob();
+              const processedBlob = await getBlobFromUrl(asset.processedUrl);
               const processedName = asset.name.replace(/\.[^/.]+$/, '_processed.png');
               processedFormData.append('file', processedBlob, processedName);
-              processedFormData.append('category', 'background-removed');
+              processedFormData.append('category', asset.category);
+              processedFormData.append('isMarketingAsset', asset.isMarketingAsset.toString());
 
               await fetch('/api/assets/upload', {
                 method: 'POST',
@@ -199,7 +309,9 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
 
       const photoData = completedPhotos.map(photo => ({
         originalUrl: photo.originalUrl,
-        processedUrl: photo.processedUrl!
+        processedUrl: photo.processedUrl!,
+        isMarketingAsset: photo.isMarketingAsset || false,
+        category: photo.category || 'vehicle-photos'
       }));
 
       onPhotosUploaded(stockNumber, photoData);
@@ -217,6 +329,21 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
   };
 
   const selectedVehicleData = vehicles.find(v => v.stockNumber === selectedVehicle);
+
+  // Auto-process first image when vehicle is selected (if no processed images exist)
+  React.useEffect(() => {
+    if (selectedVehicleData && uploadMode === 'vehicle') {
+      // Check if vehicle has images but no processed images
+      if (selectedVehicleData.images && selectedVehicleData.images.length > 0) {
+        const hasProcessedImages = selectedVehicleData.processedImages && selectedVehicleData.processedImages.length > 0;
+        
+        if (!hasProcessedImages) {
+          console.log('Auto-processing first image for selected vehicle:', selectedVehicleData.stockNumber);
+          processVehicleFirstImage(selectedVehicleData);
+        }
+      }
+    }
+  }, [selectedVehicle, uploadMode]);
 
   return (
     <div className="space-y-6">
@@ -257,13 +384,56 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
           </div>
 
           {uploadMode === 'assets' && (
-            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-              <p className="text-green-200 text-sm font-medium mb-1">
-                📁 General Assets Mode
-              </p>
-              <p className="text-green-200/70 text-xs">
-                Images will be saved as reusable assets, not tied to any specific vehicle. Perfect for logos, badges, and backgrounds.
-              </p>
+            <div className="space-y-4">
+              <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <p className="text-green-200 text-sm font-medium mb-1">
+                  📁 General Assets Mode
+                </p>
+                <p className="text-green-200/70 text-xs">
+                  Images will be saved as reusable assets, not tied to any specific vehicle. Perfect for logos, badges, and backgrounds.
+                </p>
+              </div>
+              
+              {/* Asset Category Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-white text-sm">Asset Category</Label>
+                  <Select value={assetCategory} onValueChange={setAssetCategory}>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Choose category..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="logos">Logos & Branding</SelectItem>
+                      <SelectItem value="backgrounds">Backgrounds</SelectItem>
+                      <SelectItem value="badges">Badges & Icons</SelectItem>
+                      <SelectItem value="textures">Textures & Patterns</SelectItem>
+                      <SelectItem value="overlays">Overlays & Effects</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="marketing-asset"
+                    checked={markAsMarketingAsset}
+                    onChange={(e) => setMarkAsMarketingAsset(e.target.checked)}
+                    className="rounded border-white/20 bg-white/10"
+                  />
+                  <Label htmlFor="marketing-asset" className="text-white text-sm">
+                    Mark for future marketing use
+                  </Label>
+                </div>
+              </div>
+              
+              {markAsMarketingAsset && (
+                <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <p className="text-blue-200 text-xs">
+                    ✅ This asset will be saved to your marketing library for future content creation
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -320,6 +490,19 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
               <p className="text-blue-200/70 text-xs">
                 Stock: {selectedVehicleData.stockNumber}
               </p>
+              {isProcessingVehicleImage && (
+                <div className="flex items-center gap-2 mt-2">
+                  <Loader2 className="w-4 h-4 text-blue-300 animate-spin" />
+                  <span className="text-blue-300 text-xs">
+                    Processing first image...
+                  </span>
+                </div>
+              )}
+              {selectedVehicleData.images && selectedVehicleData.images.length > 0 && (
+                <p className="text-blue-200/70 text-xs mt-1">
+                  {selectedVehicleData.images.length} image{selectedVehicleData.images.length !== 1 ? 's' : ''} available
+                </p>
+              )}
             </div>
           )}
 
