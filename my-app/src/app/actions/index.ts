@@ -13,15 +13,23 @@ export async function getShowroomDataAction() {
   
       const data = await res.json();
   
-      // Ensure response is an array
-      if (!Array.isArray(data)) {
+      // Handle the new API response format
+      if (data.success && Array.isArray(data.vehicles)) {
+        return {
+          vehicles: data.vehicles,
+          error: null,
+        };
+      } else if (data.error) {
+        return { vehicles: [], error: data.error };
+      } else if (Array.isArray(data)) {
+        // Fallback for old format (if any endpoints still use it)
+        return {
+          vehicles: data,
+          error: null,
+        };
+      } else {
         return { vehicles: [], error: "Unexpected API response format." };
       }
-  
-      return {
-        vehicles: data,
-        error: null,
-      };
     } catch (err: any) {
       return {
         vehicles: [],

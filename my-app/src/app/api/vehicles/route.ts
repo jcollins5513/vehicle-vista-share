@@ -152,17 +152,26 @@ export async function GET() {
         .filter((v): v is Vehicle => v !== null); // Remove any null entries from failed mappings
       
       console.log(`[API] Successfully processed ${vehiclesWithAllData.length} vehicles`);
-      return NextResponse.json(vehiclesWithAllData);
+      return NextResponse.json({
+        success: true,
+        vehicles: vehiclesWithAllData,
+        totalVehicles: vehiclesWithAllData.length
+      });
     } catch (dbError) {
       console.error('[API] Database error:', dbError);
       // If DB fails but we have vehicles, return them without 360 images
       if (typedVehicles.length > 0) {
         console.log('[API] Returning vehicles without 360 images due to database error');
-        return NextResponse.json(typedVehicles.map((vehicle: RedisVehicle) => ({
+        const fallbackVehicles = typedVehicles.map((vehicle: RedisVehicle) => ({
           ...vehicle,
           id: vehicle.id || vehicle.stockNumber,
           threeSixtyImageUrl: null,
-        })));
+        }));
+        return NextResponse.json({
+          success: true,
+          vehicles: fallbackVehicles,
+          totalVehicles: fallbackVehicles.length
+        });
       }
       throw dbError; // Re-throw if we have no vehicles to fall back to
     }
@@ -173,19 +182,12 @@ export async function GET() {
       name: err instanceof Error ? err.name : 'UnknownError'
     });
     
-    return new NextResponse(
-      JSON.stringify({
-        error: 'Failed to load vehicles',
-        details: process.env.NODE_ENV === 'development' 
-          ? (err instanceof Error ? err.message : 'Unknown error')
-          : undefined
-      }),
-      { 
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to load vehicles',
+      details: process.env.NODE_ENV === 'development' 
+        ? (err instanceof Error ? err.message : 'Unknown error')
+        : undefined
+    }, { status: 500 });
   }
 }
