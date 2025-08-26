@@ -16,6 +16,7 @@ import {
   Scissors,
   Image as ImageIcon
 } from 'lucide-react';
+import { DragAndDropUpload } from './DragAndDropUpload';
 import Image from 'next/image';
 import type { Vehicle } from '@/types';
 
@@ -573,40 +574,23 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
               </p>
             )}
             <div className="mt-2">
-              <input
-                type="file"
-                multiple
+              <DragAndDropUpload
+                onFilesDrop={handleFileUpload}
+                multiple={true}
                 accept="image/*"
-                onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
-                className="hidden"
-                id="photo-upload"
                 disabled={isUploading || (uploadMode === 'vehicle' && !selectedVehicle && !stockNumberInput.trim())}
+                isUploading={isUploading}
+                uploadText={
+                  uploadMode === 'direct-assets' 
+                    ? 'Click to upload assets or drag & drop here' 
+                    : 'Click to upload photos or drag & drop here'
+                }
+                uploadSubtext={
+                  uploadMode === 'direct-assets' 
+                    ? 'Assets will be saved directly to library' 
+                    : 'Supports multiple images (JPG, PNG, WebP)'
+                }
               />
-              <label
-                htmlFor="photo-upload"
-                className={`flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                  (uploadMode === 'vehicle' && !selectedVehicle && !stockNumberInput.trim()) || isUploading
-                    ? 'border-white/20 bg-white/5 cursor-not-allowed'
-                    : 'border-white/30 bg-white/10 hover:bg-white/20'
-                }`}
-              >
-                <div className="text-center">
-                  {isUploading ? (
-                    <Loader2 className="w-8 h-8 mx-auto mb-2 text-white animate-spin" />
-                  ) : (
-                    <Upload className="w-8 h-8 mx-auto mb-2 text-white" />
-                  )}
-                  <p className="text-white text-sm">
-                    {isUploading ? 'Uploading...' : uploadMode === 'direct-assets' ? 'Click to upload assets' : 'Click to upload photos'}
-                  </p>
-                  <p className="text-white/70 text-xs">
-                    {uploadMode === 'direct-assets' 
-                      ? 'Assets will be saved directly to library' 
-                      : 'Supports multiple images (JPG, PNG)'
-                    }
-                  </p>
-                </div>
-              </label>
             </div>
           </div>
         </CardContent>

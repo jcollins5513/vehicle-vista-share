@@ -125,4 +125,15 @@ my-app/
 - ✅ **NEW**: Enhanced canvas with unrestricted movement - assets can move beyond canvas boundaries
 - ✅ **NEW**: Resize functionality with 8 resize handles (corners and edges) for precise asset sizing
 - ✅ **IMPROVED**: Manual Upload tab no longer switches to next tab after saving vehicle photos
-- ✅ **IMPROVED**: Better asset organization and workflow efficiency 
+- ✅ **IMPROVED**: Better asset organization and workflow efficiency
+
+## Drag and Drop File Upload Enhancement
+- ✅ **NEW**: Created reusable `DragAndDropUpload` component for consistent file upload experience across the application
+- ✅ **NEW**: Drag and drop functionality added to all asset upload areas:
+  - Manual Vehicle Photo Upload component
+  - Unified Visual Editor asset library
+  - Asset Manager component
+  - Admin 360° image upload page
+- ✅ **IMPROVED**: Enhanced user experience with visual feedback during drag operations
+- ✅ **IMPROVED**: Consistent upload interface across all components
+- ✅ **IMPROVED**: Better accessibility with both click and drag & drop options 

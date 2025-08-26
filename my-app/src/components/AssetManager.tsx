@@ -16,6 +16,7 @@ import {
   FolderOpen,
   Plus
 } from 'lucide-react';
+import { DragAndDropUpload } from './DragAndDropUpload';
 import Image from 'next/image';
 
 interface Asset {
@@ -74,8 +75,8 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
     fetchAssets();
   }, [fetchAssets]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileUpload = async (files: FileList) => {
+    const file = files[0];
     if (!file) return;
 
     setUploading(true);
@@ -205,16 +206,18 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
               />
             </div>
             <div>
-              <Label htmlFor="file-upload" className="text-white text-sm font-medium">
-                Select File
+              <Label className="text-white text-sm font-medium">
+                Upload Asset
               </Label>
-              <Input
-                id="file-upload"
-                type="file"
+              <DragAndDropUpload
+                onFilesDrop={handleFileUpload}
+                multiple={false}
                 accept="image/*"
-                onChange={handleFileUpload}
                 disabled={uploading}
-                className="mt-1 bg-white/10 border-white/20 text-white file:bg-white/20 file:border-0 file:text-white"
+                isUploading={uploading}
+                uploadText="Click to upload or drag & drop here"
+                uploadSubtext="Supports JPG, PNG, WebP files"
+                className="mt-1"
               />
             </div>
           </div>

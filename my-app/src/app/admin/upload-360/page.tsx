@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DragAndDropUpload } from '@/components/DragAndDropUpload';
 
 export default function Upload360Page() {
   const [stockNumber, setStockNumber] = useState('');
@@ -12,9 +13,9 @@ export default function Upload360Page() {
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
+  const handleFileChange = (files: FileList) => {
+    if (files && files.length > 0) {
+      setFile(files[0]);
     }
   };
 
@@ -80,8 +81,14 @@ export default function Upload360Page() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="file-input">360° Image File</Label>
-              <Input id="file-input" type="file" onChange={handleFileChange} required />
+              <Label>360° Image File</Label>
+              <DragAndDropUpload
+                onFilesDrop={handleFileChange}
+                multiple={false}
+                accept="image/*"
+                uploadText="Click to select or drag & drop 360° image"
+                uploadSubtext="Supports JPG, PNG, WebP files"
+              />
             </div>
             <Button type="submit" className="w-full" disabled={isUploading}>
               {isUploading ? 'Uploading...' : 'Upload'}

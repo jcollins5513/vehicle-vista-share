@@ -1,4 +1,4 @@
-# Content Creator Updates
+ssssssssssssssssssssssssssss# Content Creator Updates
 
 ## Summary of Changes
 
@@ -63,7 +63,7 @@ This will show how many processed images are in S3.
 
 ### 4. Test Content Creation with Assets
 1. Upload an asset in the Assets tab
-2. Go to Templates tab and select a template
+2. Go to Templates tab and select a templateNo ap
 3. Go to Create Content tab
 4. Select your uploaded asset instead of vehicle images
 5. Generate AI content
