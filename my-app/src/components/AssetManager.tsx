@@ -94,8 +94,7 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
       
       if (data.success) {
         await fetchAssets(); // Refresh the list
-        // Reset the input
-        event.target.value = '';
+        // Note: No need to reset input since we're using DragAndDropUpload component
       } else {
         alert(`Upload failed: ${data.error}`);
       }
