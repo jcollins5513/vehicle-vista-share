@@ -837,43 +837,43 @@ export function UnifiedVisualEditor({
         y: newY
       });
     } else if (isResizing && resizeHandle) {
-      // Handle resizing
+      // Handle resizing with no padding restrictions
       const updates: Partial<ContentLayer> = {};
       
       switch (resizeHandle) {
         case 'nw':
           updates.x = currentLayer.x + (deltaX * scaleFactor);
           updates.y = currentLayer.y + (deltaY * scaleFactor);
-          updates.width = Math.max(20, currentLayer.width - (deltaX * scaleFactor));
-          updates.height = Math.max(20, currentLayer.height - (deltaY * scaleFactor));
+          updates.width = Math.max(10, currentLayer.width - (deltaX * scaleFactor));
+          updates.height = Math.max(10, currentLayer.height - (deltaY * scaleFactor));
           break;
         case 'ne':
           updates.y = currentLayer.y + (deltaY * scaleFactor);
-          updates.width = Math.max(20, currentLayer.width + (deltaX * scaleFactor));
-          updates.height = Math.max(20, currentLayer.height - (deltaY * scaleFactor));
+          updates.width = Math.max(10, currentLayer.width + (deltaX * scaleFactor));
+          updates.height = Math.max(10, currentLayer.height - (deltaY * scaleFactor));
           break;
         case 'sw':
           updates.x = currentLayer.x + (deltaX * scaleFactor);
-          updates.width = Math.max(20, currentLayer.width - (deltaX * scaleFactor));
-          updates.height = Math.max(20, currentLayer.height + (deltaY * scaleFactor));
+          updates.width = Math.max(10, currentLayer.width - (deltaX * scaleFactor));
+          updates.height = Math.max(10, currentLayer.height + (deltaY * scaleFactor));
           break;
         case 'se':
-          updates.width = Math.max(20, currentLayer.width + (deltaX * scaleFactor));
-          updates.height = Math.max(20, currentLayer.height + (deltaY * scaleFactor));
+          updates.width = Math.max(10, currentLayer.width + (deltaX * scaleFactor));
+          updates.height = Math.max(10, currentLayer.height + (deltaY * scaleFactor));
           break;
         case 'n':
           updates.y = currentLayer.y + (deltaY * scaleFactor);
-          updates.height = Math.max(20, currentLayer.height - (deltaY * scaleFactor));
+          updates.height = Math.max(10, currentLayer.height - (deltaY * scaleFactor));
           break;
         case 's':
-          updates.height = Math.max(20, currentLayer.height + (deltaY * scaleFactor));
+          updates.height = Math.max(10, currentLayer.height + (deltaY * scaleFactor));
           break;
         case 'e':
-          updates.width = Math.max(20, currentLayer.width + (deltaX * scaleFactor));
+          updates.width = Math.max(10, currentLayer.width + (deltaX * scaleFactor));
           break;
         case 'w':
           updates.x = currentLayer.x + (deltaX * scaleFactor);
-          updates.width = Math.max(20, currentLayer.width - (deltaX * scaleFactor));
+          updates.width = Math.max(10, currentLayer.width - (deltaX * scaleFactor));
           break;
       }
 
@@ -1642,8 +1642,8 @@ export function UnifiedVisualEditor({
                       <Slider
                         value={[selectedLayerData.width]}
                         onValueChange={([value]) => updateLayer(selectedLayerData.id, { width: value })}
-                        min={50}
-                        max={canvasWidth}
+                        min={10}
+                        max={canvasWidth * 2}
                         step={1}
                         className="mt-1"
                       />
@@ -1653,8 +1653,8 @@ export function UnifiedVisualEditor({
                       <Slider
                         value={[selectedLayerData.height]}
                         onValueChange={([value]) => updateLayer(selectedLayerData.id, { height: value })}
-                        min={50}
-                        max={canvasHeight}
+                        min={10}
+                        max={canvasHeight * 2}
                         step={1}
                         className="mt-1"
                       />

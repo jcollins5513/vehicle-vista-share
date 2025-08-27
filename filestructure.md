@@ -147,12 +147,11 @@ my-app/
 - ✅ **FIXED**: Asset upload workflow - assets now properly save to library after processing
 - ✅ **IMPROVED**: Added asset category selection and marketing asset marking during upload
 - ✅ **IMPROVED**: Better status indicators and progress feedback for asset processing
-- ✅ **FIXED**: Manual asset uploads now properly save to library
-- ✅ **IMPROVED**: Asset categorization system with appropriate actions per asset type
-- ✅ **NEW**: Smart asset handling - background assets skip background removal, other assets get appropriate processing
-- ✅ **IMPROVED**: Enhanced save functionality - assets can be saved with or without background removal
-- ✅ **NEW**: Fallback save options for failed background removal attempts
-- ✅ **IMPROVED**: Better user experience with context-aware action buttons (Save vs Remove BG vs Save Original)
-- ✅ **FIXED**: Manual assets in visual editor now properly categorized and saved to library
+- ✅ **FIXED**: Manual asset uploads in visual editor now properly categorized and saved to library
 - ✅ **NEW**: Smart background detection for manual assets based on filename patterns
-- ✅ **IMPROVED**: Manual assets show appropriate actions (Save to Library vs Remove BG) based on asset type 
+- ✅ **IMPROVED**: Manual assets show appropriate actions (Save to Library vs Remove BG) based on asset type
+- ✅ **NEW**: Enhanced asset saving system - now saves both original and background-removed versions
+- ✅ **NEW**: User choice system for selecting between original and processed versions when adding to canvas
+- ✅ **IMPROVED**: Image editing capabilities - reduced padding restrictions for more flexible resizing
+- ✅ **IMPROVED**: Layer properties now allow wider size ranges (10px to 2x canvas size)
+- ✅ **NEW**: Visual indicators showing both versions of assets when available 
