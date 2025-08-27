@@ -299,6 +299,45 @@ export function UnifiedVisualEditor({
     });
   };
 
+  // Add asset with choice between original and processed versions
+  const addAssetWithChoice = (asset: Asset | ManualAsset) => {
+    const originalUrl = 'url' in asset ? asset.url : asset.originalUrl;
+    const processedUrl = 'processedUrl' in asset ? asset.processedUrl : undefined;
+    const name = 'fileName' in asset ? asset.fileName : asset.name;
+    
+    if (processedUrl) {
+      // Show choice dialog
+      const choice = confirm(`Asset "${name}" has both original and background-removed versions.\n\nClick OK to use the background-removed version, or Cancel to use the original.`);
+      
+      addLayer({
+        type: 'asset',
+        name: `Asset: ${name}`,
+        url: choice ? processedUrl : originalUrl,
+        x: canvasWidth * 0.05,
+        y: canvasHeight * 0.05,
+        width: canvasWidth * 0.2,
+        height: canvasHeight * 0.15,
+        rotation: 0,
+        opacity: 1,
+        visible: true
+      });
+    } else {
+      // Only original version available
+      addLayer({
+        type: 'asset',
+        name: `Asset: ${name}`,
+        url: originalUrl,
+        x: canvasWidth * 0.05,
+        y: canvasHeight * 0.05,
+        width: canvasWidth * 0.2,
+        height: canvasHeight * 0.15,
+        rotation: 0,
+        opacity: 1,
+        visible: true
+      });
+    }
+  };
+
   // Handle manual asset upload
   const handleManualAssetUpload = async (files: FileList) => {
     const newAssets: ManualAsset[] = [];
@@ -307,11 +346,17 @@ export function UnifiedVisualEditor({
       const file = files[i];
       const assetId = `asset-${Date.now()}-${i}`;
       
+      // Determine if this is likely a background asset based on filename and content
+      const isLikelyBackground = file.name.toLowerCase().includes('background') || 
+                                file.name.toLowerCase().includes('bg') ||
+                                file.name.toLowerCase().includes('scene') ||
+                                file.name.toLowerCase().includes('texture');
+      
       const asset: ManualAsset = {
         id: assetId,
         file,
         originalUrl: URL.createObjectURL(file),
-        status: 'uploaded',
+        status: isLikelyBackground ? 'completed' : 'uploaded', // Background assets are ready immediately
         name: file.name
       };
 
@@ -331,10 +376,25 @@ export function UnifiedVisualEditor({
     ));
 
     try {
-      const { removeBackground } = await import('@imgly/background-removal');
-      const response = await fetch(asset.originalUrl);
-      const blob = await response.blob();
-      const processedBlob = await removeBackground(blob);
+      // Use the improved background removal utility with fallback
+      const { removeBackground, simpleBackgroundRemoval } = await import('@/utils/removeBackground');
+      let processedBlob: Blob;
+      
+      try {
+        // Try the main background removal first
+        processedBlob = await removeBackground(asset.file);
+      } catch (mainError) {
+        console.warn('Main background removal failed, trying simple fallback:', mainError);
+        
+        // If main method fails, try simple fallback
+        try {
+          processedBlob = await simpleBackgroundRemoval(asset.file);
+        } catch (fallbackError) {
+          console.error('Both background removal methods failed:', fallbackError);
+          throw new Error('Background removal failed. Please try with a different image or use the image as-is.');
+        }
+      }
+      
       const processedUrl = URL.createObjectURL(processedBlob);
       
       setManualAssets(prev => prev.map(a => 
@@ -346,6 +406,9 @@ export function UnifiedVisualEditor({
       setManualAssets(prev => prev.map(a => 
         a.id === assetId ? { ...a, status: 'failed' } : a
       ));
+      
+      // Show user-friendly error message
+      alert(`Background removal failed for ${asset.name}. You can still save the original image.`);
     }
   };
 
@@ -369,6 +432,52 @@ export function UnifiedVisualEditor({
       }
       
       return await response.blob();
+    }
+  };
+
+  // Background removal for uploaded assets
+  const handleUploadedAssetBackgroundRemoval = async (assetId: string) => {
+    const asset = uploadedAssets.find(a => a.id === assetId);
+    if (!asset) return;
+
+    setUploadedAssets(prev => prev.map(a => 
+      a.id === assetId ? { ...a, status: 'processing' } : a
+    ));
+
+    try {
+      // Use the improved background removal utility with fallback
+      const { removeBackground, simpleBackgroundRemoval } = await import('@/utils/removeBackground');
+      let processedBlob: Blob;
+      
+      try {
+        // Try the main background removal first
+        processedBlob = await removeBackground(asset.file);
+      } catch (mainError) {
+        console.warn('Main background removal failed, trying simple fallback:', mainError);
+        
+        // If main method fails, try simple fallback
+        try {
+          processedBlob = await simpleBackgroundRemoval(asset.file);
+        } catch (fallbackError) {
+          console.error('Both background removal methods failed:', fallbackError);
+          throw new Error('Background removal failed. Please try with a different image or use the image as-is.');
+        }
+      }
+      
+      const processedUrl = URL.createObjectURL(processedBlob);
+      
+      setUploadedAssets(prev => prev.map(a => 
+        a.id === assetId ? { ...a, processedUrl, status: 'completed' } : asset
+      ));
+
+    } catch (error) {
+      console.error('Background removal failed:', error);
+      setUploadedAssets(prev => prev.map(a => 
+        a.id === assetId ? { ...a, status: 'failed' } : asset
+      ));
+      
+      // Show user-friendly error message
+      alert(`Background removal failed for ${asset.file.name}. You can still save the original image.`);
     }
   };
 
@@ -398,25 +507,50 @@ export function UnifiedVisualEditor({
 
         setUploadedAssets(prev => [...prev, newAsset]);
 
-        // Process for background removal
-        try {
-          setUploadedAssets(prev => prev.map(asset => 
-            asset.id === assetId ? { ...asset, status: 'processing' } : asset
-          ));
+        // Only process for background removal if it's NOT a background asset
+        if (assetCategory !== 'backgrounds') {
+          try {
+            setUploadedAssets(prev => prev.map(asset => 
+              asset.id === assetId ? { ...asset, status: 'processing' } : asset
+            ));
 
-          const { removeBackground } = await import('@imgly/background-removal');
-          const response = await fetch(originalUrl);
-          const blob = await response.blob();
-          const processedBlob = await removeBackground(blob);
-          const processedUrl = URL.createObjectURL(processedBlob);
-          
+            // Use the improved background removal utility with fallback
+            const { removeBackground, simpleBackgroundRemoval } = await import('@/utils/removeBackground');
+            let processedBlob: Blob;
+            
+            try {
+              // Try the main background removal first
+              processedBlob = await removeBackground(file);
+            } catch (mainError) {
+              console.warn('Main background removal failed, trying simple fallback:', mainError);
+              
+              // If main method fails, try simple fallback
+              try {
+                processedBlob = await simpleBackgroundRemoval(file);
+              } catch (fallbackError) {
+                console.error('Both background removal methods failed:', fallbackError);
+                throw new Error('Background removal failed. Please try with a different image or use the image as-is.');
+              }
+            }
+            
+            const processedUrl = URL.createObjectURL(processedBlob);
+            
+            setUploadedAssets(prev => prev.map(asset => 
+              asset.id === assetId ? { ...asset, processedUrl, status: 'completed' } : asset
+            ));
+          } catch (error) {
+            console.error('Background removal failed:', error);
+            setUploadedAssets(prev => prev.map(asset => 
+              asset.id === assetId ? { ...asset, status: 'failed' } : asset
+            ));
+            
+            // Show user-friendly error message
+            alert(`Background removal failed for ${file.name}. The asset will be saved without background removal.`);
+          }
+        } else {
+          // For background assets, mark as completed immediately (no background removal needed)
           setUploadedAssets(prev => prev.map(asset => 
-            asset.id === assetId ? { ...asset, processedUrl, status: 'completed' } : asset
-          ));
-        } catch (error) {
-          console.error('Background removal failed:', error);
-          setUploadedAssets(prev => prev.map(asset => 
-            asset.id === assetId ? { ...asset, status: 'failed' } : asset
+            asset.id === assetId ? { ...asset, status: 'completed' } : asset
           ));
         }
       }
@@ -430,7 +564,8 @@ export function UnifiedVisualEditor({
 
   // Save asset to library
   const saveAssetToLibrary = async (asset: typeof uploadedAssets[0]) => {
-    if (!asset.processedUrl) {
+    // For background assets or failed background removal, we can save the original
+    if (!asset.processedUrl && asset.category !== 'backgrounds' && asset.status !== 'failed') {
       alert('Asset must be processed before saving to library');
       return;
     }
@@ -448,18 +583,20 @@ export function UnifiedVisualEditor({
         body: originalFormData
       });
 
-      // Upload processed
-      const processedFormData = new FormData();
-      const processedBlob = await getBlobFromUrl(asset.processedUrl);
-      const processedName = asset.file.name.replace(/\.[^/.]+$/, '_processed.png');
-      processedFormData.append('file', processedBlob, processedName);
-      processedFormData.append('category', asset.category || 'general');
-      processedFormData.append('isMarketingAsset', (asset.isMarketingAsset || false).toString());
+      // Upload processed if available
+      if (asset.processedUrl) {
+        const processedFormData = new FormData();
+        const processedBlob = await getBlobFromUrl(asset.processedUrl);
+        const processedName = asset.file.name.replace(/\.[^/.]+$/, '_processed.png');
+        processedFormData.append('file', processedBlob, processedName);
+        processedFormData.append('category', asset.category || 'general');
+        processedFormData.append('isMarketingAsset', (asset.isMarketingAsset || false).toString());
 
-      await fetch('/api/assets/upload', {
-        method: 'POST',
-        body: processedFormData
-      });
+        await fetch('/api/assets/upload', {
+          method: 'POST',
+          body: processedFormData
+        });
+      }
 
       // Remove from uploaded assets
       setUploadedAssets(prev => prev.filter(a => a.id !== asset.id));
@@ -468,7 +605,7 @@ export function UnifiedVisualEditor({
       if (onAssetsUploaded) {
         onAssetsUploaded([{
           originalUrl: asset.originalUrl,
-          processedUrl: asset.processedUrl,
+          processedUrl: asset.processedUrl || undefined,
           name: asset.file.name,
           isMarketingAsset: asset.isMarketingAsset,
           category: asset.category
@@ -485,6 +622,69 @@ export function UnifiedVisualEditor({
   // Remove asset from upload queue
   const removeAsset = (assetId: string) => {
     setUploadedAssets(prev => prev.filter(asset => asset.id !== assetId));
+  };
+
+  // Save manual asset to library
+  const saveManualAssetToLibrary = async (asset: ManualAsset) => {
+    try {
+      // Upload original version
+      const originalFormData = new FormData();
+      originalFormData.append('file', asset.file);
+      
+      // Determine category based on filename
+      let category = 'general';
+      if (asset.name.toLowerCase().includes('background') || asset.name.toLowerCase().includes('bg') || asset.name.toLowerCase().includes('scene')) {
+        category = 'backgrounds';
+      } else if (asset.name.toLowerCase().includes('logo')) {
+        category = 'logos';
+      } else if (asset.name.toLowerCase().includes('badge')) {
+        category = 'badges';
+      }
+      
+      originalFormData.append('category', category);
+      originalFormData.append('isMarketingAsset', 'true');
+      originalFormData.append('version', 'original');
+
+      await fetch('/api/assets/upload', {
+        method: 'POST',
+        body: originalFormData
+      });
+
+      // Upload processed version if available
+      if (asset.processedUrl) {
+        const processedFormData = new FormData();
+        const processedBlob = await getBlobFromUrl(asset.processedUrl);
+        const processedName = asset.name.replace(/\.[^/.]+$/, '_processed.png');
+        processedFormData.append('file', processedBlob, processedName);
+        processedFormData.append('category', category);
+        processedFormData.append('isMarketingAsset', 'true');
+        processedFormData.append('version', 'processed');
+
+        await fetch('/api/assets/upload', {
+          method: 'POST',
+          body: processedFormData
+        });
+      }
+
+      // Remove from manual assets
+      setManualAssets(prev => prev.filter(a => a.id !== asset.id));
+      
+      // Notify parent component
+      if (onAssetsUploaded) {
+        onAssetsUploaded([{
+          originalUrl: asset.originalUrl,
+          processedUrl: asset.processedUrl,
+          name: asset.name,
+          isMarketingAsset: true,
+          category: category
+        }]);
+      }
+
+      alert(`Asset "${asset.name}" saved to library with ${asset.processedUrl ? 'both original and processed versions' : 'original version'}!`);
+    } catch (error) {
+      console.error('Error saving manual asset to library:', error);
+      alert('Failed to save asset to library');
+    }
   };
 
   // Generate AI content
@@ -1151,56 +1351,122 @@ export function UnifiedVisualEditor({
                      )}
                    </TabsContent>
                   
-                  <TabsContent value="manual" className="space-y-4">
-                    {/* Manual Asset Upload */}
-                    <div>
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={(e) => e.target.files && handleManualAssetUpload(e.target.files)}
-                        className="hidden"
-                        id="manual-asset-upload"
-                      />
-                      <label
-                        htmlFor="manual-asset-upload"
-                        className="flex items-center justify-center w-full h-20 border-2 border-dashed border-white/30 rounded-lg cursor-pointer hover:bg-white/10"
-                      >
-                        <div className="text-center">
-                          <Upload className="w-6 h-6 mx-auto mb-1 text-white" />
-                          <p className="text-white text-xs">Upload Marketing Assets</p>
-                        </div>
-                      </label>
-                    </div>
-                    
-                    {/* Manual Assets List */}
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {manualAssets.map((asset) => (
-                        <div key={asset.id} className="flex items-center gap-2 p-2 bg-white/5 rounded">
-                          <Image
-                            src={asset.processedUrl || asset.originalUrl}
-                            alt={asset.name}
-                            width={30}
-                            height={30}
-                            className="rounded object-cover"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white text-xs truncate">{asset.name}</p>
-                            <p className="text-white/70 text-xs capitalize">{asset.status}</p>
-                          </div>
-                          {asset.status === 'uploaded' && (
-                            <Button
-                              onClick={() => handleAssetBackgroundRemoval(asset.id)}
-                              size="sm"
-                              className="h-6 text-xs bg-purple-600 hover:bg-purple-700"
-                            >
-                              <Scissors className="w-3 h-3" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </TabsContent>
+                                     <TabsContent value="manual" className="space-y-4">
+                     {/* Manual Asset Upload */}
+                     <div>
+                       <input
+                         type="file"
+                         multiple
+                         accept="image/*"
+                         onChange={(e) => e.target.files && handleManualAssetUpload(e.target.files)}
+                         className="hidden"
+                         id="manual-asset-upload"
+                       />
+                       <label
+                         htmlFor="manual-asset-upload"
+                         className="flex items-center justify-center w-full h-20 border-2 border-dashed border-white/30 rounded-lg cursor-pointer hover:bg-white/10"
+                       >
+                         <div className="text-center">
+                           <Upload className="w-6 h-6 mx-auto mb-1 text-white" />
+                           <p className="text-white text-xs">Upload Marketing Assets</p>
+                         </div>
+                       </label>
+                     </div>
+                     
+                     {/* Manual Assets List */}
+                     <div className="space-y-2 max-h-40 overflow-y-auto">
+                       {manualAssets.map((asset) => (
+                         <div key={asset.id} className="flex items-center gap-2 p-2 bg-white/5 rounded">
+                           <div className="flex gap-1">
+                             {/* Show both versions if available */}
+                             <Image
+                               src={asset.originalUrl}
+                               alt={`${asset.name} (Original)`}
+                               width={30}
+                               height={30}
+                               className="rounded object-cover border border-white/20"
+                               title="Original version"
+                             />
+                             {asset.processedUrl && (
+                               <Image
+                                 src={asset.processedUrl}
+                                 alt={`${asset.name} (Processed)`}
+                                 width={30}
+                                 height={30}
+                                 className="rounded object-cover border border-green-500/50"
+                                 title="Background removed version"
+                               />
+                             )}
+                           </div>
+                           <div className="flex-1 min-w-0">
+                             <p className="text-white text-xs truncate">{asset.name}</p>
+                             <p className="text-white/70 text-xs capitalize">{asset.status}</p>
+                             {asset.processedUrl && (
+                               <p className="text-green-400 text-xs">✓ Both versions available</p>
+                             )}
+                           </div>
+                           
+                           {/* Show appropriate action based on asset type and status */}
+                           {asset.status === 'completed' && (
+                             <Button
+                               onClick={() => saveManualAssetToLibrary(asset)}
+                               size="sm"
+                               className="h-6 text-xs bg-green-600 hover:bg-green-700"
+                             >
+                               Save Both
+                             </Button>
+                           )}
+                           {asset.status === 'uploaded' && (
+                             <Button
+                               onClick={() => handleAssetBackgroundRemoval(asset.id)}
+                               size="sm"
+                               className="h-6 text-xs bg-purple-600 hover:bg-purple-700"
+                             >
+                               <Scissors className="w-3 h-3" />
+                               Remove BG
+                             </Button>
+                           )}
+                           {asset.status === 'processing' && (
+                             <div className="flex items-center gap-1 text-xs text-blue-300">
+                               <Loader2 className="w-3 h-3 animate-spin" />
+                               Processing...
+                             </div>
+                           )}
+                           {asset.status === 'failed' && (
+                             <Button
+                               onClick={() => saveManualAssetToLibrary(asset)}
+                               size="sm"
+                               className="h-6 text-xs bg-orange-600 hover:bg-orange-700"
+                               title="Save without background removal"
+                             >
+                               Save Original
+                             </Button>
+                           )}
+                           
+                           {/* Add to canvas button */}
+                           {asset.status === 'completed' && (
+                             <Button
+                               onClick={() => addAssetWithChoice(asset)}
+                               size="sm"
+                               className="h-6 text-xs bg-blue-600 hover:bg-blue-700"
+                               title="Add to canvas"
+                             >
+                               Add
+                             </Button>
+                           )}
+                           
+                           <Button
+                             onClick={() => setManualAssets(prev => prev.filter(a => a.id !== asset.id))}
+                             size="sm"
+                             variant="ghost"
+                             className="h-6 w-6 p-0 text-red-400 hover:text-red-300"
+                           >
+                             <Trash2 className="w-3 h-3" />
+                           </Button>
+                         </div>
+                       ))}
+                     </div>
+                   </TabsContent>
                   
                   <TabsContent value="library" className="space-y-4">
                     {/* Asset Upload Section */}
@@ -1280,25 +1546,52 @@ export function UnifiedVisualEditor({
                                 )}
                               </div>
                             </div>
-                            <div className="flex gap-1">
-                              {asset.status === 'completed' && (
-                                <Button
-                                  onClick={() => saveAssetToLibrary(asset)}
-                                  size="sm"
-                                  className="h-6 text-xs bg-green-600 hover:bg-green-700"
-                                >
-                                  Save
-                                </Button>
-                              )}
-                              <Button
-                                onClick={() => removeAsset(asset.id)}
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 text-red-400 hover:text-red-300"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
-                            </div>
+                                                         <div className="flex gap-1">
+                               {/* Show appropriate action based on asset type and status */}
+                               {asset.status === 'completed' && (
+                                 <Button
+                                   onClick={() => saveAssetToLibrary(asset)}
+                                   size="sm"
+                                   className="h-6 text-xs bg-green-600 hover:bg-green-700"
+                                 >
+                                   Save to Library
+                                 </Button>
+                               )}
+                               {asset.status === 'uploaded' && asset.category !== 'backgrounds' && (
+                                 <Button
+                                   onClick={() => handleUploadedAssetBackgroundRemoval(asset.id)}
+                                   size="sm"
+                                   className="h-6 text-xs bg-purple-600 hover:bg-purple-700"
+                                 >
+                                   <Scissors className="w-3 h-3 mr-1" />
+                                   Remove BG
+                                 </Button>
+                               )}
+                               {asset.status === 'processing' && (
+                                 <div className="flex items-center gap-1 text-xs text-blue-300">
+                                   <Loader2 className="w-3 h-3 animate-spin" />
+                                   Processing...
+                                 </div>
+                               )}
+                               {asset.status === 'failed' && (
+                                 <Button
+                                   onClick={() => saveAssetToLibrary(asset)}
+                                   size="sm"
+                                   className="h-6 text-xs bg-orange-600 hover:bg-orange-700"
+                                   title="Save without background removal"
+                                 >
+                                   Save Original
+                                 </Button>
+                               )}
+                               <Button
+                                 onClick={() => removeAsset(asset.id)}
+                                 size="sm"
+                                 variant="ghost"
+                                 className="h-6 w-6 p-0 text-red-400 hover:text-red-300"
+                               >
+                                 <Trash2 className="w-3 h-3" />
+                               </Button>
+                             </div>
                           </div>
                         ))
                       )}

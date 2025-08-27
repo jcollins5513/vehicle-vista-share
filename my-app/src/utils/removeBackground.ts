@@ -28,4 +28,59 @@ export async function removeBackground(file: File): Promise<Blob> {
         throw new Error('Unexpected result format from background removal');
     }
 }
+
+// Alternative simple background removal using canvas (fallback)
+export async function simpleBackgroundRemoval(file: File): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            reject(new Error('Canvas context not available'));
+            return;
+        }
+
+        const img = new Image();
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            
+            // Draw the image
+            ctx.drawImage(img, 0, 0);
+            
+            // Get image data for processing
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // Simple background removal: make white/light pixels transparent
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                
+                // Calculate brightness
+                const brightness = (r + g + b) / 3;
+                
+                // If pixel is very light (close to white), make it transparent
+                if (brightness > 240) {
+                    data[i + 3] = 0; // Set alpha to 0 (transparent)
+                }
+            }
+            
+            // Put the processed image data back
+            ctx.putImageData(imageData, 0, 0);
+            
+            // Convert to blob
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error('Failed to create blob from canvas'));
+                }
+            }, 'image/png');
+        };
+        
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = URL.createObjectURL(file);
+    });
+}
   

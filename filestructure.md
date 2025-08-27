@@ -137,3 +137,22 @@ my-app/
 - ✅ **IMPROVED**: Enhanced user experience with visual feedback during drag operations
 - ✅ **IMPROVED**: Consistent upload interface across all components
 - ✅ **IMPROVED**: Better accessibility with both click and drag & drop options 
+
+## Background Removal Performance Fixes (2025-01-05)
+- ✅ **FIXED**: WebAssembly threading issues causing unresponsive UI during background removal
+- ✅ **IMPROVED**: Added cross-origin isolation headers in Next.js config for better WebAssembly support
+- ✅ **IMPROVED**: Enhanced background removal utility with fallback to single-threaded mode
+- ✅ **IMPROVED**: Better error handling and user feedback during background removal processing
+- ✅ **IMPROVED**: Optimized background removal settings for better performance
+- ✅ **FIXED**: Asset upload workflow - assets now properly save to library after processing
+- ✅ **IMPROVED**: Added asset category selection and marketing asset marking during upload
+- ✅ **IMPROVED**: Better status indicators and progress feedback for asset processing
+- ✅ **FIXED**: Manual asset uploads now properly save to library
+- ✅ **IMPROVED**: Asset categorization system with appropriate actions per asset type
+- ✅ **NEW**: Smart asset handling - background assets skip background removal, other assets get appropriate processing
+- ✅ **IMPROVED**: Enhanced save functionality - assets can be saved with or without background removal
+- ✅ **NEW**: Fallback save options for failed background removal attempts
+- ✅ **IMPROVED**: Better user experience with context-aware action buttons (Save vs Remove BG vs Save Original)
+- ✅ **FIXED**: Manual assets in visual editor now properly categorized and saved to library
+- ✅ **NEW**: Smart background detection for manual assets based on filename patterns
+- ✅ **IMPROVED**: Manual assets show appropriate actions (Save to Library vs Remove BG) based on asset type 
