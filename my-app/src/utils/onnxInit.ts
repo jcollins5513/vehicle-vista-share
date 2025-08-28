@@ -8,6 +8,17 @@ export async function initializeOnnxRuntime() {
     if (typeof window !== 'undefined' && onnx.env) {
       // Configure the WASM path for the public directory
       onnx.env.wasm.wasmPaths = '/';
+      
+      // Configure ONNX runtime for browser environment
+      if (onnx.env.wasm.numThreads !== undefined) {
+        // Use single thread for better compatibility
+        onnx.env.wasm.numThreads = 1;
+      }
+      
+      // Set other environment variables for better compatibility
+      if (onnx.env.wasm.simd !== undefined) {
+        onnx.env.wasm.simd = false; // Disable SIMD for better compatibility
+      }
     }
     
     console.log('ONNX Runtime Web initialized successfully');

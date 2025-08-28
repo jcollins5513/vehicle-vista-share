@@ -102,6 +102,8 @@ my-app/
 - ✅ **NEW**: Added copy-webpack-plugin for WASM file copying to public directory
 - ✅ **IMPROVED**: Enhanced error handling in background removal with ONNX runtime initialization
 - ✅ **FIXED**: "Cannot find module 'onnxruntime-web'" error by proper dependency management
+- ✅ **FIXED**: CORS headers blocking external images in customershowroom page
+- ✅ **IMPROVED**: Background removal now works without blocking external image loading
 
 ## Visual Editor Asset Library Enhancement
 - ✅ **NEW**: Asset Library tab in Visual Editor for direct asset upload and management

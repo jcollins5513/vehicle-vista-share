@@ -60,6 +60,8 @@ const nextConfig: NextConfig = {
       );
     }
 
+
+
     // Add fallbacks for Node.js modules and problematic imports
     if (!isServer) {
       config.resolve.fallback = {
@@ -108,27 +110,7 @@ const nextConfig: NextConfig = {
 
     return config;
   },
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'require-corp',
-          },
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin',
-          },
-          {
-            key: 'Cross-Origin-Resource-Policy',
-            value: 'cross-origin',
-          },
-        ],
-      },
-    ];
-  },
+
   // Add transpilePackages for problematic dependencies
   transpilePackages: ['@imgly/background-removal'],
   
