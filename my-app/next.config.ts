@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 
 const nextConfig: NextConfig = {
   images: {
@@ -38,6 +39,27 @@ const nextConfig: NextConfig = {
       type: 'webassembly/async',
     });
 
+    // Handle onnxruntime-web WASM files
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'webassembly/async',
+      include: /node_modules\/onnxruntime-web/,
+    });
+
+    // Copy onnxruntime-web WASM files to public directory
+    if (!isServer) {
+      config.plugins.push(
+        new CopyWebpackPlugin({
+          patterns: [
+            {
+              from: 'node_modules/onnxruntime-web/dist/*.wasm',
+              to: '[name][ext]',
+            },
+          ],
+        })
+      );
+    }
+
     // Add fallbacks for Node.js modules and problematic imports
     if (!isServer) {
       config.resolve.fallback = {
@@ -65,9 +87,7 @@ const nextConfig: NextConfig = {
         timers: false,
         tty: false,
         vm: false,
-        // Add specific fallbacks for onnxruntime-web
-        'onnxruntime-web': false,
-        'onnxruntime-node': false,
+
       };
     }
 
@@ -76,14 +96,12 @@ const nextConfig: NextConfig = {
       ...config.resolve.alias,
       // Alias problematic imports to empty modules
       'a': false,
-      'onnxruntime-web': false,
-      'onnxruntime-node': false,
     };
 
     // Ignore specific modules that cause issues
     config.plugins.push(
       new (require('webpack').IgnorePlugin)({
-        resourceRegExp: /^(a|onnxruntime-web|onnxruntime-node)$/,
+        resourceRegExp: /^a$/,
         contextRegExp: /.*/,
       })
     );
@@ -103,12 +121,21 @@ const nextConfig: NextConfig = {
             key: 'Cross-Origin-Opener-Policy',
             value: 'same-origin',
           },
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'cross-origin',
+          },
         ],
       },
     ];
   },
   // Add transpilePackages for problematic dependencies
-  transpilePackages: ['@imgly/background-removal', 'onnxruntime-web'],
+  transpilePackages: ['@imgly/background-removal'],
+  
+  // Runtime configuration for onnxruntime-web
+  publicRuntimeConfig: {
+    onnxRuntimePath: '/onnxruntime-web.wasm',
+  },
 };
 
 export default nextConfig;

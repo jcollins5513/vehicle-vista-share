@@ -34,6 +34,8 @@ my-app/
 │   ├── types/                     # TypeScript type definitions
 │   ├── hooks/                     # Custom React hooks
 │   ├── utils/                     # Utility functions
+│   │   ├── removeBackground.ts    # Background removal using @imgly/background-removal
+│   │   └── onnxInit.ts           # ONNX runtime initialization utility
 │   └── generated/                 # Generated files
 ├── prisma/                        # Database schema and migrations
 ├── public/                        # Static assets
@@ -92,6 +94,14 @@ my-app/
 - ✅ **IMPROVED**: Enhanced user experience with automatic processing on vehicle selection
 - ✅ **FIXED**: CORS issues in background removal by using existing proxy endpoint for external image fetching
 - ✅ **FIXED**: Asset upload failures by properly handling blob URLs and data URLs in save functionality
+
+## ONNX Runtime Web Integration (2025-01-05)
+- ✅ **NEW**: Installed onnxruntime-web@1.21.0 as peer dependency for @imgly/background-removal
+- ✅ **NEW**: Created onnxInit.ts utility for proper ONNX runtime initialization
+- ✅ **NEW**: Updated Next.js configuration to properly handle WebAssembly files and ONNX runtime
+- ✅ **NEW**: Added copy-webpack-plugin for WASM file copying to public directory
+- ✅ **IMPROVED**: Enhanced error handling in background removal with ONNX runtime initialization
+- ✅ **FIXED**: "Cannot find module 'onnxruntime-web'" error by proper dependency management
 
 ## Visual Editor Asset Library Enhancement
 - ✅ **NEW**: Asset Library tab in Visual Editor for direct asset upload and management
