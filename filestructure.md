@@ -32,6 +32,9 @@ my-app/
 │   ├── components/                # React components
 │   ├── lib/                       # Utility libraries
 │   ├── types/                     # TypeScript type definitions
+│   │   ├── index.ts               # Main type definitions
+│   │   ├── media.ts               # Media-related types
+│   │   └── onnx.d.ts              # ONNX runtime type declarations
 │   ├── hooks/                     # Custom React hooks
 │   ├── utils/                     # Utility functions
 │   │   ├── removeBackground.ts    # Background removal using @imgly/background-removal
@@ -98,6 +101,8 @@ my-app/
 ## ONNX Runtime Web Integration (2025-01-05)
 - ✅ **NEW**: Installed onnxruntime-web@1.21.0 as peer dependency for @imgly/background-removal
 - ✅ **NEW**: Created onnxInit.ts utility for proper ONNX runtime initialization
+- ✅ **FIXED**: TypeScript module resolution issues with custom type declarations
+- ✅ **NEW**: Added onnx.d.ts type declaration file for proper TypeScript support
 - ✅ **NEW**: Updated Next.js configuration to properly handle WebAssembly files and ONNX runtime
 - ✅ **NEW**: Added copy-webpack-plugin for WASM file copying to public directory
 - ✅ **IMPROVED**: Enhanced error handling in background removal with ONNX runtime initialization
