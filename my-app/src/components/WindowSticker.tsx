@@ -6,6 +6,7 @@ import { PrinterIcon, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { generateBuyersGuidePDF, createPDFBlobUrl } from '@/lib/pdf-service';
+import * as QRCode from 'qrcode';
 
 interface WindowStickerProps {
   vehicle: VehicleWithMedia;
@@ -17,17 +18,31 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
   const getCarfaxUrl = (vin: string) => 
     `https://www.carfax.com/VehicleHistory/p/Report.cfx?partner=DVW_1&vin=${vin}`;
 
-  // Generate QR code SVG string directly
-  const generateQRCodeSVG = (value: string): Promise<string> => {
-    // For now, return a simple SVG representation
-    // In production, you'd want to use a proper QR code library
-    return Promise.resolve(`<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-      <rect width="120" height="120" fill="white" stroke="black" stroke-width="2"/>
-      <rect x="5" y="5" width="110" height="110" fill="none" stroke="black" stroke-width="1"/>
-      <text x="60" y="40" text-anchor="middle" font-family="Arial" font-size="8" fill="black">QR Code</text>
-      <text x="60" y="60" text-anchor="middle" font-family="Arial" font-size="6" fill="black">${value.substring(0, 25)}...</text>
-      <text x="60" y="80" text-anchor="middle" font-family="Arial" font-size="6" fill="black">Scan to view</text>
-    </svg>`);
+  // Generate QR code SVG string using qrcode library
+  const generateQRCodeSVG = async (value: string): Promise<string> => {
+    try {
+      // Generate QR code as SVG string
+      const svgString = await QRCode.toString(value, {
+        type: 'svg',
+        width: 120,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      return svgString;
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      // Fallback to a simple SVG if generation fails
+      return `<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <rect width="120" height="120" fill="white" stroke="black" stroke-width="2"/>
+        <rect x="5" y="5" width="110" height="110" fill="none" stroke="black" stroke-width="1"/>
+        <text x="60" y="40" text-anchor="middle" font-family="Arial" font-size="8" fill="black">QR Code</text>
+        <text x="60" y="60" text-anchor="middle" font-family="Arial" font-size="6" fill="black">${value.substring(0, 25)}...</text>
+        <text x="60" y="80" text-anchor="middle" font-family="Arial" font-size="6" fill="black">Scan to view</text>
+      </svg>`;
+    }
   };
     
   const openBuyersGuidePDF = async () => {
