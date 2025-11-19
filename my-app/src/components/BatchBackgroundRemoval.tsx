@@ -29,7 +29,14 @@ export function BatchBackgroundRemoval({
   // Helper function to convert image URL to base64
   const urlToBase64 = async (url: string): Promise<string> => {
     try {
-      const response = await fetch(url);
+      // Use proxy API to avoid CORS issues
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      }
+      
       const blob = await response.blob();
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -233,9 +240,13 @@ export function BatchBackgroundRemoval({
                 <div className="w-16 h-12 rounded overflow-hidden bg-slate-700">
                   {vehicle.images?.[0] ? (
                     <img
-                      src={vehicle.images[0]}
+                      src={`/api/proxy-image?url=${encodeURIComponent(vehicle.images[0])}`}
                       alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback to placeholder on error
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

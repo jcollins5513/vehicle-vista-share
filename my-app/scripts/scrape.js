@@ -5,7 +5,7 @@ import puppeteer from 'puppeteer';
 import fs from 'fs';
 
 const CACHE_KEY = 'dealership:inventory';
-const CACHE_TTL = parseInt(process.env.SCRAPE_INTERVAL_HOURS || '24') * 60 * 60;
+const CACHE_TTL = parseInt(process.env.SCRAPE_INTERVAL_HOURS || '0') * 60 * 60;
 const BASE_URL = 'https://www.bentleysupercenter.com/searchused.aspx';
 // const ITEMS_PER_PAGE = 24; // Not used currently
 
@@ -461,7 +461,7 @@ async function scrapeInventory() {
         // Set user agent to avoid detection
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         
-        await page.goto(`${BASE_URL}`, { waitUntil: 'networkidle2', timeout: 60000 });
+        await page.goto(`${BASE_URL}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
 
 
         
@@ -477,16 +477,46 @@ async function scrapeInventory() {
         while (hasMorePages && pageNum <= 20) { // Cap at 20 pages to prevent infinite loops
             console.log(`[DEBUG] Scraping page ${pageNum}${totalPages > 1 ? ` of ${totalPages}` : ''}`);
             
-            if (pageNum > 1) {
-                await page.goto(`${BASE_URL}?pt=${pageNum}`, { waitUntil: 'networkidle2', timeout: 60000 });
-            }
-
-            // Wait for vehicle cards to load
             try {
-                await page.waitForSelector(selectors.CSS_SELECTOR_VEHICLE_CARD, { timeout: 30000 });
-            } catch {
-                console.log(`[DEBUG] No vehicle cards found on page ${pageNum}, stopping pagination`);
-                break;
+                if (pageNum > 1) {
+                    // Add retry logic for page navigation
+                    let retries = 3;
+                    let navigationSuccess = false;
+                    
+                    while (retries > 0 && !navigationSuccess) {
+                        try {
+                            await page.goto(`${BASE_URL}?pt=${pageNum}`, { 
+                                waitUntil: 'domcontentloaded',  // Changed from networkidle2 to domcontentloaded
+                                timeout: 90000  // Increased timeout to 90s
+                            });
+                            navigationSuccess = true;
+                        } catch (navError) {
+                            retries--;
+                            console.log(`[WARNING] Navigation to page ${pageNum} failed: ${navError.message}, retries left: ${retries}`);
+                            if (retries > 0) {
+                                console.log(`[DEBUG] Waiting 10 seconds before retry...`);
+                                await new Promise(resolve => setTimeout(resolve, 10000));
+                            } else {
+                                // If all retries failed, skip this page and try next one
+                                console.log(`[ERROR] Failed to load page ${pageNum} after all retries, skipping to next page`);
+                                pageNum++;
+                                continue;
+                            }
+                        }
+                    }
+                }
+
+                // Wait for vehicle cards to load
+                try {
+                    await page.waitForSelector(selectors.CSS_SELECTOR_VEHICLE_CARD, { timeout: 30000 });
+                } catch {
+                    console.log(`[DEBUG] No vehicle cards found on page ${pageNum}, stopping pagination`);
+                    break;
+                }
+            } catch (pageError) {
+                console.log(`[ERROR] Error on page ${pageNum}: ${pageError.message}, attempting to continue...`);
+                pageNum++;
+                continue;
             }
 
             // Extract vehicle data from all cards on this page
@@ -517,6 +547,8 @@ async function scrapeInventory() {
                                 const existing = Array.isArray(vehicleData.features) ? vehicleData.features : [];
                                 vehicleData.features = [...new Set([...existing, ...detailFeatures])];
                             }
+                            // Add small delay after opening detail page to reduce load
+                            await new Promise(resolve => setTimeout(resolve, 500));
                         }
                     } catch {
                         console.log('[DEBUG] Skipping detail feature extraction due to error while fetching detail features');
@@ -533,15 +565,30 @@ async function scrapeInventory() {
                     }
                 }
             }
+            
+            // Clear browser cache and cookies periodically to prevent memory issues
+            if (pageNum % 3 === 0) {
+                try {
+                    console.log(`[DEBUG] Clearing browser cache after page ${pageNum}...`);
+                    const client = await page.target().createCDPSession();
+                    await client.send('Network.clearBrowserCache');
+                    await client.send('Network.clearBrowserCookies');
+                } catch (clearError) {
+                    console.log(`[DEBUG] Cache clearing skipped: ${clearError.message}`);
+                }
+            }
 
             // Always try the next page if we found vehicles on this page
             if (vehicleCards.length === 0) {
                 hasMorePages = false;
             }
 
-            // Add a small delay between pages to be respectful
+            // Add a delay between pages to be respectful and avoid rate limiting
             if (hasMorePages) {
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // Random delay between 4-8 seconds to appear more human-like
+                const delay = 4000 + Math.random() * 4000;
+                console.log(`[DEBUG] Waiting ${Math.round(delay/1000)} seconds before next page...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
             }
             
             pageNum++;
