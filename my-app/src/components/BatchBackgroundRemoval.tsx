@@ -110,21 +110,57 @@ export function BatchBackgroundRemoval({
             }
           });
 
-          // Handle the result
+          // Handle the result and convert to blob for upload
+          let processedBlob: Blob;
           let processedImageUrl: string;
+          
           if (typeof result === 'string') {
+            // Convert base64 to blob
+            const base64Response = await fetch(result);
+            processedBlob = await base64Response.blob();
             processedImageUrl = result;
           } else if (result instanceof Blob) {
+            processedBlob = result;
             processedImageUrl = URL.createObjectURL(result);
           } else {
             throw new Error('Unexpected result format from background removal');
+          }
+
+          // Upload processed image to S3 via assets API
+          let s3Url: string | null = null;
+          try {
+            setCurrentOperation(`Uploading ${vehicle.make} ${vehicle.model} to S3...`);
+            
+            const formData = new FormData();
+            const fileName = `${vehicle.year}-${vehicle.make}-${vehicle.model}-${vehicle.stockNumber}-bg-removed.png`;
+            formData.append('file', processedBlob, fileName);
+            formData.append('category', 'processed-vehicles');
+            formData.append('isMarketingAsset', 'false');
+
+            const uploadResponse = await fetch('/api/assets/upload', {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (uploadResponse.ok) {
+              const uploadData = await uploadResponse.json();
+              s3Url = uploadData.asset.url;
+              console.log(`[SUCCESS] Uploaded processed image to S3: ${s3Url}`);
+            } else {
+              console.error(`[WARNING] Failed to upload to S3: ${uploadResponse.statusText}`);
+            }
+          } catch (uploadError) {
+            console.error('[WARNING] Error uploading to S3:', uploadError);
+            // Continue even if upload fails - we still have the processed image
           }
 
           results[vehicle.stockNumber] = {
             status: 'completed',
             originalUrl: imageUrl,
             processedUrl: processedImageUrl,
-            vehicle: vehicle
+            s3Url: s3Url,
+            vehicle: vehicle,
+            fileName: `${vehicle.year}-${vehicle.make}-${vehicle.model}-${vehicle.stockNumber}-bg-removed.png`
           };
         } catch (error) {
           console.error(`Error processing vehicle ${vehicle.stockNumber}:`, error);
@@ -305,8 +341,8 @@ export function BatchBackgroundRemoval({
 
           {/* Results Summary */}
           {Object.keys(results).length > 0 && (
-            <div className="pt-4 border-t border-slate-700">
-              <h4 className="text-white font-medium mb-2">Processing Results</h4>
+            <div className="pt-4 border-t border-slate-700 space-y-4">
+              <h4 className="text-white font-medium">Processing Results</h4>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div className="bg-green-900/20 border border-green-700 rounded-lg p-3">
                   <div className="text-green-400 font-bold text-lg">
@@ -322,9 +358,58 @@ export function BatchBackgroundRemoval({
                 </div>
                 <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3">
                   <div className="text-blue-400 font-bold text-lg">
-                    {Object.keys(results).length}
+                    {Object.values(results).filter((r: any) => r.s3Url).length}
                   </div>
-                  <div className="text-blue-300 text-sm">Total</div>
+                  <div className="text-blue-300 text-sm">Saved to S3</div>
+                </div>
+              </div>
+
+              {/* Saved Images List */}
+              <div className="space-y-2">
+                <h5 className="text-white text-sm font-medium">Saved Images:</h5>
+                <div className="max-h-48 overflow-y-auto space-y-2">
+                  {Object.entries(results)
+                    .filter(([_, result]: [string, any]) => result.s3Url)
+                    .map(([stockNumber, result]: [string, any]) => (
+                      <div
+                        key={stockNumber}
+                        className="flex items-center justify-between p-2 bg-slate-800 rounded text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <span className="text-white">
+                            {result.vehicle.year} {result.vehicle.make} {result.vehicle.model}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={result.s3Url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 text-xs underline"
+                          >
+                            View in S3
+                          </a>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={() => {
+                              // Create download link
+                              const a = document.createElement('a');
+                              a.href = result.s3Url;
+                              a.download = result.fileName;
+                              a.click();
+                            }}
+                          >
+                            Download
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+                <div className="text-xs text-slate-400 bg-slate-800/50 p-2 rounded">
+                  💡 Images are saved to your S3 bucket in the <code className="text-blue-400">processed-vehicles</code> category
                 </div>
               </div>
             </div>
