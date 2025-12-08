@@ -16,6 +16,7 @@ import Image from 'next/image';
 import type { Vehicle, ProcessedImage } from '@/types';
 import { ManualVehiclePhotoUpload } from '@/components/ManualVehiclePhotoUpload';
 import { UnifiedVisualEditor } from '@/components/UnifiedVisualEditor';
+import { useSearchParams } from 'next/navigation';
 
 interface ExtendedProcessedImage extends Omit<ProcessedImage, 'processedAt'> {
   processedAt: Date;
@@ -46,10 +47,36 @@ export default function ContentCreationPage() {
   const [generatedContent, setGeneratedContent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('manual-upload');
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [hasAppliedSearchParam, setHasAppliedSearchParam] = useState(false);
+  const [vehiclesLoaded, setVehiclesLoaded] = useState(false);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     Promise.all([fetchProcessedImages(), fetchVehicles(), fetchAssets()]);
   }, []);
+
+  useEffect(() => {
+    if (!searchParams || hasAppliedSearchParam || !vehiclesLoaded) return;
+    const stockParam = searchParams.get('stockNumber');
+    if (!stockParam) return;
+
+    const matchingVehicle = vehicles.find(
+      (vehicle) => vehicle.stockNumber.toLowerCase() === stockParam.toLowerCase()
+    );
+
+    if (matchingVehicle) {
+      setSelectedVehicle(matchingVehicle);
+      const hasImages =
+        processedImages[matchingVehicle.stockNumber] &&
+        processedImages[matchingVehicle.stockNumber].length > 0;
+      setActiveTab(hasImages ? 'visual-editor' : 'vehicle-selection');
+    } else {
+      setSearchTerm(stockParam);
+      setActiveTab('vehicle-selection');
+    }
+
+    setHasAppliedSearchParam(true);
+  }, [searchParams, hasAppliedSearchParam, vehiclesLoaded, vehicles, processedImages]);
 
   const fetchAssets = async () => {
     try {
@@ -144,6 +171,8 @@ export default function ContentCreationPage() {
     } catch (error) {
       console.error('Error fetching vehicles:', error);
       setError(error instanceof Error ? error.message : 'Failed to load vehicles');
+    } finally {
+      setVehiclesLoaded(true);
     }
   };
 
