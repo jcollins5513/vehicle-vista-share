@@ -40,14 +40,13 @@ interface Asset {
   size?: number;
 }
 
-export default function ContentCreationPage() {
+function ContentCreationInner() {
   const [processedImages, setProcessedImages] = useState<ProcessedImagesData>({});
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [generatedContent, setGeneratedContent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('manual-upload');
   const [assets, setAssets] = useState<Asset[]>([]);
   const [hasAppliedSearchParam, setHasAppliedSearchParam] = useState(false);
@@ -217,13 +216,6 @@ export default function ContentCreationPage() {
   }
 
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-          <p className="text-white/80 text-lg">Loading content creation studio...</p>
-        </div>
-      }
-    >
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
@@ -392,7 +384,7 @@ export default function ContentCreationPage() {
                 assets={assets}
                 allVehicles={vehicles}
                 allProcessedImages={processedImages}
-                onContentGenerated={(content) => setGeneratedContent(content)}
+                onContentGenerated={() => {}}
                 onAssetsUploaded={(assets) => {
                   console.log('Assets uploaded from Visual Editor:', assets);
                   // Refresh assets list
@@ -427,6 +419,19 @@ export default function ContentCreationPage() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+export default function ContentCreationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+          <p className="text-white/80 text-lg">Loading content creation studio...</p>
+        </div>
+      }
+    >
+      <ContentCreationInner />
     </Suspense>
   );
 }
