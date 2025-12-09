@@ -4,10 +4,8 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 const nativeExternalPackages = ['@imgly/background-removal-node', 'sharp'];
 
 const nextConfig: NextConfig = {
-  experimental: {
-    // Keep native modules external so their .node bindings aren't bundled
-    serverComponentsExternalPackages: nativeExternalPackages,
-  },
+  // Keep native modules external so their .node bindings aren't bundled
+  serverExternalPackages: nativeExternalPackages,
   images: {
     remotePatterns: [
       {

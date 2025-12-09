@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,11 +23,11 @@ export default function RootLayout({
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
             <div className="font-semibold text-lg">Vehicle Vista</div>
             <nav className="flex flex-wrap gap-2 text-sm">
-              <a className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/">Home</a>
-              <a className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/customershowroom">Customer Showroom</a>
-              <a className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/content-creation">Content Creation</a>
-              <a className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/web-companion">Web Companion</a>
-              <a className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/web-companion-gallery">Web Companion Gallery</a>
+              <Link className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/">Home</Link>
+              <Link className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/customershowroom">Customer Showroom</Link>
+              <Link className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/content-creation">Content Creation</Link>
+              <Link className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/web-companion">Web Companion</Link>
+              <Link className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/web-companion-gallery">Web Companion Gallery</Link>
             </nav>
           </div>
         </header>
