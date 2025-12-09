@@ -100,11 +100,10 @@ export function DragAndDropUpload({
         onDrop={handleDrop}
         className={cn(
           "flex items-center justify-center w-full border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200",
-          "hover:border-white/40 hover:bg-white/10",
+          "border-border bg-card/80 hover:border-accent hover:bg-accent/5",
           {
-            "border-white/30 bg-white/10": !isDragOver && !disabled && !isUploading,
-            "border-white/20 bg-white/5 cursor-not-allowed": disabled || isUploading,
-            "border-blue-400 bg-blue-500/10 scale-[1.02]": isDragOver && !disabled && !isUploading,
+            "cursor-not-allowed opacity-70": disabled || isUploading,
+            "border-accent bg-accent/10 scale-[1.01]": isDragOver && !disabled && !isUploading,
           }
         )}
         style={{
@@ -114,19 +113,19 @@ export function DragAndDropUpload({
         {children || (
           <div className="text-center p-6">
             {isUploading ? (
-              <Loader2 className="w-8 h-8 mx-auto mb-2 text-white animate-spin" />
+              <Loader2 className="w-8 h-8 mx-auto mb-2 text-primary animate-spin" />
             ) : (
-              <Upload className="w-8 h-8 mx-auto mb-2 text-white" />
+              <Upload className="w-8 h-8 mx-auto mb-2 text-primary" />
             )}
-            <p className="text-white text-sm font-medium">
+            <p className="text-foreground text-sm font-medium">
               {isUploading ? 'Uploading...' : uploadText}
             </p>
-            <p className="text-white/70 text-xs mt-1">
+            <p className="text-muted-foreground text-xs mt-1">
               {uploadSubtext}
             </p>
             {isDragOver && !disabled && !isUploading && (
-              <div className="mt-2 p-2 bg-blue-500/20 rounded border border-blue-500/30">
-                <p className="text-blue-200 text-xs">Drop files here to upload</p>
+              <div className="mt-2 p-2 bg-accent/10 rounded border border-accent/30">
+                <p className="text-foreground text-xs">Drop files here to upload</p>
               </div>
             )}
           </div>

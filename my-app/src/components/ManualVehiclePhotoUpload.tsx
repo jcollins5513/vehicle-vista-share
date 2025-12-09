@@ -338,20 +338,20 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
 
   return (
     <div className="space-y-6">
-      <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-white flex items-center">
+          <CardTitle className="text-foreground flex items-center">
             <Upload className="w-5 h-5 mr-2" />
             Manual Photo Upload
           </CardTitle>
-          <CardDescription className="text-white/70">
+          <CardDescription className="text-muted-foreground">
             Upload photos for vehicles or create general marketing assets with background removal
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Upload Mode Toggle */}
-          <div className="flex items-center gap-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <Label className="text-white text-sm font-medium">Upload Mode:</Label>
+          <div className="flex items-center gap-4 p-3 bg-muted border border-border rounded-lg">
+            <Label className="text-foreground text-sm font-medium">Upload Mode:</Label>
             <div className="flex gap-2">
               <Button
                 size="sm"
@@ -385,11 +385,11 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
 
           {uploadMode === 'assets' && (
             <div className="space-y-4">
-              <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <p className="text-green-200 text-sm font-medium mb-1">
+              <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
+                <p className="text-foreground text-sm font-medium mb-1">
                   📁 General Assets Mode
                 </p>
-                <p className="text-green-200/70 text-xs">
+                <p className="text-muted-foreground text-xs">
                   Images will be saved as reusable assets, not tied to any specific vehicle. Perfect for logos, badges, and backgrounds.
                 </p>
               </div>
@@ -397,9 +397,9 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
               {/* Asset Category Selection */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-white text-sm">Asset Category</Label>
+                  <Label className="text-foreground text-sm">Asset Category</Label>
                   <Select value={assetCategory} onValueChange={setAssetCategory}>
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                    <SelectTrigger className="bg-muted border-border text-foreground">
                       <SelectValue placeholder="Choose category..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -419,17 +419,17 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
                     id="marketing-asset"
                     checked={markAsMarketingAsset}
                     onChange={(e) => setMarkAsMarketingAsset(e.target.checked)}
-                    className="rounded border-white/20 bg-white/10"
+                    className="rounded border-border bg-muted"
                   />
-                  <Label htmlFor="marketing-asset" className="text-white text-sm">
+                  <Label htmlFor="marketing-asset" className="text-foreground text-sm">
                     Mark for future marketing use
                   </Label>
                 </div>
               </div>
               
               {markAsMarketingAsset && (
-                <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                  <p className="text-blue-200 text-xs">
+                <div className="p-2 bg-accent/10 border border-accent/30 rounded-lg">
+                  <p className="text-foreground text-xs">
                     ✅ This asset will be saved to your marketing library for future content creation
                   </p>
                 </div>
@@ -439,11 +439,11 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
 
           {uploadMode === 'direct-assets' && (
             <div className="space-y-4">
-              <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                <p className="text-purple-200 text-sm font-medium mb-1">
+              <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
+                <p className="text-foreground text-sm font-medium mb-1">
                   🚀 Direct Asset Upload Mode
                 </p>
-                <p className="text-purple-200/70 text-xs">
+                <p className="text-muted-foreground text-xs">
                   Images will be saved directly to your asset library without background removal. Perfect for backgrounds, textures, and assets that don't need processing.
                 </p>
               </div>
@@ -451,9 +451,9 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
               {/* Asset Category Selection */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-white text-sm">Asset Category</Label>
+                  <Label className="text-foreground text-sm">Asset Category</Label>
                   <Select value={assetCategory} onValueChange={setAssetCategory}>
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                    <SelectTrigger className="bg-muted border-border text-foreground">
                       <SelectValue placeholder="Choose category..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -473,17 +473,17 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
                     id="marketing-asset-direct"
                     checked={markAsMarketingAsset}
                     onChange={(e) => setMarkAsMarketingAsset(e.target.checked)}
-                    className="rounded border-white/20 bg-white/10"
+                    className="rounded border-border bg-muted"
                   />
-                  <Label htmlFor="marketing-asset-direct" className="text-white text-sm">
+                  <Label htmlFor="marketing-asset-direct" className="text-foreground text-sm">
                     Mark for future marketing use
                   </Label>
                 </div>
               </div>
               
               {markAsMarketingAsset && (
-                <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                  <p className="text-blue-200 text-xs">
+                <div className="p-2 bg-accent/10 border border-accent/30 rounded-lg">
+                  <p className="text-foreground text-xs">
                     ✅ This asset will be saved to your marketing library for future content creation
                   </p>
                 </div>
@@ -493,11 +493,11 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
 
           {/* Debug Info */}
           {vehicles.length === 0 && (
-            <div className="p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
-              <p className="text-yellow-200 text-sm font-medium">
+            <div className="p-3 bg-muted border border-border rounded-lg">
+              <p className="text-foreground text-sm font-medium">
                 ⚠️ No vehicles available for selection
               </p>
-              <p className="text-yellow-200/70 text-xs">
+              <p className="text-muted-foreground text-xs">
                 You can still enter a stock number manually below
               </p>
             </div>
@@ -507,9 +507,9 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
           {uploadMode === 'vehicle' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-white text-sm">Select Existing Vehicle</Label>
+                <Label className="text-foreground text-sm">Select Existing Vehicle</Label>
                 <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectTrigger className="bg-muted border-border text-foreground">
                     <SelectValue placeholder="Choose a vehicle..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -523,12 +523,12 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
               </div>
               
               <div>
-                <Label className="text-white text-sm">Or Enter Stock Number</Label>
+                <Label className="text-foreground text-sm">Or Enter Stock Number</Label>
                 <Input
                   value={stockNumberInput}
                   onChange={(e) => setStockNumberInput(e.target.value)}
                   placeholder="Enter stock number..."
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
                   disabled={!!selectedVehicle}
                 />
               </div>
@@ -562,7 +562,7 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
 
           {/* File Upload */}
           <div>
-            <Label className="text-white text-sm">Upload Photos</Label>
+            <Label className="text-foreground text-sm">Upload Photos</Label>
             {uploadMode === 'vehicle' && (!selectedVehicle && !stockNumberInput.trim()) && (
               <p className="text-yellow-400 text-xs mt-1">
                 ⚠️ Please select a vehicle or enter a stock number first
@@ -598,12 +598,12 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
 
       {/* Uploaded Photos */}
       {uploadedPhotos.length > 0 && (
-        <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-lg">
+            <CardTitle className="text-foreground text-lg">
               {uploadMode === 'direct-assets' ? 'Uploaded Assets' : 'Uploaded Photos'}
             </CardTitle>
-            <CardDescription className="text-white/70">
+            <CardDescription className="text-muted-foreground">
               {uploadMode === 'direct-assets' 
                 ? 'Upload assets directly to library' 
                 : 'Remove backgrounds and save to vehicle'
@@ -613,7 +613,7 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {uploadedPhotos.map((photo) => (
-                <div key={photo.id} className="relative bg-white/5 rounded-lg p-3">
+                <div key={photo.id} className="relative bg-muted rounded-lg p-3">
                   <div className="relative aspect-video mb-3">
                     <Image
                       src={photo.processedUrl || photo.originalUrl}
@@ -635,18 +635,18 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
                     {/* Status */}
                     <div className="flex items-center gap-2">
                       {photo.status === 'uploaded' && (
-                        <AlertCircle className="w-4 h-4 text-yellow-400" />
+                          <AlertCircle className="w-4 h-4 text-muted-foreground" />
                       )}
                       {photo.status === 'processing' && (
-                        <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                          <Loader2 className="w-4 h-4 text-primary animate-spin" />
                       )}
                       {photo.status === 'completed' && (
-                        <CheckCircle className="w-4 h-4 text-green-400" />
+                          <CheckCircle className="w-4 h-4 text-accent" />
                       )}
                       {photo.status === 'failed' && (
-                        <AlertCircle className="w-4 h-4 text-red-400" />
+                          <AlertCircle className="w-4 h-4 text-destructive" />
                       )}
-                      <span className="text-white text-xs capitalize">
+                        <span className="text-foreground text-xs capitalize">
                         {photo.status === 'uploaded' ? 'Ready for processing' : photo.status}
                       </span>
                     </div>
@@ -656,7 +656,7 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
                       <Button
                         onClick={() => handleBackgroundRemoval(photo.id)}
                         size="sm"
-                        className="w-full bg-purple-600 hover:bg-purple-700"
+                        className="w-full"
                       >
                         <Scissors className="w-3 h-3 mr-2" />
                         Remove Background
@@ -684,7 +684,6 @@ export function ManualVehiclePhotoUpload({ vehicles, onPhotosUploaded, onAssetsU
                 <Button
                   onClick={handleSavePhotos}
                   disabled={isUploading}
-                  className="bg-green-600 hover:bg-green-700"
                 >
                   {isUploading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

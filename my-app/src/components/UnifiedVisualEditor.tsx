@@ -1343,11 +1343,11 @@ export function UnifiedVisualEditor({
                        const vehicleImages = allProcessedImages[vehicle.stockNumber] || [];
                        return vehicleImages.length === 0;
                      }).length > 0 && (
-                       <div className="text-center py-4">
-                         <p className="text-white/50 text-xs">
-                           Some vehicles have no processed images yet
-                         </p>
-                       </div>
+                      <div className="text-center py-4">
+                        <p className="text-muted-foreground text-xs">
+                          Some vehicles have no processed images yet
+                        </p>
+                      </div>
                      )}
                    </TabsContent>
                   
@@ -1364,11 +1364,11 @@ export function UnifiedVisualEditor({
                        />
                        <label
                          htmlFor="manual-asset-upload"
-                         className="flex items-center justify-center w-full h-20 border-2 border-dashed border-white/30 rounded-lg cursor-pointer hover:bg-white/10"
+                         className="flex items-center justify-center w-full h-20 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted"
                        >
                          <div className="text-center">
-                           <Upload className="w-6 h-6 mx-auto mb-1 text-white" />
-                           <p className="text-white text-xs">Upload Marketing Assets</p>
+                           <Upload className="w-6 h-6 mx-auto mb-1 text-primary" />
+                           <p className="text-foreground text-xs">Upload Marketing Assets</p>
                          </div>
                        </label>
                      </div>

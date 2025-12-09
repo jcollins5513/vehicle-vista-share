@@ -359,8 +359,8 @@ export default function CustomerShowroomPage() {
                       onClick={() => toggleFavorite(vehicle.id)}
                       className={`w-8 h-8 rounded-full border-0 transition-all ${
                         favorites.has(vehicle.id)
-                          ? "bg-red-500/80 hover:bg-red-600"
-                          : "bg-black/50 hover:bg-black/70"
+                          ? "bg-accent text-accent-foreground"
+                          : "bg-muted text-foreground hover:bg-muted/80"
                       }`}
                     >
                       <Heart
@@ -370,10 +370,10 @@ export default function CustomerShowroomPage() {
                     <Button
                       size="icon"
                       onClick={() => copyShareLink(vehicle)}
-                      className="w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 border-0"
+                      className="w-8 h-8 rounded-full bg-muted text-foreground hover:bg-muted/80 border-0"
                     >
                       {copiedLink === vehicle.id ? (
-                        <Check className="w-4 h-4 text-green-400" />
+                        <Check className="w-4 h-4 text-accent-foreground" />
                       ) : (
                         <Share2 className="w-4 h-4" />
                       )}
@@ -397,33 +397,33 @@ export default function CustomerShowroomPage() {
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className="w-3 h-3 text-yellow-400 fill-current"
+                          className="w-3 h-3 text-accent fill-current"
                         />
                       ))}
                     </div>
                   </div>
 
-                  <p className="text-white/80 text-sm mb-3">{vehicle.model}</p>
+                  <p className="text-muted-foreground text-sm mb-3">{vehicle.model}</p>
 
                   <div className="flex items-center justify-between mb-4">
-                      <span className="text-green-400 font-bold text-xl">
+                      <span className="text-primary font-bold text-xl">
                         {getDisplayPrice(vehicle)}
                       </span>
-                    <span className="text-white/60 text-sm">
+                    <span className="text-muted-foreground text-sm">
                       Stock #{vehicle.stockNumber}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
-                    <div className="bg-white/10 rounded px-2 py-1">
-                      <span className="text-white/60">Miles: </span>
-                      <span className="text-white font-medium">
+                    <div className="bg-muted rounded px-2 py-1">
+                      <span className="text-muted-foreground">Miles: </span>
+                      <span className="text-foreground font-medium">
                         {vehicle.mileage?.toLocaleString() || "N/A"}
                       </span>
                     </div>
-                    <div className="bg-white/10 rounded px-2 py-1">
-                      <span className="text-white/60">Engine: </span>
-                      <span className="text-white font-medium">
+                    <div className="bg-muted rounded px-2 py-1">
+                      <span className="text-muted-foreground">Engine: </span>
+                      <span className="text-foreground font-medium">
                         {vehicle.engine || "N/A"}
                       </span>
                     </div>
@@ -443,7 +443,7 @@ export default function CustomerShowroomPage() {
                       <Button
                         onClick={() => scheduleViewing(vehicle)}
                         variant="outline"
-                        className="flex-1 border-white/30 text-white hover:bg-white/10 text-sm"
+                        className="flex-1 border-border text-foreground hover:bg-muted text-sm"
                       >
                         <Calendar className="w-3 h-3 mr-1" />
                         Schedule
@@ -470,7 +470,7 @@ export default function CustomerShowroomPage() {
             {filteredVehicles.map((vehicle, index) => (
               <Card
                 key={vehicle.id}
-                className="bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-xl border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-500 animate-slide-up"
+                className="bg-card border-border overflow-hidden hover:shadow-2xl transition-all duration-500 animate-slide-up"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-center p-6">
@@ -486,7 +486,7 @@ export default function CustomerShowroomPage() {
 
                   <div className="flex-1">
                      <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-white text-xl font-bold">
+                      <h3 className="text-foreground text-xl font-bold">
                         {vehicle.year} {vehicle.make} {vehicle.model}
                       </h3>
                       <div className="flex items-center space-x-3">
@@ -495,8 +495,8 @@ export default function CustomerShowroomPage() {
                           onClick={() => toggleFavorite(vehicle.id)}
                           className={`w-8 h-8 rounded-full border-0 ${
                             favorites.has(vehicle.id)
-                              ? "bg-red-500/80 hover:bg-red-600"
-                              : "bg-white/10 hover:bg-white/20"
+                              ? "bg-accent text-accent-foreground"
+                              : "bg-muted text-foreground hover:bg-muted/80"
                           }`}
                         >
                           <Heart
@@ -506,10 +506,10 @@ export default function CustomerShowroomPage() {
                         <Button
                           size="icon"
                           onClick={() => copyShareLink(vehicle)}
-                          className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border-0"
+                          className="w-8 h-8 rounded-full bg-muted text-foreground hover:bg-muted/80 border-0"
                         >
                           {copiedLink === vehicle.id ? (
-                            <Check className="w-4 h-4 text-green-400" />
+                            <Check className="w-4 h-4 text-accent-foreground" />
                           ) : (
                             <Share2 className="w-4 h-4" />
                           )}
@@ -519,26 +519,26 @@ export default function CustomerShowroomPage() {
 
                     <div className="grid grid-cols-4 gap-4 mb-4 text-sm">
                       <div>
-                        <span className="text-white/60">Price: </span>
-                        <span className="text-green-400 font-bold">
+                        <span className="text-muted-foreground">Price: </span>
+                        <span className="text-primary font-bold">
                           ${vehicle.price?.toLocaleString() || "Contact"}
                         </span>
                       </div>
                       <div>
-                        <span className="text-white/60">Miles: </span>
-                        <span className="text-white">
+                        <span className="text-muted-foreground">Miles: </span>
+                        <span className="text-foreground">
                           {vehicle.mileage?.toLocaleString() || "N/A"}
                         </span>
                       </div>
                       <div>
-                        <span className="text-white/60">Stock: </span>
-                        <span className="text-white">
+                        <span className="text-muted-foreground">Stock: </span>
+                        <span className="text-foreground">
                           {vehicle.stockNumber}
                         </span>
                       </div>
                       <div>
-                        <span className="text-white/60">Engine: </span>
-                        <span className="text-white">
+                        <span className="text-muted-foreground">Engine: </span>
+                        <span className="text-foreground">
                           {vehicle.engine || "N/A"}
                         </span>
                       </div>
@@ -557,7 +557,7 @@ export default function CustomerShowroomPage() {
                       <Button
                         onClick={() => scheduleViewing(vehicle)}
                         variant="outline"
-                        className="border-white/30 text-white hover:bg-white/10"
+                        className="border-border text-foreground hover:bg-muted"
                       >
                         <Calendar className="w-4 h-4 mr-2" />
                         Schedule Viewing
@@ -565,7 +565,7 @@ export default function CustomerShowroomPage() {
                       <Button
                         onClick={() => copyShareLink(vehicle)}
                         variant="outline"
-                        className="border-white/30 text-white hover:bg-white/10"
+                        className="border-border text-foreground hover:bg-muted"
                       >
                         <Copy className="w-4 h-4 mr-2" />
                         {copiedLink === vehicle.id
@@ -581,7 +581,7 @@ export default function CustomerShowroomPage() {
                         >
                           <Button
                             variant="outline"
-                            className="border-white/30 text-white hover:bg-white/10"
+                            className="border-border text-foreground hover:bg-muted"
                           >
                             <Image
                               src="/360.svg"
@@ -611,23 +611,23 @@ export default function CustomerShowroomPage() {
       </div>
 
       {/* Contact Footer */}
-      <div className="relative z-10 bg-gradient-to-r from-black/40 to-black/20 backdrop-blur-xl border-t border-white/20 mt-16">
+      <div className="relative z-10 bg-card border-t border-border mt-16">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <Phone className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-              <h3 className="text-white font-bold mb-2">Call Us</h3>
-              <p className="text-white/70">(555) 123-4567</p>
+              <Phone className="w-8 h-8 text-primary mx-auto mb-3" />
+              <h3 className="text-foreground font-bold mb-2">Call Us</h3>
+              <p className="text-muted-foreground">(555) 123-4567</p>
             </div>
             <div className="text-center">
-              <MessageSquare className="w-8 h-8 text-green-400 mx-auto mb-3" />
-              <h3 className="text-white font-bold mb-2">Live Chat</h3>
-              <p className="text-white/70">Available 24/7</p>
+              <MessageSquare className="w-8 h-8 text-accent mx-auto mb-3" />
+              <h3 className="text-foreground font-bold mb-2">Live Chat</h3>
+              <p className="text-muted-foreground">Available 24/7</p>
             </div>
             <div className="text-center">
               <MapPin className="w-8 h-8 text-primary mx-auto mb-3" />
-              <h3 className="text-white font-bold mb-2">Visit Us</h3>
-              <p className="text-white/70">Downtown Showroom</p>
+              <h3 className="text-foreground font-bold mb-2">Visit Us</h3>
+              <p className="text-muted-foreground">Downtown Showroom</p>
             </div>
           </div>
         </div>

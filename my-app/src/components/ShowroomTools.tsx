@@ -134,13 +134,13 @@ const ShowroomTools = ({ selectedVehicle, onVehicleSelect, onGenerateLink, vehic
                 setSelectedVehicles([]);
               }}
               variant="outline"
-              className="w-full border-white/30 text-white hover:bg-white/10"
+              className="w-full border-border text-foreground hover:bg-muted"
             >
               Cancel Selection
             </Button>
           </div>
         )}
-        <p className="text-white/60 text-xs mt-2">
+        <p className="text-muted-foreground text-xs mt-2">
           {shareMode 
             ? "Select up to 3 vehicles to share with customers" 
             : "Share with customers"}

@@ -224,7 +224,7 @@ export function BackgroundRemovalButton({
         disabled
         variant="outline"
         size="sm"
-        className="border-white/30 text-white/50"
+        className="border-border text-muted-foreground"
       >
         <Image className="w-3 h-3 mr-1" />
         No Images
@@ -240,7 +240,7 @@ export function BackgroundRemovalButton({
             variant="outline"
             size="sm"
             disabled={isProcessing}
-            className="border-white/30 text-white hover:bg-white/10 w-full"
+            className="border-border text-foreground hover:bg-muted w-full"
           >
             {getStatusIcon()}
             <span className="ml-1">
@@ -248,29 +248,29 @@ export function BackgroundRemovalButton({
             </span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 bg-slate-800 border-slate-700">
+        <DropdownMenuContent className="w-56 bg-card border-border">
           <DropdownMenuItem
             onClick={processAllImages}
             disabled={isProcessing}
-            className="text-white hover:bg-slate-700"
+            className="text-foreground hover:bg-muted"
           >
             <Scissors className="w-4 h-4 mr-2" />
             Process All Images ({vehicleImages.length})
           </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-slate-700" />
+          <DropdownMenuSeparator className="bg-border" />
           {vehicleImages.slice(0, 5).map((_, index) => (
             <DropdownMenuItem
               key={index}
               onClick={() => processImage(index)}
               disabled={isProcessing}
-              className="text-white hover:bg-slate-700"
+              className="text-foreground hover:bg-muted"
             >
               <Image className="w-4 h-4 mr-2" />
               Process Image {index + 1}
             </DropdownMenuItem>
           ))}
           {vehicleImages.length > 5 && (
-            <DropdownMenuItem disabled className="text-white/50">
+            <DropdownMenuItem disabled className="text-muted-foreground">
               ... and {vehicleImages.length - 5} more
             </DropdownMenuItem>
           )}

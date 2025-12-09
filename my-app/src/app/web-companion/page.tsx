@@ -76,13 +76,13 @@ export default function WebCompanionLanding() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="rounded-lg p-4 border font-mono text-xs overflow-x-auto">
+              <div className="rounded-lg p-4 border border-border bg-card font-mono text-xs overflow-x-auto">
                 <div>POST /api/web-companion/uploads</div>
-                <div className="mt-2 text-white/60">multipart/form-data fields:</div>
+                <div className="mt-2 text-muted-foreground">multipart/form-data fields:</div>
                 <div>• stockNumber — required</div>
                 <div>• file — required image payload</div>
               </div>
-              <p className="text-white/60">
+              <p className="text-muted-foreground">
                 The web workspace will poll this queue and push processed images into inventory so they appear inside the Content Creation editor.
               </p>
             </CardContent>

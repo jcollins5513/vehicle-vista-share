@@ -268,14 +268,14 @@ export default function WebCompanionSessionPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card className="lg:col-span-2 bg-white/5 border-white/10">
+          <Card className="lg:col-span-2 bg-card border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Camera className="w-5 h-5 text-blue-300" />
                 Incoming Captures
               </CardTitle>
-              <CardDescription className="text-white/70">
-                iOS should POST to <code className="text-white">/api/web-companion/uploads</code> with this stock number.
+              <CardDescription className="text-muted-foreground">
+                iOS should POST to <code className="text-foreground">/api/web-companion/uploads</code> with this stock number.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -294,9 +294,9 @@ export default function WebCompanionSessionPage() {
                     id="autoProcess"
                     checked={autoProcess}
                     onChange={(e) => setAutoProcess(e.target.checked)}
-                    className="rounded border-white/30 bg-white/10"
+                    className="rounded border-border bg-muted"
                   />
-                  <label htmlFor="autoProcess" className="text-sm text-white/80">
+                  <label htmlFor="autoProcess" className="text-sm text-foreground">
                     Auto-run background removal when uploads arrive
                   </label>
                 </div>
@@ -305,7 +305,7 @@ export default function WebCompanionSessionPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => fetchUploads()}
-                    className="border-white/30 text-white"
+                    className="border-border text-foreground"
                   >
                     <RefreshCcw className="w-4 h-4 mr-1" />
                     Refresh queue
@@ -314,7 +314,6 @@ export default function WebCompanionSessionPage() {
                     size="sm"
                     onClick={processQueue}
                     disabled={isProcessing || pendingUploads.length === 0}
-                    className="bg-blue-600 hover:bg-blue-700"
                   >
                     {isProcessing ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -326,41 +325,41 @@ export default function WebCompanionSessionPage() {
                 </div>
               </div>
 
-              <Separator className="bg-white/10" />
+              <Separator className="bg-border" />
 
               <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
-                {isLoading && <p className="text-white/60 text-sm">Loading uploads…</p>}
+                {isLoading && <p className="text-muted-foreground text-sm">Loading uploads…</p>}
                 {!isLoading && uploads.length === 0 && (
-                  <p className="text-white/60 text-sm">No uploads yet for this stock number.</p>
+                  <p className="text-muted-foreground text-sm">No uploads yet for this stock number.</p>
                 )}
 
                 {uploads.map((upload) => (
                   <div
                     key={upload.id}
-                    className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg px-3 py-2"
+                    className="flex items-center justify-between bg-card/90 border border-border rounded-lg px-3 py-2"
                   >
                     <div>
                       <p className="text-sm font-medium">
                         {upload.originalFilename || 'Capture'}{' '}
-                        <span className="text-white/50 text-xs">
+                        <span className="text-muted-foreground text-xs">
                           · {upload.imageIndex !== undefined ? `#${upload.imageIndex}` : 'queued'}
                         </span>
                       </p>
-                      <p className="text-xs text-white/60">
+                      <p className="text-xs text-muted-foreground">
                         {new Date(upload.createdAt).toLocaleTimeString()} — {upload.originalUrl}
                       </p>
                       {upload.error && (
-                        <p className="text-xs text-red-300 mt-1">Error: {upload.error}</p>
+                        <p className="text-xs text-destructive mt-1">Error: {upload.error}</p>
                       )}
                     </div>
                     <Badge
                       variant="outline"
                       className={
                         upload.status === 'processed'
-                          ? 'border-green-500/50 text-green-200 bg-green-500/10'
+                          ? 'border-accent text-accent-foreground bg-accent/10'
                           : upload.status === 'failed'
-                          ? 'border-red-500/50 text-red-200 bg-red-500/10'
-                          : 'border-yellow-500/50 text-yellow-200 bg-yellow-500/10'
+                          ? 'border-destructive text-destructive bg-destructive/10'
+                          : 'border-border text-foreground bg-muted'
                       }
                     >
                       {upload.status}
@@ -372,38 +371,38 @@ export default function WebCompanionSessionPage() {
           </Card>
 
           <div className="space-y-4">
-            <Card className="bg-white/5 border-white/10">
+            <Card className="bg-card border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-blue-300" />
+                  <Sparkles className="w-5 h-5 text-primary" />
                   Latest Activity
                 </CardTitle>
-                <CardDescription className="text-white/70">
+                <CardDescription className="text-muted-foreground">
                   Background removal runs in-browser; processed images are saved to inventory with the original capture preserved.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 max-h-[260px] overflow-y-auto pr-1">
                 {results.length === 0 && (
-                  <p className="text-white/60 text-sm">No activity yet.</p>
+                  <p className="text-muted-foreground text-sm">No activity yet.</p>
                 )}
                 {results.map((result) => (
                   <div
                     key={result.id}
-                    className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-lg p-3"
+                    className="flex items-start gap-3 bg-card/90 border border-border rounded-lg p-3"
                   >
                     {result.status === 'success' ? (
-                      <CheckCircle className="w-5 h-5 text-green-300 mt-0.5" />
+                      <CheckCircle className="w-5 h-5 text-accent mt-0.5" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-red-300 mt-0.5" />
+                      <XCircle className="w-5 h-5 text-destructive mt-0.5" />
                     )}
-                    <div className="text-sm text-white/80">
+                    <div className="text-sm text-foreground">
                       <p>{result.message}</p>
                       {result.processedUrl && (
                         <a
                           href={result.processedUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-blue-300 text-xs inline-flex items-center gap-1 mt-1"
+                          className="text-primary text-xs inline-flex items-center gap-1 mt-1"
                         >
                           View processed
                           <ExternalLink className="w-3 h-3" />
@@ -415,16 +414,16 @@ export default function WebCompanionSessionPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/5 border-white/10">
+            <Card className="bg-card border-border">
               <CardHeader>
                 <CardTitle className="text-lg">Send to Editor</CardTitle>
-                <CardDescription className="text-white/70">
+                <CardDescription className="text-muted-foreground">
                   Opens Content Creation with this stock number pre-selected so the processed images are ready to design.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full"
                   onClick={() =>
                     router.push(`/content-creation?stockNumber=${encodeURIComponent(stockNumber)}`)
                   }
@@ -432,7 +431,7 @@ export default function WebCompanionSessionPage() {
                   Launch editor
                   <ExternalLink className="w-4 h-4 ml-2" />
                 </Button>
-                <p className="text-xs text-white/60">
+                <p className="text-xs text-muted-foreground">
                   Background-removed images are saved under <code>processed/{stockNumber}</code> in S3.
                   The first (original) capture URL is kept alongside each processed image entry.
                 </p>

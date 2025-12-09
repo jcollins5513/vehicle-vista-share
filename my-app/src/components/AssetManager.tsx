@@ -179,21 +179,21 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
         </Card>
       )}
 
-      {/* Upload Section */}
-      <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20">
+    {/* Upload Section */}
+    <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-white flex items-center">
+        <CardTitle className="text-foreground flex items-center">
             <Upload className="w-5 h-5 mr-2" />
             Upload Assets
           </CardTitle>
-          <CardDescription className="text-white/70">
+        <CardDescription className="text-muted-foreground">
             Upload images to use in your content templates
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="category" className="text-white text-sm font-medium">
+            <Label htmlFor="category" className="text-foreground text-sm font-medium">
                 Category
               </Label>
               <Input
@@ -201,11 +201,11 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
                 value={uploadCategory}
                 onChange={(e) => setUploadCategory(e.target.value)}
                 placeholder="e.g., backgrounds, logos, templates"
-                className="mt-1 bg-white/10 border-white/20 text-white placeholder-white/50"
+              className="mt-1 bg-muted border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div>
-              <Label className="text-white text-sm font-medium">
+            <Label className="text-foreground text-sm font-medium">
                 Upload Asset
               </Label>
               <DragAndDropUpload
@@ -222,21 +222,21 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
           </div>
           {uploading && (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="w-6 h-6 animate-spin text-white mr-2" />
-              <span className="text-white">Uploading...</span>
+            <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" />
+            <span className="text-foreground">Uploading...</span>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Asset Browser */}
-      <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20">
+    <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-white flex items-center">
+        <CardTitle className="text-foreground flex items-center">
             <FolderOpen className="w-5 h-5 mr-2" />
             Asset Library
           </CardTitle>
-          <CardDescription className="text-white/70">
+        <CardDescription className="text-muted-foreground">
             Browse and manage your uploaded assets
           </CardDescription>
         </CardHeader>
@@ -245,12 +245,12 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Search assets..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white/10 border-white/20 text-white placeholder-white/50"
+                  className="pl-10 bg-muted border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
             </div>
@@ -262,8 +262,8 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
                   size="sm"
                   onClick={() => setSelectedCategory(category)}
                   className={selectedCategory === category 
-                    ? "bg-blue-600 hover:bg-blue-700" 
-                    : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    ? undefined 
+                    : "border-border text-foreground hover:bg-muted"
                   }
                 >
                   {category}
@@ -275,14 +275,14 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
           {/* Asset Grid */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-white" />
-              <span className="text-white ml-2">Loading assets...</span>
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="text-foreground ml-2">Loading assets...</span>
             </div>
           ) : filteredAssets.length === 0 ? (
             <div className="text-center py-12">
-              <ImageIcon className="w-16 h-16 mx-auto mb-4 text-white/30" />
-              <h3 className="text-white text-lg font-medium mb-2">No Assets Found</h3>
-              <p className="text-white/70">
+              <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-foreground text-lg font-medium mb-2">No Assets Found</h3>
+              <p className="text-muted-foreground">
                 {assets.length === 0 
                   ? "Upload your first asset to get started" 
                   : "No assets match your current filters"
@@ -296,12 +296,12 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
                   key={asset.key}
                   className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
                     selectedAsset?.key === asset.key 
-                      ? 'border-blue-500 ring-2 ring-blue-500/50' 
-                      : 'border-white/20 hover:border-white/40'
+                      ? 'border-primary ring-2 ring-primary/40' 
+                      : 'border-border hover:border-accent/60'
                   }`}
                   onClick={() => onAssetSelect?.(asset)}
                 >
-                  <div className="aspect-square bg-white/5">
+                  <div className="aspect-square bg-muted">
                     <Image
                       src={asset.url}
                       alt={asset.fileName}
@@ -321,7 +321,7 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
                           e.stopPropagation();
                           window.open(asset.url, '_blank');
                         }}
-                        className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                        className="bg-card border-border text-foreground hover:bg-muted"
                       >
                         <Download className="w-4 h-4" />
                       </Button>
@@ -341,14 +341,14 @@ export function AssetManager({ onAssetSelect, selectedAsset }: AssetManagerProps
 
                   {/* Asset info */}
                   <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-2">
-                    <p className="text-white text-xs font-medium truncate">
+                    <p className="text-foreground text-xs font-medium truncate">
                       {asset.fileName}
                     </p>
                     <div className="flex items-center justify-between mt-1">
                       <Badge variant="secondary" className="text-xs">
                         {asset.category}
                       </Badge>
-                      <span className="text-white/70 text-xs">
+                      <span className="text-muted-foreground text-xs">
                         {formatFileSize(asset.size)}
                       </span>
                     </div>

@@ -285,12 +285,12 @@ function ContentCreationInner() {
           <TabsContent value="vehicle-selection" className="space-y-6">
             <div className="flex items-center space-x-4 mb-6">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Search by stock number, make, model, or year..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white/10 border-white/20 text-white placeholder-white/50"
+                  className="pl-10 bg-muted border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
             </div>
@@ -332,7 +332,7 @@ function ContentCreationInner() {
                       <CardContent>
                         <div className="grid grid-cols-2 gap-2 mb-4">
                           {images.slice(0, 4).map((image, index) => (
-                            <div key={index} className="aspect-video rounded-lg overflow-hidden border border-white/20">
+                            <div key={index} className="aspect-video rounded-lg overflow-hidden border border-border">
                               <Image
                                 src={image.processedUrl}
                                 alt={`Vehicle ${stockNumber} - Image ${index + 1}`}
@@ -347,19 +347,19 @@ function ContentCreationInner() {
                         {vehicle && (
                           <div className="space-y-1 text-sm">
                             {vehicle.color && (
-                              <p className="text-white/70">Color: {vehicle.color}</p>
+                              <p className="text-muted-foreground">Color: {vehicle.color}</p>
                             )}
                             {vehicle.price && (
-                              <p className="text-white/70">Price: ${vehicle.price.toLocaleString()}</p>
+                              <p className="text-muted-foreground">Price: ${vehicle.price.toLocaleString()}</p>
                             )}
                             {vehicle.mileage && (
-                              <p className="text-white/70">Mileage: {vehicle.mileage.toLocaleString()} miles</p>
+                              <p className="text-muted-foreground">Mileage: {vehicle.mileage.toLocaleString()} miles</p>
                             )}
                           </div>
                         )}
                         
                         <Button 
-                          className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+                          className="w-full mt-4"
                           onClick={(e) => {
                             e.stopPropagation();
                             vehicle && handleVehicleSelect(vehicle);
@@ -401,14 +401,14 @@ function ContentCreationInner() {
                 }}
               />
             ) : (
-              <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 backdrop-blur-xl border-yellow-500/20">
+              <Card className="bg-card border-border">
                 <CardContent className="text-center py-16">
-                  <Car className="w-16 h-16 mx-auto mb-4 text-yellow-400" />
-                  <h3 className="text-yellow-200 text-xl font-bold mb-2">Select a Vehicle First</h3>
-                  <p className="text-yellow-100/70">Go back to the Vehicle Selection tab and choose a vehicle to start creating content</p>
+                  <Car className="w-16 h-16 mx-auto mb-4 text-primary" />
+                  <h3 className="text-foreground text-xl font-bold mb-2">Select a Vehicle First</h3>
+                  <p className="text-muted-foreground">Go back to the Vehicle Selection tab and choose a vehicle to start creating content</p>
                   <Button 
                     onClick={() => setActiveTab('vehicle-selection')}
-                    className="mt-4 bg-yellow-600 hover:bg-yellow-700"
+                    className="mt-4"
                   >
                     Select Vehicle
                   </Button>
