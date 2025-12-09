@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -214,6 +214,13 @@ export default function ContentCreationPage() {
   }
 
   return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+          <p className="text-white/80 text-lg">Loading content creation studio...</p>
+        </div>
+      }
+    >
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
@@ -417,5 +424,6 @@ export default function ContentCreationPage() {
         </Tabs>
       </div>
     </div>
+    </Suspense>
   );
 }
