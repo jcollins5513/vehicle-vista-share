@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 
-const nativeExternalPackages = ['@imgly/background-removal-node', 'sharp'];
+const nativeExternalPackages = ['sharp'];
 
 const nextConfig: NextConfig = {
   // Keep native modules external so their .node bindings aren't bundled
@@ -57,10 +57,6 @@ const nextConfig: NextConfig = {
           patterns: [
             {
               from: 'node_modules/onnxruntime-web/dist/*.wasm',
-              to: '[name][ext]',
-            },
-            {
-              from: 'node_modules/@imgly/background-removal/dist/*.wasm',
               to: '[name][ext]',
             },
           ],

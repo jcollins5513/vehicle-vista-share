@@ -124,3 +124,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// Allow GET (used by Vercel Cron) to run the same worker logic
+export async function GET(req: NextRequest) {
+  return POST(req);
+}
+
