@@ -103,7 +103,11 @@ const nextConfig: NextConfig = {
         config.externals.push(...nativeExternalPackages);
       } else if (typeof config.externals === 'function') {
         const originalExternals = config.externals;
-        config.externals = async (context, request, callback) => {
+        config.externals = async (
+          context: any,
+          request: any,
+          callback: (err?: unknown, result?: string) => void
+        ) => {
           if (nativeExternalPackages.includes(request as string)) {
             return callback(null, `commonjs ${request}`);
           }
