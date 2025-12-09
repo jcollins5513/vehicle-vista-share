@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Architects_Daughter } from "next/font/google";
 import "./globals.css";
+
+const architects = Architects_Daughter({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -18,7 +25,10 @@ export default function RootLayout({
   }
   return (
     <html lang="en">
-      <body suppressHydrationWarning className="antialiased relative">
+      <body
+        suppressHydrationWarning
+        className={`${architects.variable} antialiased relative`}
+      >
         <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
             <div className="font-semibold text-lg">Vehicle Vista</div>

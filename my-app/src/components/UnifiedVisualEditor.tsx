@@ -30,6 +30,8 @@ import { DragAndDropUpload } from './DragAndDropUpload';
 import Image from 'next/image';
 import type { Vehicle } from '@/types';
 
+const BRAND_FONT = '"Architects Daughter", sans-serif';
+
 
 interface ContentLayer {
   id: string;
@@ -775,7 +777,7 @@ export function UnifiedVisualEditor({
 
       if (layer.type === 'text' && layer.content) {
         ctx.fillStyle = 'white';
-        ctx.font = `${layer.height}px Arial`;
+        ctx.font = `${layer.height}px ${BRAND_FONT}`;
         ctx.fillText(layer.content, 0, layer.height);
       } else if (layer.url) {
         const img = new window.Image();

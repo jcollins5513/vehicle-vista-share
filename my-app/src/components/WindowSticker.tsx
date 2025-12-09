@@ -8,6 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { generateBuyersGuidePDF, createPDFBlobUrl } from '@/lib/pdf-service';
 import * as QRCode from 'qrcode';
 
+const BRAND_FONT = '"Architects Daughter", sans-serif';
+
 interface WindowStickerProps {
   vehicle: VehicleWithMedia;
 }
@@ -38,9 +40,9 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
       return `<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
         <rect width="120" height="120" fill="white" stroke="black" stroke-width="2"/>
         <rect x="5" y="5" width="110" height="110" fill="none" stroke="black" stroke-width="1"/>
-        <text x="60" y="40" text-anchor="middle" font-family="Arial" font-size="8" fill="black">QR Code</text>
-        <text x="60" y="60" text-anchor="middle" font-family="Arial" font-size="6" fill="black">${value.substring(0, 25)}...</text>
-        <text x="60" y="80" text-anchor="middle" font-family="Arial" font-size="6" fill="black">Scan to view</text>
+        <text x="60" y="40" text-anchor="middle" font-family=${BRAND_FONT} font-size="8" fill="black">QR Code</text>
+        <text x="60" y="60" text-anchor="middle" font-family=${BRAND_FONT} font-size="6" fill="black">${value.substring(0, 25)}...</text>
+        <text x="60" y="80" text-anchor="middle" font-family=${BRAND_FONT} font-size="6" fill="black">Scan to view</text>
       </svg>`;
     }
   };
@@ -127,7 +129,7 @@ const WindowSticker = ({ vehicle }: WindowStickerProps) => {
             }
             
             body {
-              font-family: Arial, sans-serif;
+              font-family: ${BRAND_FONT};
               padding: 20px;
               background: white;
               color: black;

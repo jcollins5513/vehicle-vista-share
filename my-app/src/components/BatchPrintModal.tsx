@@ -12,6 +12,8 @@ import { VehicleWithMedia } from '@/types';
 import { generateBuyersGuidePDF, createPDFBlobUrl } from '@/lib/pdf-service';
 import * as QRCode from 'qrcode';
 
+const BRAND_FONT = '"Architects Daughter", sans-serif';
+
 interface BatchPrintModalProps {
   vehicles: VehicleWithMedia[];
   isOpen: boolean;
@@ -79,9 +81,9 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
       return `<svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
         <rect width="140" height="140" fill="white" stroke="black" stroke-width="2"/>
         <rect x="10" y="10" width="120" height="120" fill="none" stroke="black" stroke-width="1"/>
-        <text x="70" y="50" text-anchor="middle" font-family="Arial" font-size="8" fill="black">QR Code</text>
-        <text x="70" y="70" text-anchor="middle" font-family="Arial" font-size="6" fill="black">${displayText}</text>
-        <text x="70" y="90" text-anchor="middle" font-family="Arial" font-size="6" fill="black">Scan to view</text>
+        <text x="70" y="50" text-anchor="middle" font-family=${BRAND_FONT} font-size="8" fill="black">QR Code</text>
+        <text x="70" y="70" text-anchor="middle" font-family=${BRAND_FONT} font-size="6" fill="black">${displayText}</text>
+        <text x="70" y="90" text-anchor="middle" font-family=${BRAND_FONT} font-size="6" fill="black">Scan to view</text>
       </svg>`;
     }
   };
@@ -203,7 +205,7 @@ export default function BatchPrintModal({ vehicles, isOpen, onClose }: BatchPrin
             @page { margin: 0.5in; size: letter; }
             * { box-sizing: border-box; }
             body {
-              font-family: Arial, sans-serif;
+              font-family: ${BRAND_FONT};
               background: white;
               color: black;
               -webkit-print-color-adjust: exact !important;

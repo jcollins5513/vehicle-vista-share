@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { renderToString } from "react-dom/server";
 
+const BRAND_FONT = '"Architects Daughter", sans-serif';
+
 interface Icon {
   x: number;
   y: number;
@@ -289,7 +291,7 @@ export function IconCloud({ icons, images }: IconCloudProps) {
           ctx.fillStyle = "white";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.font = "16px Arial";
+          ctx.font = `16px ${BRAND_FONT}`;
           ctx.fillText(`${icon.id + 1}`, 0, 0);
         }
 

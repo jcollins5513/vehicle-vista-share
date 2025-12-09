@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 
+const BRAND_FONT = '"Architects Daughter", sans-serif';
+
 interface ContentLayer {
   id: string;
   type: 'background' | 'vehicle' | 'logo' | 'text';
@@ -156,7 +158,7 @@ export const VisualContentEditor = React.forwardRef<
       if (layer.type === 'text' && layer.content) {
         // Draw text
         ctx.fillStyle = 'white';
-        ctx.font = `${layer.height}px Arial`;
+        ctx.font = `${layer.height}px ${BRAND_FONT}`;
         ctx.fillText(layer.content, 0, layer.height);
       } else if (layer.url) {
         // Draw image
