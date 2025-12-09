@@ -24,7 +24,7 @@ function ensureFileBackedObjectURL() {
 
   function waitForBuffer(blob: Blob): Buffer {
     const signal = new Int32Array(new SharedArrayBuffer(4));
-    let result: Buffer | null = null;
+    let result: Buffer | undefined;
     let error: unknown;
 
     blob.arrayBuffer()
@@ -44,7 +44,8 @@ function ensureFileBackedObjectURL() {
     }
 
     if (error) throw error;
-    return result as Buffer;
+    if (!result) throw new Error('Failed to create buffer from blob');
+    return result;
   }
 
   URL.createObjectURL = (blob: Blob) => {
@@ -73,8 +74,7 @@ async function getRemoveBackground(): Promise<RemoveBackgroundFn> {
 
   // Provide a minimal navigator shim for the WASM build when running in Node.js.
   if (typeof globalThis.navigator === 'undefined') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (globalThis as any).navigator = { userAgent: 'node' };
+    (globalThis as unknown as { navigator: { userAgent: string } }).navigator = { userAgent: 'node' };
   }
 
   if (typeof globalThis.window === 'undefined') {
