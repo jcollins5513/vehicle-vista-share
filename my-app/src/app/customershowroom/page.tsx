@@ -30,6 +30,7 @@ import WindowSticker from "@/components/WindowSticker";
 import BatchPrintModal from "@/components/BatchPrintModal";
 import { BackgroundRemovalButton } from "@/components/BackgroundRemovalButton";
 import { BatchBackgroundRemoval } from "@/components/BatchBackgroundRemoval";
+import { MediaCarousel } from "@/components/MediaCarousel";
 
 export default function CustomerShowroomPage() {
   const [vehicles, setVehicles] = useState<VehicleWithMedia[]>([]);
@@ -215,6 +216,17 @@ export default function CustomerShowroomPage() {
 
   const makes = [...new Set(vehicles.map((v) => v.make))];
 
+  const getVehicleImages = (vehicle: VehicleWithMedia) => {
+    const urls: string[] = [];
+    if (Array.isArray(vehicle.media)) {
+      urls.push(...vehicle.media.map((m) => m.url).filter(Boolean));
+    }
+    if (Array.isArray(vehicle.images)) {
+      urls.push(...vehicle.images.filter(Boolean));
+    }
+    return urls.length ? urls : ["/placeholder.svg"];
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
       {/* Animated Background */}
@@ -367,20 +379,12 @@ export default function CustomerShowroomPage() {
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="relative">
-                  <div className="aspect-video overflow-hidden">
-                    <Image
-                      src={
-                        vehicle.media?.[0]?.url ||
-                        vehicle.images?.[0] ||
-                        "/placeholder.svg"
-                      }
-                      alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                      width={400}
-                      height={300}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      unoptimized={vehicle.images?.[0]?.includes('bentleysupercenter.com')}
-                    />
-                  </div>
+                  <MediaCarousel
+                    images={getVehicleImages(vehicle).map((url) => ({
+                      url,
+                      alt: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+                    }))}
+                  />
 
                   {/* Overlay Controls */}
                   <div className="absolute top-3 right-3 flex space-x-2">
@@ -505,18 +509,13 @@ export default function CustomerShowroomPage() {
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-center p-6">
-                  <div className="w-32 h-24 rounded-lg overflow-hidden mr-6">
-                    <Image
-                      src={
-                        vehicle.media?.[0]?.url ||
-                        vehicle.images?.[0] ||
-                        "/placeholder.svg"
-                      }
-                      alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                      width={128}
-                      height={96}
-                      className="w-full h-full object-cover"
-                      unoptimized={vehicle.images?.[0]?.includes('bentleysupercenter.com')}
+                  <div className="w-48">
+                    <MediaCarousel
+                      images={getVehicleImages(vehicle).map((url) => ({
+                        url,
+                        alt: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+                      }))}
+                      className="rounded-lg"
                     />
                   </div>
 

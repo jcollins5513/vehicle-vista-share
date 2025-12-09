@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import type { WebCompanionUpload } from '@/types/webCompanion';
 import { Loader2, RefreshCcw, Search } from 'lucide-react';
+import { MediaCarousel } from '@/components/MediaCarousel';
+import Link from 'next/link';
 
 export default function WebCompanionGalleryPage() {
   const [uploads, setUploads] = useState<WebCompanionUpload[]>([]);
@@ -138,22 +138,14 @@ export default function WebCompanionGalleryPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {upload.processedUrl ? (
-                  <div className="relative w-full aspect-video overflow-hidden rounded-lg border border-white/10 bg-black/40">
-                    <Image
-                      src={upload.processedUrl}
-                      alt={upload.originalFilename || 'Processed image'}
-                      fill
-                      className="object-contain"
-                      sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-                      priority={false}
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full aspect-video rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-white/60 text-sm">
-                    No processed preview
-                  </div>
-                )}
+                <MediaCarousel
+                  images={
+                    [
+                      upload.processedUrl && { url: upload.processedUrl, alt: upload.originalFilename || 'Processed image' },
+                      upload.originalUrl && { url: upload.originalUrl, alt: 'Original image' },
+                    ].filter(Boolean) as { url: string; alt?: string }[]
+                  }
+                />
 
                 <div className="space-y-1 text-sm text-white/70">
                   <p>

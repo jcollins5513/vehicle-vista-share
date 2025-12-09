@@ -11,6 +11,13 @@ const uploadKey = (id: string) => `web-companion:upload:${id}`;
 const stockSequenceKey = (stockNumber: string) => `web-companion:stock:${stockNumber}:seq`;
 
 export const runtime = 'nodejs';
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+};
 
 async function saveUpload(upload: WebCompanionUpload) {
   await redisClient.set(uploadKey(upload.id), upload);
