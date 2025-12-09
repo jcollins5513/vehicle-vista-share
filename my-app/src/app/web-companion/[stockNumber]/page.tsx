@@ -236,32 +236,32 @@ export default function WebCompanionSessionPage() {
   }, [autoProcess, pendingUploads, processQueue]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-10 space-y-6">
         <div className="flex items-center justify-between gap-4">
           <div>
             <button
               onClick={() => router.push('/web-companion')}
-              className="text-white/60 hover:text-white flex items-center gap-2 text-sm mb-2"
+              className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm mb-2"
             >
               <ArrowLeft className="w-4 h-4" />
               Back
             </button>
             <h1 className="text-3xl font-semibold">
-              Web Companion • <span className="text-blue-300">{stockNumber}</span>
+              Web Companion • <span className="text-primary">{stockNumber}</span>
             </h1>
-            <p className="text-white/60">
+            <p className="text-muted-foreground">
               Drop captures from iOS or upload manually. The browser will remove backgrounds and push assets into inventory.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-white/10 border-white/20">
+            <Badge variant="outline">
               Pending: {pendingUploads.length}
             </Badge>
-            <Badge variant="outline" className="bg-green-500/10 border-green-500/30 text-green-200">
+            <Badge variant="outline">
               Processed: {uploads.filter((u) => u.status === 'processed').length}
             </Badge>
-            <Badge variant="outline" className="bg-red-500/10 border-red-500/30 text-red-200">
+            <Badge variant="outline">
               Failed: {uploads.filter((u) => u.status === 'failed').length}
             </Badge>
           </div>

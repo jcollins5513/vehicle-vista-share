@@ -59,30 +59,26 @@ export default function WebCompanionGalleryPage() {
   }, [uploads]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-10 space-y-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-3xl font-semibold">Web Companion Gallery</h1>
-            <p className="text-white/70">
+            <p className="text-muted-foreground">
               Processed images that were uploaded to the web companion queue. Background removal
               happens in-browser; this view shows the processed results.
             </p>
           </div>
-          <Badge variant="outline" className="bg-white/10 border-white/20">
-            Total: {stats.total}
-          </Badge>
+          <Badge variant="outline">Total: {stats.total}</Badge>
         </div>
 
-        <Card className="bg-white/5 border-white/10">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Search className="w-4 h-4" />
               Filter by Stock Number
             </CardTitle>
-            <CardDescription className="text-white/70">
-              Leave empty to show all processed uploads.
-            </CardDescription>
+            <CardDescription>Leave empty to show all processed uploads.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-col sm:flex-row gap-3">
@@ -90,7 +86,6 @@ export default function WebCompanionGalleryPage() {
                 placeholder="e.g. ABC123"
                 value={stockFilter}
                 onChange={(e) => setStockFilter(e.target.value)}
-                className="bg-white/10 border-white/20 text-white"
               />
               <div className="flex gap-2">
                 <Button onClick={() => loadUploads()} disabled={isLoading} className="whitespace-nowrap">
@@ -103,37 +98,34 @@ export default function WebCompanionGalleryPage() {
                     setStockFilter('');
                     loadUploads();
                   }}
-                  className="border-white/30 text-white"
                 >
                   <RefreshCcw className="w-4 h-4 mr-2" />
                   Refresh
                 </Button>
               </div>
             </div>
-            {error && <p className="text-red-300 text-sm">Error: {error}</p>}
-            <Separator className="bg-white/10" />
+            {error && <p className="text-destructive text-sm">Error: {error}</p>}
+            <Separator />
             <div className="flex flex-wrap gap-2">
               {Object.entries(stats.byStock).map(([stock, count]) => (
-                <Badge key={stock} variant="outline" className="bg-white/10 border-white/20">
+                <Badge key={stock} variant="outline">
                   {stock}: {count}
                 </Badge>
               ))}
-              {stats.total === 0 && <p className="text-white/60 text-sm">No processed uploads yet.</p>}
+              {stats.total === 0 && <p className="text-muted-foreground text-sm">No processed uploads yet.</p>}
             </div>
           </CardContent>
         </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {uploads.map((upload) => (
-            <Card key={upload.id} className="bg-white/5 border-white/10">
+            <Card key={upload.id}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between gap-2">
                   <span className="truncate">{upload.originalFilename || 'Capture'}</span>
-                  <Badge variant="outline" className="bg-green-500/10 border-green-500/30 text-green-200">
-                    processed
-                  </Badge>
+                  <Badge variant="outline">processed</Badge>
                 </CardTitle>
-                <CardDescription className="text-white/70">
+                <CardDescription>
                   Stock {upload.stockNumber} · #{upload.imageIndex ?? 0}
                 </CardDescription>
               </CardHeader>
@@ -147,11 +139,11 @@ export default function WebCompanionGalleryPage() {
                   }
                 />
 
-                <div className="space-y-1 text-sm text-white/70">
+                <div className="space-y-1 text-sm text-muted-foreground">
                   <p>
                     Original:{' '}
                     {upload.originalUrl ? (
-                      <Link href={upload.originalUrl} target="_blank" className="text-blue-300 underline">
+                      <Link href={upload.originalUrl} target="_blank" className="underline">
                         View
                       </Link>
                     ) : (
@@ -161,7 +153,7 @@ export default function WebCompanionGalleryPage() {
                   <p>
                     Processed:{' '}
                     {upload.processedUrl ? (
-                      <Link href={upload.processedUrl} target="_blank" className="text-blue-300 underline">
+                      <Link href={upload.processedUrl} target="_blank" className="underline">
                         View
                       </Link>
                     ) : (
@@ -169,10 +161,7 @@ export default function WebCompanionGalleryPage() {
                     )}
                   </p>
                   <p>
-                    Processed at:{' '}
-                    {upload.processedAt
-                      ? new Date(upload.processedAt).toLocaleString()
-                      : 'pending'}
+                    Processed at: {upload.processedAt ? new Date(upload.processedAt).toLocaleString() : 'pending'}
                   </p>
                 </div>
               </CardContent>

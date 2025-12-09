@@ -39,7 +39,7 @@ export function MediaCarousel({ images, className }: MediaCarouselProps) {
   };
 
   return (
-    <div className={cn('flex flex-col gap-3', className)}>
+    <div className={cn('flex flex-col gap-3 relative', className)}>
       <div className="relative w-full overflow-hidden rounded-[14px] border border-white/10 bg-black/50">
         <div className="relative aspect-video">
           <Image

@@ -206,32 +206,32 @@ function ContentCreationInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mb-4"></div>
-          <p className="text-white text-lg">Loading content creation tools...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mb-4"></div>
+          <p className="text-lg">Loading content creation tools...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Content Creation Studio</h1>
-          <p className="text-white/70 text-lg">Create stunning marketing content for your vehicles</p>
+          <h1 className="text-4xl font-bold mb-2">Content Creation Studio</h1>
+          <p className="text-muted-foreground text-lg">Create stunning marketing content for your vehicles</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-            <p className="text-red-200">{error}</p>
+          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+            <p className="text-destructive">{error}</p>
             <button
               onClick={() => {
                 setError(null);
                 Promise.all([fetchProcessedImages(), fetchVehicles(), fetchAssets()]);
               }}
-              className="mt-2 text-red-300 hover:text-red-100 underline"
+              className="mt-2 text-destructive hover:text-destructive/80 underline"
             >
               Retry
             </button>
@@ -239,16 +239,16 @@ function ContentCreationInner() {
         )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white/10 backdrop-blur-xl border border-white/20">
-            <TabsTrigger value="manual-upload" className="data-[state=active]:bg-white/20 text-white">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="manual-upload">
               <Upload className="w-4 h-4 mr-2" />
               Manual Upload
             </TabsTrigger>
-            <TabsTrigger value="vehicle-selection" className="data-[state=active]:bg-white/20 text-white">
+            <TabsTrigger value="vehicle-selection">
               <Car className="w-4 h-4 mr-2" />
               Select Vehicle
             </TabsTrigger>
-            <TabsTrigger value="visual-editor" className="data-[state=active]:bg-white/20 text-white" disabled={!selectedVehicle}>
+            <TabsTrigger value="visual-editor" disabled={!selectedVehicle}>
               <Palette className="w-4 h-4 mr-2" />
               Visual Editor
             </TabsTrigger>
