@@ -18,6 +18,22 @@ let cachedRemoveBackground: RemoveBackgroundFn | null = null;
 async function getRemoveBackground(): Promise<RemoveBackgroundFn> {
   if (cachedRemoveBackground) return cachedRemoveBackground;
 
+  const runningInNode = typeof globalThis.window === 'undefined';
+
+  if (runningInNode) {
+    // Prefer the Node build to avoid browser-only APIs (e.g., blob: URLs, canvas)
+    try {
+      const nodeMod = (await import('@imgly/background-removal-node')) as unknown as {
+        removeBackground?: RemoveBackgroundFn;
+        default?: RemoveBackgroundFn;
+      };
+      cachedRemoveBackground = nodeMod.removeBackground ?? nodeMod.default ?? null;
+      if (cachedRemoveBackground) return cachedRemoveBackground;
+    } catch (err) {
+      console.warn('[Worker] falling back to web background-removal build', err);
+    }
+  }
+
   // Provide a minimal navigator shim for the WASM build when running in Node.js.
   if (typeof globalThis.navigator === 'undefined') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
