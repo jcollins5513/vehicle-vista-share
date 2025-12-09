@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { redisClient } from '@/lib/redis';
 import { uploadBufferToS3 } from '@/lib/s3';
 import type { WebCompanionUpload } from '@/types/webCompanion';
+import fs from 'fs';
+import path from 'path';
+import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';
 
@@ -15,29 +18,67 @@ type RemoveBackgroundFn = (
 
 let cachedRemoveBackground: RemoveBackgroundFn | null = null;
 
+function ensureFileBackedObjectURL() {
+  // Node's ESM loader cannot handle blob: URLs. Convert blobs to file:// URLs in /tmp.
+  const originalCreateObjectURL = URL.createObjectURL;
+
+  function waitForBuffer(blob: Blob): Buffer {
+    const signal = new Int32Array(new SharedArrayBuffer(4));
+    let result: Buffer | null = null;
+    let error: unknown;
+
+    blob.arrayBuffer()
+      .then((arrayBuf) => {
+        result = Buffer.from(new Uint8Array(arrayBuf));
+        Atomics.store(signal, 0, 1);
+        Atomics.notify(signal, 0);
+      })
+      .catch((err) => {
+        error = err;
+        Atomics.store(signal, 0, 1);
+        Atomics.notify(signal, 0);
+      });
+
+    while (Atomics.load(signal, 0) === 0) {
+      Atomics.wait(signal, 0, 0, 50);
+    }
+
+    if (error) throw error;
+    return result as Buffer;
+  }
+
+  URL.createObjectURL = (blob: Blob) => {
+    const buffer = waitForBuffer(blob);
+    const fileName = `imgly-${randomUUID()}.bin`;
+    const filePath = path.join('/tmp', fileName);
+    fs.writeFileSync(filePath, buffer);
+    return `file://${filePath}`;
+  };
+
+  URL.revokeObjectURL = (url: string) => {
+    if (url.startsWith('file://')) {
+      try {
+        fs.unlinkSync(url.replace('file://', ''));
+      } catch {
+        // ignore cleanup errors
+      }
+    } else {
+      originalCreateObjectURL(url);
+    }
+  };
+}
+
 async function getRemoveBackground(): Promise<RemoveBackgroundFn> {
   if (cachedRemoveBackground) return cachedRemoveBackground;
-
-  const runningInNode = typeof globalThis.window === 'undefined';
-
-  if (runningInNode) {
-    // Prefer the Node build to avoid browser-only APIs (e.g., blob: URLs, canvas)
-    try {
-      const nodeMod = (await import('@imgly/background-removal-node')) as unknown as {
-        removeBackground?: RemoveBackgroundFn;
-        default?: RemoveBackgroundFn;
-      };
-      cachedRemoveBackground = nodeMod.removeBackground ?? nodeMod.default ?? null;
-      if (cachedRemoveBackground) return cachedRemoveBackground;
-    } catch (err) {
-      console.warn('[Worker] falling back to web background-removal build', err);
-    }
-  }
 
   // Provide a minimal navigator shim for the WASM build when running in Node.js.
   if (typeof globalThis.navigator === 'undefined') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (globalThis as any).navigator = { userAgent: 'node' };
+  }
+
+  if (typeof globalThis.window === 'undefined') {
+    ensureFileBackedObjectURL();
   }
 
   // Use the WASM-based build to avoid bundling native binaries
