@@ -111,11 +111,13 @@ export default function WebCompanionSessionPage() {
 
         const formData = new FormData();
         formData.append('image', processedBlob, `processed-${upload.imageIndex ?? '0'}.png`);
+        formData.append('uploadId', upload.id);
+        formData.append('stockNumber', stockNumber);
         formData.append('originalUrl', upload.originalUrl);
         formData.append('imageIndex', String(upload.imageIndex ?? 0));
 
         const processedResponse = await fetch(
-          `/api/vehicles/${encodeURIComponent(stockNumber)}/processed-images`,
+          `/api/web-companion/uploads/processed`,
           { method: 'POST', body: formData }
         );
 
@@ -124,9 +126,7 @@ export default function WebCompanionSessionPage() {
         }
 
         const processedJson = await processedResponse.json();
-        const processedUrl = processedJson?.processedImage?.processedUrl as string | undefined;
-
-        await markUpload(upload.id, 'processed', processedUrl, upload.imageIndex);
+        const processedUrl = processedJson?.upload?.processedUrl as string | undefined;
 
         setUploads((prev) =>
           prev.map((item) =>
@@ -135,7 +135,7 @@ export default function WebCompanionSessionPage() {
                   ...item,
                   status: 'processed',
                   processedUrl: processedUrl ?? item.processedUrl,
-                  processedAt: new Date().toISOString(),
+                  processedAt: processedJson?.upload?.processedAt ?? new Date().toISOString(),
                 }
               : item
           )
@@ -144,7 +144,7 @@ export default function WebCompanionSessionPage() {
         logResult({
           id: upload.id,
           status: 'success',
-          message: `Processed ${upload.originalFilename || 'capture'} • saved to inventory`,
+          message: `Processed ${upload.originalFilename || 'capture'} • saved for gallery`,
           processedUrl,
         });
       } catch (error) {
