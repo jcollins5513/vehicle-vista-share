@@ -21,6 +21,7 @@ let cachedRemoveBackground: RemoveBackgroundFn | null = null;
 function ensureFileBackedObjectURL() {
   // Node's ESM loader cannot handle blob: URLs. Convert blobs to file:// URLs in /tmp.
   const originalCreateObjectURL = URL.createObjectURL;
+  const originalRevokeObjectURL = URL.revokeObjectURL;
 
   function waitForBuffer(blob: Blob): Buffer {
     const signal = new Int32Array(new SharedArrayBuffer(4));
@@ -64,7 +65,7 @@ function ensureFileBackedObjectURL() {
         // ignore cleanup errors
       }
     } else {
-      originalCreateObjectURL(url);
+      originalRevokeObjectURL(url);
     }
   };
 }
