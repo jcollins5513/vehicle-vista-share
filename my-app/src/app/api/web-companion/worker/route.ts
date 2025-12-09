@@ -8,14 +8,17 @@ export const runtime = 'nodejs';
 const stockUploadsKey = (stockNumber: string) => `web-companion:stock:${stockNumber}:uploads`;
 const uploadKey = (id: string) => `web-companion:upload:${id}`;
 
-type RemoveBackgroundFn = (input: Buffer, options?: unknown) => Promise<Buffer | ArrayBuffer | Uint8Array>;
+type RemoveBackgroundFn = (
+  input: Buffer | ArrayBuffer | Uint8Array,
+  options?: unknown
+) => Promise<unknown>;
 
 let cachedRemoveBackground: RemoveBackgroundFn | null = null;
 
 async function getRemoveBackground(): Promise<RemoveBackgroundFn> {
   if (cachedRemoveBackground) return cachedRemoveBackground;
 
-  const mod = (await import('@imgly/background-removal-node')) as { removeBackground: RemoveBackgroundFn };
+  const mod = (await import('@imgly/background-removal-node')) as unknown as { removeBackground: RemoveBackgroundFn };
   cachedRemoveBackground = mod.removeBackground;
   return cachedRemoveBackground;
 }
@@ -60,8 +63,16 @@ async function processOne(upload: WebCompanionUpload) {
   });
 
   // Upload processed to S3
+  const normalizedBuffer = Buffer.isBuffer(processedBuffer)
+    ? processedBuffer
+    : Buffer.from(
+        processedBuffer instanceof ArrayBuffer
+          ? new Uint8Array(processedBuffer)
+          : (processedBuffer as Uint8Array)
+      );
+
   const { url: processedUrl } = await uploadBufferToS3({
-    buffer: Buffer.isBuffer(processedBuffer) ? processedBuffer : Buffer.from(processedBuffer),
+    buffer: normalizedBuffer,
     mimeType: 'image/png',
     keyPrefix: `web-companion/${upload.stockNumber}/processed`,
   });
