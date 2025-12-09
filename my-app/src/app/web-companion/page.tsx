@@ -19,44 +19,43 @@ export default function WebCompanionLanding() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto space-y-8">
           <div>
-            <p className="text-blue-300 text-sm uppercase tracking-wide mb-2">Inventory Sync</p>
+            <p className="text-primary text-sm uppercase tracking-wide mb-2">Inventory Sync</p>
             <h1 className="text-4xl md:text-5xl font-bold leading-tight">
               Web Companion
-              <span className="block text-lg text-white/70 font-normal mt-2">
+              <span className="block text-lg text-muted-foreground font-normal mt-2">
                 Start a capture session by stock number and mirror iOS uploads straight into the browser.
               </span>
             </h1>
           </div>
 
-          <Card className="bg-white/5 border-white/10">
+          <Card>
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
-                <Link2 className="w-5 h-5 text-blue-300" />
+                <Link2 className="w-5 h-5 text-primary" />
                 Create a Session
               </CardTitle>
-              <CardDescription className="text-white/70">
+              <CardDescription>
                 Enter a stock number to open the live web companion workspace. Use this same stock number when sending captures from the iOS app.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                 <div className="md:col-span-4 space-y-2">
-                  <Label htmlFor="stockNumber" className="text-white">Stock Number</Label>
+                  <Label htmlFor="stockNumber">Stock Number</Label>
                   <Input
                     id="stockNumber"
                     value={stockNumber}
                     onChange={(e) => setStockNumber(e.target.value.toUpperCase())}
                     placeholder="e.g. 23-8842"
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   />
                 </div>
                 <Button
                   onClick={startSession}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full"
                   disabled={!stockNumber.trim()}
                 >
                   Continue
@@ -66,18 +65,18 @@ export default function WebCompanionLanding() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/5 border-white/10">
+          <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-blue-300" />
+                <Smartphone className="w-5 h-5 text-primary" />
                 iOS Upload Endpoint
               </CardTitle>
-              <CardDescription className="text-white/70">
+              <CardDescription>
                 Point the AutoCapture app at this endpoint to drop captures into the queue. Background removal runs in the browser session.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm text-white/80">
-              <div className="bg-black/40 rounded-lg p-4 border border-white/10 font-mono text-xs overflow-x-auto">
+            <CardContent className="space-y-3 text-sm">
+              <div className="rounded-lg p-4 border font-mono text-xs overflow-x-auto">
                 <div>POST /api/web-companion/uploads</div>
                 <div className="mt-2 text-white/60">multipart/form-data fields:</div>
                 <div>• stockNumber — required</div>

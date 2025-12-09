@@ -22,6 +22,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
@@ -434,7 +435,7 @@ export default function CustomerShowroomPage() {
                         onClick={() =>
                           window.open(`/customer/${vehicle.id}`, "_blank")
                         }
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-sm"
+                        className="flex-1 text-sm"
                       >
                         <Eye className="w-3 h-3 mr-1" />
                         View Details
@@ -548,7 +549,7 @@ export default function CustomerShowroomPage() {
                         onClick={() =>
                           window.open(`/vehicles/${vehicle.stockNumber}`, "_blank")
                         }
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                        className=""
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         View Details
@@ -624,7 +625,7 @@ export default function CustomerShowroomPage() {
               <p className="text-white/70">Available 24/7</p>
             </div>
             <div className="text-center">
-              <MapPin className="w-8 h-8 text-purple-400 mx-auto mb-3" />
+              <MapPin className="w-8 h-8 text-primary mx-auto mb-3" />
               <h3 className="text-white font-bold mb-2">Visit Us</h3>
               <p className="text-white/70">Downtown Showroom</p>
             </div>

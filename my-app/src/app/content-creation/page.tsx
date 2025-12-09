@@ -257,10 +257,10 @@ function ContentCreationInner() {
           {/* Manual Upload Tab */}
           <TabsContent value="manual-upload" className="space-y-6">
             {vehicles.length === 0 && !loading && (
-              <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 backdrop-blur-xl border-yellow-500/20 mb-4">
+              <Card className="mb-4">
                 <CardContent className="text-center py-8">
-                  <p className="text-yellow-200 text-lg font-bold mb-2">No Vehicles Available</p>
-                  <p className="text-yellow-100/70">No vehicles found in inventory. Please check your Redis connection.</p>
+                  <p className="text-lg font-bold mb-2">No Vehicles Available</p>
+                  <p className="text-muted-foreground">No vehicles found in inventory. Please check your Redis connection.</p>
                 </CardContent>
               </Card>
             )}
@@ -296,11 +296,11 @@ function ContentCreationInner() {
             </div>
 
             {filteredImages.length === 0 ? (
-              <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20">
+              <Card>
                 <CardContent className="text-center py-16">
-                  <ImageIcon className="w-16 h-16 mx-auto mb-4 text-white/50" />
-                  <h3 className="text-white text-xl font-bold mb-2">No Vehicles Found</h3>
-                  <p className="text-white/70">
+                  <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-bold mb-2">No Vehicles Found</h3>
+                  <p className="text-muted-foreground">
                     {searchTerm 
                       ? "No vehicles match your search criteria" 
                       : "Upload vehicle photos in the Manual Upload tab to get started"
@@ -315,17 +315,17 @@ function ContentCreationInner() {
                   return (
                     <Card
                       key={stockNumber}
-                      className={`bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 hover:border-white/40 transition-all cursor-pointer ${
-                        selectedVehicle?.stockNumber === stockNumber ? 'ring-2 ring-blue-500' : ''
+                      className={`transition-all cursor-pointer ${
+                        selectedVehicle?.stockNumber === stockNumber ? 'ring-2 ring-primary' : ''
                       }`}
                       onClick={() => vehicle && handleVehicleSelect(vehicle)}
                     >
                       <CardHeader>
-                        <CardTitle className="text-white flex items-center">
+                        <CardTitle className="flex items-center">
                           <Car className="w-5 h-5 mr-2" />
                           {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : `Vehicle ${stockNumber}`}
                         </CardTitle>
-                        <CardDescription className="text-white/70">
+                        <CardDescription>
                           {images.length} processed image{images.length !== 1 ? 's' : ''} • Stock: {stockNumber}
                         </CardDescription>
                       </CardHeader>
