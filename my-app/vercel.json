@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/web-companion/worker?limit=5",
-      "schedule": "*/2 * * * *"
-    }
-  ]
-}
