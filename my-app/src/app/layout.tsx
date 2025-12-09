@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,10 +19,22 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body suppressHydrationWarning className="antialiased relative">
-        {children}
-        <div id="modal-root" className="absolute inset-0 pointer-events-none">
-          {/* Modal content will be rendered here */}
-        </div>
+        <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
+            <div className="font-semibold text-lg">Vehicle Vista</div>
+            <nav className="flex flex-wrap gap-2 text-sm">
+              <Link className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/">Home</Link>
+              <Link className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/customershowroom">Customer Showroom</Link>
+              <Link className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/content-creation">Content Creation</Link>
+              <Link className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/web-companion">Web Companion</Link>
+              <Link className="px-3 py-1 rounded-md border hover:bg-accent hover:text-accent-foreground" href="/web-companion-gallery">Web Companion Gallery</Link>
+            </nav>
+          </div>
+        </header>
+        <main className="pt-2">
+          {children}
+        </main>
+        <div id="modal-root" className="absolute inset-0 pointer-events-none" />
       </body>
     </html>
   );

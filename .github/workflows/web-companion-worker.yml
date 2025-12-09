@@ -1,0 +1,33 @@
+name: Run Web Companion Worker
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # Runs roughly every 5 minutes (GitHub minimum)
+  workflow_dispatch:
+
+concurrency:
+  group: web-companion-worker
+  cancel-in-progress: false
+
+jobs:
+  run-worker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger worker endpoint
+        env:
+          WORKER_URL: ${{ secrets.WEB_COMPANION_WORKER_URL }}
+        run: |
+          if [ -z "$WORKER_URL" ]; then
+            echo "WEB_COMPANION_WORKER_URL secret is not set" >&2
+            exit 1
+          fi
+
+          echo "POST $WORKER_URL"
+          http_status=$(curl -s -o /tmp/worker-response.json -w "%{http_code}" -X POST "$WORKER_URL")
+          cat /tmp/worker-response.json
+
+          if [ "$http_status" -ge 400 ]; then
+            echo "Worker call failed with HTTP $http_status" >&2
+            exit 1
+          fi

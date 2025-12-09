@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,10 @@ import Image from 'next/image';
 import type { Vehicle, ProcessedImage } from '@/types';
 import { ManualVehiclePhotoUpload } from '@/components/ManualVehiclePhotoUpload';
 import { UnifiedVisualEditor } from '@/components/UnifiedVisualEditor';
+import { useSearchParams } from 'next/navigation';
+
+// Force dynamic rendering to avoid static prerender issues with search params
+export const dynamic = 'force-dynamic';
 
 interface ExtendedProcessedImage extends Omit<ProcessedImage, 'processedAt'> {
   processedAt: Date;
@@ -36,20 +40,45 @@ interface Asset {
   size?: number;
 }
 
-export default function ContentCreationPage() {
+function ContentCreationInner() {
   const [processedImages, setProcessedImages] = useState<ProcessedImagesData>({});
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [generatedContent, setGeneratedContent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('manual-upload');
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [hasAppliedSearchParam, setHasAppliedSearchParam] = useState(false);
+  const [vehiclesLoaded, setVehiclesLoaded] = useState(false);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     Promise.all([fetchProcessedImages(), fetchVehicles(), fetchAssets()]);
   }, []);
+
+  useEffect(() => {
+    if (!searchParams || hasAppliedSearchParam || !vehiclesLoaded) return;
+    const stockParam = searchParams.get('stockNumber');
+    if (!stockParam) return;
+
+    const matchingVehicle = vehicles.find(
+      (vehicle) => vehicle.stockNumber.toLowerCase() === stockParam.toLowerCase()
+    );
+
+    if (matchingVehicle) {
+      setSelectedVehicle(matchingVehicle);
+      const hasImages =
+        processedImages[matchingVehicle.stockNumber] &&
+        processedImages[matchingVehicle.stockNumber].length > 0;
+      setActiveTab(hasImages ? 'visual-editor' : 'vehicle-selection');
+    } else {
+      setSearchTerm(stockParam);
+      setActiveTab('vehicle-selection');
+    }
+
+    setHasAppliedSearchParam(true);
+  }, [searchParams, hasAppliedSearchParam, vehiclesLoaded, vehicles, processedImages]);
 
   const fetchAssets = async () => {
     try {
@@ -144,6 +173,8 @@ export default function ContentCreationPage() {
     } catch (error) {
       console.error('Error fetching vehicles:', error);
       setError(error instanceof Error ? error.message : 'Failed to load vehicles');
+    } finally {
+      setVehiclesLoaded(true);
     }
   };
 
@@ -175,32 +206,32 @@ export default function ContentCreationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mb-4"></div>
-          <p className="text-white text-lg">Loading content creation tools...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mb-4"></div>
+          <p className="text-lg">Loading content creation tools...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Content Creation Studio</h1>
-          <p className="text-white/70 text-lg">Create stunning marketing content for your vehicles</p>
+          <h1 className="text-4xl font-bold mb-2">Content Creation Studio</h1>
+          <p className="text-muted-foreground text-lg">Create stunning marketing content for your vehicles</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-            <p className="text-red-200">{error}</p>
+          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+            <p className="text-destructive">{error}</p>
             <button
               onClick={() => {
                 setError(null);
                 Promise.all([fetchProcessedImages(), fetchVehicles(), fetchAssets()]);
               }}
-              className="mt-2 text-red-300 hover:text-red-100 underline"
+              className="mt-2 text-destructive hover:text-destructive/80 underline"
             >
               Retry
             </button>
@@ -208,16 +239,16 @@ export default function ContentCreationPage() {
         )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white/10 backdrop-blur-xl border border-white/20">
-            <TabsTrigger value="manual-upload" className="data-[state=active]:bg-white/20 text-white">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="manual-upload">
               <Upload className="w-4 h-4 mr-2" />
               Manual Upload
             </TabsTrigger>
-            <TabsTrigger value="vehicle-selection" className="data-[state=active]:bg-white/20 text-white">
+            <TabsTrigger value="vehicle-selection">
               <Car className="w-4 h-4 mr-2" />
               Select Vehicle
             </TabsTrigger>
-            <TabsTrigger value="visual-editor" className="data-[state=active]:bg-white/20 text-white" disabled={!selectedVehicle}>
+            <TabsTrigger value="visual-editor" disabled={!selectedVehicle}>
               <Palette className="w-4 h-4 mr-2" />
               Visual Editor
             </TabsTrigger>
@@ -226,10 +257,10 @@ export default function ContentCreationPage() {
           {/* Manual Upload Tab */}
           <TabsContent value="manual-upload" className="space-y-6">
             {vehicles.length === 0 && !loading && (
-              <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 backdrop-blur-xl border-yellow-500/20 mb-4">
+              <Card className="mb-4">
                 <CardContent className="text-center py-8">
-                  <p className="text-yellow-200 text-lg font-bold mb-2">No Vehicles Available</p>
-                  <p className="text-yellow-100/70">No vehicles found in inventory. Please check your Redis connection.</p>
+                  <p className="text-lg font-bold mb-2">No Vehicles Available</p>
+                  <p className="text-muted-foreground">No vehicles found in inventory. Please check your Redis connection.</p>
                 </CardContent>
               </Card>
             )}
@@ -265,11 +296,11 @@ export default function ContentCreationPage() {
             </div>
 
             {filteredImages.length === 0 ? (
-              <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20">
+              <Card>
                 <CardContent className="text-center py-16">
-                  <ImageIcon className="w-16 h-16 mx-auto mb-4 text-white/50" />
-                  <h3 className="text-white text-xl font-bold mb-2">No Vehicles Found</h3>
-                  <p className="text-white/70">
+                  <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-bold mb-2">No Vehicles Found</h3>
+                  <p className="text-muted-foreground">
                     {searchTerm 
                       ? "No vehicles match your search criteria" 
                       : "Upload vehicle photos in the Manual Upload tab to get started"
@@ -284,17 +315,17 @@ export default function ContentCreationPage() {
                   return (
                     <Card
                       key={stockNumber}
-                      className={`bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 hover:border-white/40 transition-all cursor-pointer ${
-                        selectedVehicle?.stockNumber === stockNumber ? 'ring-2 ring-blue-500' : ''
+                      className={`transition-all cursor-pointer ${
+                        selectedVehicle?.stockNumber === stockNumber ? 'ring-2 ring-primary' : ''
                       }`}
                       onClick={() => vehicle && handleVehicleSelect(vehicle)}
                     >
                       <CardHeader>
-                        <CardTitle className="text-white flex items-center">
+                        <CardTitle className="flex items-center">
                           <Car className="w-5 h-5 mr-2" />
                           {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : `Vehicle ${stockNumber}`}
                         </CardTitle>
-                        <CardDescription className="text-white/70">
+                        <CardDescription>
                           {images.length} processed image{images.length !== 1 ? 's' : ''} • Stock: {stockNumber}
                         </CardDescription>
                       </CardHeader>
@@ -353,7 +384,7 @@ export default function ContentCreationPage() {
                 assets={assets}
                 allVehicles={vehicles}
                 allProcessedImages={processedImages}
-                onContentGenerated={(content) => setGeneratedContent(content)}
+                onContentGenerated={() => {}}
                 onAssetsUploaded={(assets) => {
                   console.log('Assets uploaded from Visual Editor:', assets);
                   // Refresh assets list
@@ -388,5 +419,19 @@ export default function ContentCreationPage() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+export default function ContentCreationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+          <p className="text-white/80 text-lg">Loading content creation studio...</p>
+        </div>
+      }
+    >
+      <ContentCreationInner />
+    </Suspense>
   );
 }

@@ -22,6 +22,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
@@ -30,6 +31,7 @@ import WindowSticker from "@/components/WindowSticker";
 import BatchPrintModal from "@/components/BatchPrintModal";
 import { BackgroundRemovalButton } from "@/components/BackgroundRemovalButton";
 import { BatchBackgroundRemoval } from "@/components/BatchBackgroundRemoval";
+import { MediaCarousel } from "@/components/MediaCarousel";
 
 export default function CustomerShowroomPage() {
   const [vehicles, setVehicles] = useState<VehicleWithMedia[]>([]);
@@ -159,15 +161,13 @@ export default function CustomerShowroomPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center animate-fade-in">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center animate-pulse">
-            <Car className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 mx-auto mb-4 bg-accent text-accent-foreground rounded-full flex items-center justify-center animate-pulse">
+            <Car className="w-8 h-8" />
           </div>
-          <h2 className="text-white text-xl font-bold mb-2">
-            Loading Premium Collection
-          </h2>
-          <p className="text-white/70">Preparing your luxury experience...</p>
+          <h2 className="text-xl font-bold mb-2">Loading Premium Collection</h2>
+          <p className="text-muted-foreground">Preparing your luxury experience...</p>
         </div>
       </div>
     );
@@ -175,19 +175,14 @@ export default function CustomerShowroomPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-red-950 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center animate-fade-in">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center">
-            <Zap className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 mx-auto mb-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center">
+            <Zap className="w-8 h-8" />
           </div>
-          <h2 className="text-white text-xl font-bold mb-2">
-            Service Unavailable
-          </h2>
-          <p className="text-white/70 mb-4">Error loading vehicles: {error}</p>
-          <Button
-            onClick={() => window.location.reload()}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
+          <h2 className="text-xl font-bold mb-2">Service Unavailable</h2>
+          <p className="text-muted-foreground mb-4">Error loading vehicles: {error}</p>
+          <Button onClick={() => window.location.reload()}>
             Try Again
           </Button>
         </div>
@@ -197,15 +192,13 @@ export default function CustomerShowroomPage() {
 
   if (!vehicles || vehicles.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center animate-fade-in">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-            <Car className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 mx-auto mb-4 bg-secondary text-secondary-foreground rounded-full flex items-center justify-center">
+            <Car className="w-8 h-8" />
           </div>
-          <h2 className="text-white text-xl font-bold mb-2">
-            Collection Coming Soon
-          </h2>
-          <p className="text-white/70">
+          <h2 className="text-xl font-bold mb-2">Collection Coming Soon</h2>
+          <p className="text-muted-foreground">
             Our premium vehicles are being prepared for display.
           </p>
         </div>
@@ -215,32 +208,25 @@ export default function CustomerShowroomPage() {
 
   const makes = [...new Set(vehicles.map((v) => v.make))];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        {[...Array(15)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white/20 rounded-full animate-float"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${2 + Math.random() * 3}s`,
-            }}
-          />
-        ))}
-      </div>
+  const getVehicleImages = (vehicle: VehicleWithMedia) => {
+    const urls: string[] = [];
+    if (Array.isArray(vehicle.media)) {
+      urls.push(...vehicle.media.map((m) => m.url).filter(Boolean));
+    }
+    if (Array.isArray(vehicle.images)) {
+      urls.push(...vehicle.images.filter(Boolean));
+    }
+    return urls.length ? urls : ["/placeholder.svg"];
+  };
 
+  return (
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="relative z-10 bg-gradient-to-r from-black/40 to-black/20 backdrop-blur-xl border-b border-white/20">
+      <div className="relative z-10 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-secondary text-secondary-foreground rounded-xl flex items-center justify-center">
                 <Image
                   src="/Bentley-logo-groups.svg"
                   alt="Bentley Logo"
@@ -250,25 +236,20 @@ export default function CustomerShowroomPage() {
                 />
               </div>
               <div>
-                <h1 className="text-white text-3xl font-bold bg-gradient-to-r from-white via-yellow-100 to-blue-100 bg-clip-text text-transparent">
-                  Customer Showroom
-                </h1>
-                <p className="text-white/70">
-                  Discover Your Perfect Luxury Vehicle
-                </p>
+                <h1 className="text-3xl font-bold">Customer Showroom</h1>
+                <p className="text-muted-foreground">Discover Your Perfect Luxury Vehicle</p>
               </div>
             </div>
 
             <div className="flex items-center space-x-3">
-              <div className="bg-white/10 rounded-lg px-3 py-2">
-                <span className="text-white/70 text-sm">
+              <div className="rounded-lg px-3 py-2 border">
+                <span className="text-sm text-muted-foreground">
                   {filteredVehicles.length} vehicles
                 </span>
               </div>
               <Button
                 onClick={() => window.open('/content-creation', '_blank')}
                 variant="outline"
-                className="border-white/30 text-white hover:bg-white/10"
                 title="Content Creation Library"
               >
                 <ImageIcon className="w-4 h-4" />
@@ -276,7 +257,6 @@ export default function CustomerShowroomPage() {
               <Button
                 onClick={() => setIsBatchBgRemovalOpen(true)}
                 variant="outline"
-                className="border-white/30 text-white hover:bg-white/10"
                 title="Batch Background Removal"
               >
                 <Scissors className="w-4 h-4" />
@@ -284,7 +264,6 @@ export default function CustomerShowroomPage() {
               <Button
                 onClick={() => setIsBatchPrintModalOpen(true)}
                 variant="outline"
-                className="border-white/30 text-white hover:bg-white/10"
                 title="Batch Print"
               >
                 <Printer className="w-4 h-4" />
@@ -294,7 +273,6 @@ export default function CustomerShowroomPage() {
                   setViewMode(viewMode === "grid" ? "list" : "grid")
                 }
                 variant="outline"
-                className="border-white/30 text-white hover:bg-white/10"
               >
                 {viewMode === "grid" ? (
                   <List className="w-4 h-4" />
@@ -308,12 +286,12 @@ export default function CustomerShowroomPage() {
           {/* Search and Filters */}
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Search by make, model, year, or stock #..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/10 border-white/20 text-white placeholder-white/50"
+                className="pl-10"
               />
             </div>
 
@@ -325,11 +303,11 @@ export default function CustomerShowroomPage() {
                   make: e.target.value,
                 }))
               }
-              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white"
+              className="border rounded-lg px-3 py-2 bg-background"
             >
               <option value="">All Makes</option>
               {makes.map((make) => (
-                <option key={make} value={make} className="bg-slate-800">
+                <option key={make} value={make}>
                   {make}
                 </option>
               ))}
@@ -340,15 +318,15 @@ export default function CustomerShowroomPage() {
               onChange={(e) =>
                 setSortBy(e.target.value as "price" | "year" | "make")
               }
-              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white"
+              className="border rounded-lg px-3 py-2 bg-background"
             >
-              <option value="year" className="bg-slate-800">
+              <option value="year">
                 Newest First
               </option>
-              <option value="price" className="bg-slate-800">
+              <option value="price">
                 Price: Low to High
               </option>
-              <option value="make" className="bg-slate-800">
+              <option value="make">
                 Make: A to Z
               </option>
             </select>
@@ -363,24 +341,16 @@ export default function CustomerShowroomPage() {
             {filteredVehicles.map((vehicle, index) => (
               <Card
                 key={vehicle.id}
-                className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-500 group hover-lift"
+                className="overflow-hidden transition-all duration-500 group hover:shadow-lg"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="relative">
-                  <div className="aspect-video overflow-hidden">
-                    <Image
-                      src={
-                        vehicle.media?.[0]?.url ||
-                        vehicle.images?.[0] ||
-                        "/placeholder.svg"
-                      }
-                      alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                      width={400}
-                      height={300}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      unoptimized={vehicle.images?.[0]?.includes('bentleysupercenter.com')}
-                    />
-                  </div>
+                  <MediaCarousel
+                    images={getVehicleImages(vehicle).map((url) => ({
+                      url,
+                      alt: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+                    }))}
+                  />
 
                   {/* Overlay Controls */}
                   <div className="absolute top-3 right-3 flex space-x-2">
@@ -412,16 +382,15 @@ export default function CustomerShowroomPage() {
 
                   {/* Special Offers Badge */}
                   <div className="absolute top-3 left-3">
-                    <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
-                      <Zap className="w-3 h-3 inline mr-1" />
-                      SPECIAL OFFER
-                    </div>
+                  <Badge className="px-3 py-1 text-xs font-semibold">
+                    SPECIAL OFFER
+                  </Badge>
                   </div>
                 </div>
 
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-white font-bold text-lg">
+                  <h3 className="font-bold text-lg">
                       {vehicle.year} {vehicle.make}
                     </h3>
                     <div className="flex space-x-1">
@@ -466,7 +435,7 @@ export default function CustomerShowroomPage() {
                         onClick={() =>
                           window.open(`/customer/${vehicle.id}`, "_blank")
                         }
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-sm"
+                        className="flex-1 text-sm"
                       >
                         <Eye className="w-3 h-3 mr-1" />
                         View Details
@@ -505,18 +474,13 @@ export default function CustomerShowroomPage() {
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-center p-6">
-                  <div className="w-32 h-24 rounded-lg overflow-hidden mr-6">
-                    <Image
-                      src={
-                        vehicle.media?.[0]?.url ||
-                        vehicle.images?.[0] ||
-                        "/placeholder.svg"
-                      }
-                      alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                      width={128}
-                      height={96}
-                      className="w-full h-full object-cover"
-                      unoptimized={vehicle.images?.[0]?.includes('bentleysupercenter.com')}
+                  <div className="w-48">
+                    <MediaCarousel
+                      images={getVehicleImages(vehicle).map((url) => ({
+                        url,
+                        alt: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+                      }))}
+                      className="rounded-lg"
                     />
                   </div>
 
@@ -585,7 +549,7 @@ export default function CustomerShowroomPage() {
                         onClick={() =>
                           window.open(`/vehicles/${vehicle.stockNumber}`, "_blank")
                         }
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                        className=""
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         View Details
@@ -661,7 +625,7 @@ export default function CustomerShowroomPage() {
               <p className="text-white/70">Available 24/7</p>
             </div>
             <div className="text-center">
-              <MapPin className="w-8 h-8 text-purple-400 mx-auto mb-3" />
+              <MapPin className="w-8 h-8 text-primary mx-auto mb-3" />
               <h3 className="text-white font-bold mb-2">Visit Us</h3>
               <p className="text-white/70">Downtown Showroom</p>
             </div>

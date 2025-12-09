@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 
+const nativeExternalPackages = ['sharp'];
+
 const nextConfig: NextConfig = {
+  // Keep native modules external so their .node bindings aren't bundled
+  serverExternalPackages: nativeExternalPackages,
   images: {
     remotePatterns: [
       {
@@ -91,6 +95,28 @@ const nextConfig: NextConfig = {
         vm: false,
 
       };
+    }
+
+    // Keep native bindings external on the server to avoid webpack parsing .node files
+    if (isServer) {
+      if (Array.isArray(config.externals)) {
+        config.externals.push(...nativeExternalPackages);
+      } else if (typeof config.externals === 'function') {
+        const originalExternals = config.externals;
+        config.externals = async (
+          context: any,
+          request: any,
+          callback: (err?: unknown, result?: string) => void
+        ) => {
+          if (nativeExternalPackages.includes(request as string)) {
+            return callback(null, `commonjs ${request}`);
+          }
+          if (originalExternals) {
+            return originalExternals(context, request, callback);
+          }
+          callback();
+        };
+      }
     }
 
     // Handle problematic imports from @imgly/background-removal
