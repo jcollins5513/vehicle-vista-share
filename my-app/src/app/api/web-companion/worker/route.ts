@@ -10,17 +10,31 @@ const uploadKey = (id: string) => `web-companion:upload:${id}`;
 
 type RemoveBackgroundFn = (
   input: Buffer | ArrayBuffer | Uint8Array,
-  options?: unknown
-) => Promise<unknown>;
+  options?: Record<string, unknown>
+) => Promise<Buffer | ArrayBuffer | Uint8Array | Blob>;
 
 let cachedRemoveBackground: RemoveBackgroundFn | null = null;
 
 async function getRemoveBackground(): Promise<RemoveBackgroundFn> {
   if (cachedRemoveBackground) return cachedRemoveBackground;
 
-  const mod = (await import('@imgly/background-removal-node')) as unknown as { removeBackground: RemoveBackgroundFn };
+  // Use the WASM-based build to avoid bundling native binaries
+  const mod = (await import('@imgly/background-removal')) as unknown as {
+    removeBackground: RemoveBackgroundFn;
+  };
   cachedRemoveBackground = mod.removeBackground;
   return cachedRemoveBackground;
+}
+
+async function toBuffer(output: Buffer | ArrayBuffer | Uint8Array | Blob): Promise<Buffer> {
+  if (Buffer.isBuffer(output)) return output;
+  if (output instanceof Uint8Array) return Buffer.from(output);
+  if (output instanceof ArrayBuffer) return Buffer.from(new Uint8Array(output));
+  if (output instanceof Blob) {
+    const arrayBuf = await output.arrayBuffer();
+    return Buffer.from(new Uint8Array(arrayBuf));
+  }
+  throw new Error('Unsupported output type from background removal');
 }
 
 async function listPending(limit = 5): Promise<WebCompanionUpload[]> {
@@ -58,18 +72,12 @@ async function processOne(upload: WebCompanionUpload) {
 
   // Run server-side background removal (returns Buffer)
   const removeBackground = await getRemoveBackground();
-  const processedBuffer = await removeBackground(buffer, {
+  const processed = await removeBackground(buffer, {
     output: { format: 'image/png', quality: 0.9 },
   });
 
   // Upload processed to S3
-  const normalizedBuffer = Buffer.isBuffer(processedBuffer)
-    ? processedBuffer
-    : Buffer.from(
-        processedBuffer instanceof ArrayBuffer
-          ? new Uint8Array(processedBuffer)
-          : (processedBuffer as Uint8Array)
-      );
+  const normalizedBuffer = await toBuffer(processed);
 
   const { url: processedUrl } = await uploadBufferToS3({
     buffer: normalizedBuffer,
