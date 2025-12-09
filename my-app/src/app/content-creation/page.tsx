@@ -18,6 +18,9 @@ import { ManualVehiclePhotoUpload } from '@/components/ManualVehiclePhotoUpload'
 import { UnifiedVisualEditor } from '@/components/UnifiedVisualEditor';
 import { useSearchParams } from 'next/navigation';
 
+// Force dynamic rendering to avoid static prerender issues with search params
+export const dynamic = 'force-dynamic';
+
 interface ExtendedProcessedImage extends Omit<ProcessedImage, 'processedAt'> {
   processedAt: Date;
   isMarketingAsset?: boolean;
