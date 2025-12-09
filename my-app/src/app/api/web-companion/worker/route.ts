@@ -2,12 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { redisClient } from '@/lib/redis';
 import { uploadBufferToS3 } from '@/lib/s3';
 import type { WebCompanionUpload } from '@/types/webCompanion';
-import { removeBackground } from '@imgly/background-removal-node';
 
 export const runtime = 'nodejs';
 
 const stockUploadsKey = (stockNumber: string) => `web-companion:stock:${stockNumber}:uploads`;
 const uploadKey = (id: string) => `web-companion:upload:${id}`;
+
+type RemoveBackgroundFn = (input: Buffer, options?: unknown) => Promise<Buffer | ArrayBuffer | Uint8Array>;
+
+let cachedRemoveBackground: RemoveBackgroundFn | null = null;
+
+async function getRemoveBackground(): Promise<RemoveBackgroundFn> {
+  if (cachedRemoveBackground) return cachedRemoveBackground;
+
+  const mod = (await import('@imgly/background-removal-node')) as { removeBackground: RemoveBackgroundFn };
+  cachedRemoveBackground = mod.removeBackground;
+  return cachedRemoveBackground;
+}
 
 async function listPending(limit = 5): Promise<WebCompanionUpload[]> {
   const clientWithKeys = redisClient as unknown as { keys?: (pattern: string) => Promise<string[]> };
@@ -43,6 +54,7 @@ async function processOne(upload: WebCompanionUpload) {
   const buffer = Buffer.from(arrayBuffer);
 
   // Run server-side background removal (returns Buffer)
+  const removeBackground = await getRemoveBackground();
   const processedBuffer = await removeBackground(buffer, {
     output: { format: 'image/png', quality: 0.9 },
   });
