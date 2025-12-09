@@ -28,9 +28,15 @@ interface ProcessResult {
 }
 
 export default function WebCompanionSessionPage() {
-  const params = useParams<{ stockNumber: string }>();
+  const params = useParams<{ stockNumber?: string }>();
   const router = useRouter();
-  const stockNumber = decodeURIComponent(params.stockNumber);
+  const stockNumberParam = params?.stockNumber;
+
+  if (!stockNumberParam) {
+    throw new Error('Missing stock number in route params');
+  }
+
+  const stockNumber = decodeURIComponent(stockNumberParam);
 
   const [uploads, setUploads] = useState<WebCompanionUpload[]>([]);
   const [isLoading, setIsLoading] = useState(true);
