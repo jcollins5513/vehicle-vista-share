@@ -20,7 +20,6 @@ let cachedRemoveBackground: RemoveBackgroundFn | null = null;
 
 function ensureFileBackedObjectURL() {
   // Node's ESM loader cannot handle blob: URLs. Convert blobs to file:// URLs in /tmp.
-  const originalCreateObjectURL = URL.createObjectURL;
   const originalRevokeObjectURL = URL.revokeObjectURL;
 
   function waitForBuffer(blob: Blob): Buffer {
@@ -121,6 +120,21 @@ async function listPending(limit = 5): Promise<WebCompanionUpload[]> {
   return uploads;
 }
 
+async function listPendingForStock(stockNumber: string, limit = 5): Promise<WebCompanionUpload[]> {
+  const ids = await redisClient.smembers(stockUploadsKey(stockNumber));
+  const uploads: WebCompanionUpload[] = [];
+
+  for (const id of ids) {
+    const upload = await redisClient.get<WebCompanionUpload>(uploadKey(id));
+    if (upload && upload.status === 'pending') {
+      uploads.push(upload);
+      if (uploads.length >= limit) return uploads;
+    }
+  }
+
+  return uploads;
+}
+
 async function processOne(upload: WebCompanionUpload) {
   if (!upload.originalUrl || !upload.stockNumber) {
     throw new Error('Missing originalUrl or stockNumber');
@@ -164,9 +178,35 @@ async function processOne(upload: WebCompanionUpload) {
 export async function POST(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const limit = Number(searchParams.get('limit') || '5');
+  const uploadId = searchParams.get('uploadId')?.trim() || null;
+  const stockNumber = searchParams.get('stockNumber')?.trim() || null;
 
   try {
-    const pending = await listPending(Number.isFinite(limit) ? limit : 5);
+    if (uploadId) {
+      const upload = await redisClient.get<WebCompanionUpload>(uploadKey(uploadId));
+      if (!upload) {
+        return NextResponse.json({ error: 'Upload not found' }, { status: 404 });
+      }
+
+      if (upload.status !== 'pending') {
+        return NextResponse.json({ success: true, processed: 0, results: [{ id: upload.id, status: upload.status, processedUrl: upload.processedUrl, error: upload.error }] });
+      }
+
+      try {
+        const updated = await processOne(upload);
+        return NextResponse.json({ success: true, processed: 1, results: [{ id: upload.id, status: 'processed', processedUrl: updated.processedUrl }] });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'processing failed';
+        console.error('[Worker] failed', upload.id, message);
+        await redisClient.set(uploadKey(upload.id), { ...upload, status: 'failed', error: message });
+        return NextResponse.json({ success: true, processed: 0, results: [{ id: upload.id, status: 'failed', error: message }] }, { status: 200 });
+      }
+    }
+
+    const resolvedLimit = Number.isFinite(limit) ? limit : 5;
+    const pending = stockNumber
+      ? await listPendingForStock(stockNumber, resolvedLimit)
+      : await listPending(resolvedLimit);
     const results = [];
 
     for (const upload of pending) {

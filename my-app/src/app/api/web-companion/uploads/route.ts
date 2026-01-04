@@ -111,6 +111,14 @@ export async function POST(req: NextRequest) {
 
     await saveUpload(upload);
 
+    // Kick off server-side background removal immediately (do not block the upload response).
+    // This allows processing to start without requiring anyone to visit the web-companion page.
+    const workerUrl = new URL('/api/web-companion/worker', req.url);
+    workerUrl.searchParams.set('uploadId', upload.id);
+    void fetch(workerUrl.toString(), { method: 'POST' }).catch((err) => {
+      console.error('[Web Companion] Failed to trigger worker:', err);
+    });
+
     return NextResponse.json({ success: true, upload });
   } catch (error) {
     console.error('[Web Companion] Upload failed:', error);

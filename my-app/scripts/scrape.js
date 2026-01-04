@@ -126,8 +126,15 @@ async function saveToRedis(vehicles) {
       totalCount: vehicles.length
     };
     
-    await redis.set(CACHE_KEY, JSON.stringify(cacheData), { ex: CACHE_TTL });
-    console.log(`[SUCCESS] Cached ${vehicles.length} vehicles in Redis with TTL ${CACHE_TTL}s`);
+    // Only include TTL if CACHE_TTL is greater than 0
+    // If CACHE_TTL is 0 or negative, make the cache persistent (no expiration)
+    if (CACHE_TTL > 0) {
+      await redis.set(CACHE_KEY, JSON.stringify(cacheData), { ex: CACHE_TTL });
+      console.log(`[SUCCESS] Cached ${vehicles.length} vehicles in Redis with TTL ${CACHE_TTL}s`);
+    } else {
+      await redis.set(CACHE_KEY, JSON.stringify(cacheData));
+      console.log(`[SUCCESS] Cached ${vehicles.length} vehicles in Redis (persistent, no expiration)`);
+    }
   } catch (error) {
     console.error('[ERROR] Failed to save to Redis:', error);
   }
