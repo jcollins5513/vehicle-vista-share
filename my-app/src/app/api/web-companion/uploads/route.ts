@@ -9,6 +9,7 @@ const MAX_UPLOAD_SIZE = 25 * 1024 * 1024; // 25MB
 const stockUploadsKey = (stockNumber: string) => `web-companion:stock:${stockNumber}:uploads`;
 const uploadKey = (id: string) => `web-companion:upload:${id}`;
 const stockSequenceKey = (stockNumber: string) => `web-companion:stock:${stockNumber}:seq`;
+const globalPendingKey = 'web-companion:pending';
 
 export const runtime = 'nodejs';
 export const config = {
@@ -22,6 +23,21 @@ export const config = {
 async function saveUpload(upload: WebCompanionUpload) {
   await redisClient.set(uploadKey(upload.id), upload);
   await redisClient.sadd(stockUploadsKey(upload.stockNumber), upload.id);
+  await redisClient.sadd(globalPendingKey, upload.id);
+}
+
+// Fire-and-forget trigger to let the server worker process pending uploads
+async function triggerWorker(url: string, limit = 3) {
+  try {
+    const workerUrl = new URL('/api/web-companion/worker', url);
+    workerUrl.searchParams.set('limit', String(limit));
+    // Do not await the response; kick it off and return
+    fetch(workerUrl.toString(), { method: 'POST' }).catch((err) => {
+      console.warn('[Web Companion] worker trigger failed:', err instanceof Error ? err.message : err);
+    });
+  } catch (err) {
+    console.warn('[Web Companion] worker trigger setup failed:', err instanceof Error ? err.message : err);
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -110,6 +126,9 @@ export async function POST(req: NextRequest) {
     };
 
     await saveUpload(upload);
+
+    // Kick off server-side background removal so the browser isn't required
+    triggerWorker(req.url, 3);
 
     return NextResponse.json({ success: true, upload });
   } catch (error) {
