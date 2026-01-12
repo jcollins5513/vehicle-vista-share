@@ -9,6 +9,7 @@ const MAX_UPLOAD_SIZE = 25 * 1024 * 1024; // 25MB
 const stockUploadsKey = (stockNumber: string) => `web-companion:stock:${stockNumber}:uploads`;
 const uploadKey = (id: string) => `web-companion:upload:${id}`;
 const stockSequenceKey = (stockNumber: string) => `web-companion:stock:${stockNumber}:seq`;
+const globalPendingKey = 'web-companion:pending';
 
 export const runtime = 'nodejs';
 export const config = {
@@ -22,6 +23,24 @@ export const config = {
 async function saveUpload(upload: WebCompanionUpload) {
   await redisClient.set(uploadKey(upload.id), upload);
   await redisClient.sadd(stockUploadsKey(upload.stockNumber), upload.id);
+  
+  if (upload.status === 'pending') {
+    await redisClient.sadd(globalPendingKey, upload.id);
+  }
+}
+
+// Fire-and-forget trigger to let the server worker process pending uploads
+async function triggerWorker(url: string, limit = 3) {
+  try {
+    const workerUrl = new URL('/api/web-companion/worker', url);
+    workerUrl.searchParams.set('limit', String(limit));
+    // Do not await the response; kick it off and return
+    fetch(workerUrl.toString(), { method: 'POST' }).catch((err) => {
+      console.warn('[Web Companion] worker trigger failed:', err instanceof Error ? err.message : err);
+    });
+  } catch (err) {
+    console.warn('[Web Companion] worker trigger setup failed:', err instanceof Error ? err.message : err);
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -85,11 +104,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const isProcessedRaw = formData.get('isProcessed');
+    const isProcessed = isProcessedRaw === 'true';
+
+    console.log(`[Web Companion] Upload for stock ${stockNumber}, isProcessed: ${isProcessed} (raw: ${isProcessedRaw})`);
+
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Choose appropriate S3 prefix based on whether it's processed or original
+    // Use 'processed/' prefix for processed images so they are picked up by the main inventory API
+    const keyPrefix = isProcessed
+      ? `processed/${stockNumber}`
+      : `web-companion/${stockNumber}/original`;
+
     const { url, key } = await uploadBufferToS3({
       buffer,
       mimeType: file.type || 'image/jpeg',
-      keyPrefix: `web-companion/${stockNumber}/original`,
+      keyPrefix,
     });
 
     const rawSequence = typeof (redisClient as any).incr === 'function'
@@ -102,22 +133,23 @@ export async function POST(req: NextRequest) {
       stockNumber,
       originalUrl: url,
       s3Key: key,
-      status: 'pending',
+      status: isProcessed ? 'processed' : 'pending',
       createdAt: new Date().toISOString(),
       originalFilename: file.name,
       size: file.size,
       imageIndex,
+      // If it's already processed, the "originalUrl" IS the processed URL in this context,
+      // or we can set processedUrl to the same value.
+      processedUrl: isProcessed ? url : undefined,
+      processedAt: isProcessed ? new Date().toISOString() : undefined,
     };
 
     await saveUpload(upload);
 
-    // Kick off server-side background removal immediately (do not block the upload response).
-    // This allows processing to start without requiring anyone to visit the web-companion page.
-    const workerUrl = new URL('/api/web-companion/worker', req.url);
-    workerUrl.searchParams.set('uploadId', upload.id);
-    void fetch(workerUrl.toString(), { method: 'POST' }).catch((err) => {
-      console.error('[Web Companion] Failed to trigger worker:', err);
-    });
+    if (!isProcessed) {
+      // Kick off server-side background removal so the browser isn't required
+      triggerWorker(req.url, 3);
+    }
 
     return NextResponse.json({ success: true, upload });
   } catch (error) {
