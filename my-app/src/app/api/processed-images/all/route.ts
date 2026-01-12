@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { listS3Objects } from '@/lib/s3';
 import { redisService } from '@/lib/services/redisService';
 
+export const dynamic = 'force-dynamic';
+
 interface ProcessedImageData {
   originalUrl: string;
   processedUrl: string;

@@ -23,7 +23,10 @@ export const config = {
 async function saveUpload(upload: WebCompanionUpload) {
   await redisClient.set(uploadKey(upload.id), upload);
   await redisClient.sadd(stockUploadsKey(upload.stockNumber), upload.id);
-  await redisClient.sadd(globalPendingKey, upload.id);
+  
+  if (upload.status === 'pending') {
+    await redisClient.sadd(globalPendingKey, upload.id);
+  }
 }
 
 // Fire-and-forget trigger to let the server worker process pending uploads
@@ -101,11 +104,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const isProcessedRaw = formData.get('isProcessed');
+    const isProcessed = isProcessedRaw === 'true';
+
+    console.log(`[Web Companion] Upload for stock ${stockNumber}, isProcessed: ${isProcessed} (raw: ${isProcessedRaw})`);
+
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Choose appropriate S3 prefix based on whether it's processed or original
+    // Use 'processed/' prefix for processed images so they are picked up by the main inventory API
+    const keyPrefix = isProcessed
+      ? `processed/${stockNumber}`
+      : `web-companion/${stockNumber}/original`;
+
     const { url, key } = await uploadBufferToS3({
       buffer,
       mimeType: file.type || 'image/jpeg',
-      keyPrefix: `web-companion/${stockNumber}/original`,
+      keyPrefix,
     });
 
     const rawSequence = typeof (redisClient as any).incr === 'function'
@@ -118,17 +133,23 @@ export async function POST(req: NextRequest) {
       stockNumber,
       originalUrl: url,
       s3Key: key,
-      status: 'pending',
+      status: isProcessed ? 'processed' : 'pending',
       createdAt: new Date().toISOString(),
       originalFilename: file.name,
       size: file.size,
       imageIndex,
+      // If it's already processed, the "originalUrl" IS the processed URL in this context,
+      // or we can set processedUrl to the same value.
+      processedUrl: isProcessed ? url : undefined,
+      processedAt: isProcessed ? new Date().toISOString() : undefined,
     };
 
     await saveUpload(upload);
 
-    // Kick off server-side background removal so the browser isn't required
-    triggerWorker(req.url, 3);
+    if (!isProcessed) {
+      // Kick off server-side background removal so the browser isn't required
+      triggerWorker(req.url, 3);
+    }
 
     return NextResponse.json({ success: true, upload });
   } catch (error) {
