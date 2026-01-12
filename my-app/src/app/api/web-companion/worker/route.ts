@@ -5,6 +5,13 @@ import type { WebCompanionUpload } from '@/types/webCompanion';
 
 export const runtime = 'nodejs';
 
+// Stub for missing server-side background removal
+async function getRemoveBackground() {
+  return async (buffer: Buffer, options: any): Promise<Buffer> => {
+    throw new Error('Server-side background removal is disabled.');
+  };
+}
+
 const stockUploadsKey = (stockNumber: string) => `web-companion:stock:${stockNumber}:uploads`;
 const uploadKey = (id: string) => `web-companion:upload:${id}`;
 const globalPendingKey = 'web-companion:pending';
@@ -50,7 +57,7 @@ async function processOne(upload: WebCompanionUpload) {
   });
 
   // Upload processed to S3
-  const normalizedBuffer = await toBuffer(processed);
+  const normalizedBuffer = processed;
 
   const { url: processedUrl } = await uploadBufferToS3({
     buffer: normalizedBuffer,
