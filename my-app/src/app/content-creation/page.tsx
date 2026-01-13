@@ -10,7 +10,8 @@ import {
   Search,
   Car,
   Palette,
-  Upload
+  Upload,
+  Loader2
 } from 'lucide-react';
 import Image from 'next/image';
 import type { Vehicle, ProcessedImage } from '@/types';
@@ -46,55 +47,129 @@ function ContentCreationInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Single vehicle selection
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  
+  // Batch selection
+  const [batchVehicles, setBatchVehicles] = useState<Vehicle[]>([]);
+  const [isBatchMode, setIsBatchMode] = useState(false);
+
   const [activeTab, setActiveTab] = useState('manual-upload');
   const [assets, setAssets] = useState<Asset[]>([]);
   const [hasAppliedSearchParam, setHasAppliedSearchParam] = useState(false);
-  const [vehiclesLoaded, setVehiclesLoaded] = useState(false);
+  
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    Promise.all([fetchProcessedImages(), fetchVehicles(), fetchAssets()]);
+    // Load everything in parallel
+    const loadAll = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([fetchProcessedImages(), fetchVehicles(), fetchAssets()]);
+      } catch (err) {
+        console.error("Initialization error:", err);
+        // Don't block UI on error, just show empty state or specific error
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAll();
   }, []);
 
+  // Handle Search Params (Deep Linking)
   useEffect(() => {
-    if (!searchParams || hasAppliedSearchParam || !vehiclesLoaded) return;
-    const stockParam = searchParams.get('stockNumber');
-    if (!stockParam) return;
+    if (loading || hasAppliedSearchParam) return;
 
-    const matchingVehicle = vehicles.find(
-      (vehicle) => vehicle.stockNumber.toLowerCase() === stockParam.toLowerCase()
-    );
+    const stockParam = searchParams?.get('stockNumber');
+    const batchParam = searchParams?.get('batch');
 
-    if (matchingVehicle) {
-      setSelectedVehicle(matchingVehicle);
-      const hasImages =
-        processedImages[matchingVehicle.stockNumber] &&
-        processedImages[matchingVehicle.stockNumber].length > 0;
-      setActiveTab(hasImages ? 'visual-editor' : 'vehicle-selection');
-    } else {
+    if (batchParam) {
+      // BATCH MODE
+      const stocks = batchParam.split(',').map(s => s.trim()).filter(Boolean);
+      const foundVehicles: Vehicle[] = [];
+
+      stocks.forEach(stock => {
+        let v = vehicles.find(v => v.stockNumber.toLowerCase() === stock.toLowerCase());
+        if (!v) {
+          // Create Stub if not found in inventory
+          v = {
+            id: `stub-${stock}`,
+            stockNumber: stock.toUpperCase(),
+            year: 2025,
+            make: 'Unknown',
+            model: 'Vehicle',
+            vin: 'UNKNOWN',
+            color: 'Unknown',
+            price: 0,
+            mileage: 0,
+            status: 'available',
+            images: [],
+            features: [],
+            isNew: true
+          };
+        }
+        if (v) foundVehicles.push(v);
+      });
+
+      if (foundVehicles.length > 0) {
+        setBatchVehicles(foundVehicles);
+        setSelectedVehicle(foundVehicles[0]); // Select first as template
+        setIsBatchMode(true);
+        setActiveTab('visual-editor');
+      }
+      setHasAppliedSearchParam(true);
+
+    } else if (stockParam) {
+      // SINGLE MODE
+      let v = vehicles.find(v => v.stockNumber.toLowerCase() === stockParam.toLowerCase());
+      
+      if (!v) {
+         // Create stub if missing from inventory feed but passed in URL
+         v = {
+            id: `stub-${stockParam}`,
+            stockNumber: stockParam.toUpperCase(),
+            year: 2025,
+            make: 'Unknown',
+            model: 'Vehicle',
+            vin: 'UNKNOWN',
+            color: 'Unknown',
+            price: 0,
+            mileage: 0,
+            status: 'available',
+            images: [],
+            features: [],
+            isNew: true
+         };
+      }
+
+      // Only switch if we actually have images or user specifically requested this stock
+      if (v) setSelectedVehicle(v);
       setSearchTerm(stockParam);
-      setActiveTab('vehicle-selection');
+      
+      const hasImages = processedImages[v.stockNumber] && processedImages[v.stockNumber].length > 0;
+      if (hasImages) {
+        setActiveTab('visual-editor');
+      } else {
+        // stay on selection or manual upload?
+        // If specific stock requested, maybe show manual upload for it?
+        setActiveTab('vehicle-selection');
+      }
+      setHasAppliedSearchParam(true);
     }
-
-    setHasAppliedSearchParam(true);
-  }, [searchParams, hasAppliedSearchParam, vehiclesLoaded, vehicles, processedImages]);
+  }, [loading, searchParams, hasAppliedSearchParam, vehicles, processedImages]);
 
   const fetchAssets = async () => {
     try {
       const response = await fetch('/api/assets');
       const data = await response.json();
-      
-      if (data.success) {
-        setAssets(data.assets);
-      }
+      if (data.success) setAssets(data.assets);
     } catch (error) {
       console.error('Error fetching assets:', error);
     }
   };
 
   const handleManualPhotosUploaded = async (stockNumber: string, photos: { originalUrl: string; processedUrl?: string; isMarketingAsset?: boolean; category?: string }[]) => {
-    // Create processed image data
     const processedImagesData = photos.map((photo, index) => ({
       originalUrl: photo.originalUrl,
       processedUrl: photo.processedUrl || photo.originalUrl,
@@ -105,58 +180,35 @@ function ContentCreationInner() {
       category: photo.category || 'vehicle-photos'
     }));
 
-    // Save to Redis so they persist
     try {
-      const response = await fetch('/api/processed-images/save', {
+      await fetch('/api/processed-images/save', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          stockNumber,
-          processedImages: processedImagesData
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stockNumber, processedImages: processedImagesData })
       });
-
-      if (!response.ok) {
-        console.error('Failed to save processed images to Redis');
-      } else {
-        console.log('Successfully saved processed images to Redis');
-      }
     } catch (error) {
       console.error('Error saving processed images to Redis:', error);
     }
 
-    // Add the photos to the processedImages state
     setProcessedImages(prev => ({
       ...prev,
-      [stockNumber]: [
-        ...(prev[stockNumber] || []),
-        ...processedImagesData
-      ]
+      [stockNumber]: [ ...(prev[stockNumber] || []), ...processedImagesData ]
     }));
-    
-    // Don't switch tabs - stay on manual upload tab for continued asset upload
-    // setActiveTab('vehicle-selection');
   };
 
   const fetchProcessedImages = async () => {
     try {
-      setLoading(true);
+      // Don't set loading here to avoid flickering if called multiple times
       const response = await fetch('/api/processed-images/all');
       const data = await response.json();
-
       if (data.success) {
         setProcessedImages(data.processedImages);
-        console.log(`Loaded ${data.totalImages} processed images from ${data.totalVehicles} vehicles`);
       } else {
         throw new Error(data.error || 'Failed to fetch processed images');
       }
     } catch (error) {
       console.error('Error fetching processed images:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load processed images');
-    } finally {
-      setLoading(false);
+      setError('Failed to load processed images');
     }
   };
 
@@ -164,17 +216,10 @@ function ContentCreationInner() {
     try {
       const response = await fetch('/api/vehicles');
       const data = await response.json();
-      
-      if (data.success) {
-        setVehicles(data.vehicles);
-      } else {
-        throw new Error(data.error || 'Failed to fetch vehicles');
-      }
+      if (data.success) setVehicles(data.vehicles);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load vehicles');
-    } finally {
-      setVehiclesLoaded(true);
+       // Don't set global error, just log it. We can survive without vehicle data (using stubs).
     }
   };
 
@@ -182,13 +227,10 @@ function ContentCreationInner() {
     return vehicles.find(v => v.stockNumber === stockNumber);
   };
 
-  // Filter processed images based on search term
   const filteredImages = Object.entries(processedImages).filter(([stockNumber, images]) => {
     if (!searchTerm) return images.length > 0;
-    
     const vehicle = getVehicleByStockNumber(stockNumber);
     const searchLower = searchTerm.toLowerCase();
-    
     return (
       stockNumber.toLowerCase().includes(searchLower) ||
       (vehicle && (
@@ -201,6 +243,8 @@ function ContentCreationInner() {
 
   const handleVehicleSelect = (vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
+    setBatchVehicles([]); // Clear batch if single select
+    setIsBatchMode(false);
     setActiveTab('visual-editor');
   };
 
@@ -227,10 +271,7 @@ function ContentCreationInner() {
           <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
             <p className="text-destructive">{error}</p>
             <button
-              onClick={() => {
-                setError(null);
-                Promise.all([fetchProcessedImages(), fetchVehicles(), fetchAssets()]);
-              }}
+              onClick={() => { setError(null); Promise.all([fetchProcessedImages(), fetchVehicles(), fetchAssets()]); }}
               className="mt-2 text-destructive hover:text-destructive/80 underline"
             >
               Retry
@@ -254,166 +295,96 @@ function ContentCreationInner() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Manual Upload Tab */}
           <TabsContent value="manual-upload" className="space-y-6">
-            {vehicles.length === 0 && !loading && (
-              <Card className="mb-4">
-                <CardContent className="text-center py-8">
-                  <p className="text-lg font-bold mb-2">No Vehicles Available</p>
-                  <p className="text-muted-foreground">No vehicles found in inventory. Please check your Redis connection.</p>
-                </CardContent>
-              </Card>
-            )}
+            {/* Manual Upload Content */}
             <ManualVehiclePhotoUpload 
               vehicles={vehicles}
               onPhotosUploaded={handleManualPhotosUploaded}
               onAssetsUploaded={(assets) => {
-                console.log('Assets uploaded:', assets);
-                // Refresh assets list
-                fetchAssets();
-                // Show success message with marketing asset info
-                const marketingAssets = assets.filter(asset => asset.isMarketingAsset);
-                const message = marketingAssets.length > 0 
-                  ? `Successfully uploaded ${assets.length} assets! ${marketingAssets.length} marked for future marketing use.`
-                  : `Successfully uploaded ${assets.length} assets to general library!`;
-                alert(message);
+                 fetchAssets();
+                 alert(`Successfully uploaded ${assets.length} assets!`);
               }}
             />
           </TabsContent>
 
-          {/* Vehicle Selection Tab */}
           <TabsContent value="vehicle-selection" className="space-y-6">
             <div className="flex items-center space-x-4 mb-6">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="Search by stock number, make, model, or year..."
+                  placeholder="Search by stock number..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-muted border-border text-foreground placeholder:text-muted-foreground"
+                  className="pl-10 bg-muted border-border text-foreground"
                 />
               </div>
             </div>
 
-            {filteredImages.length === 0 ? (
-              <Card>
-                <CardContent className="text-center py-16">
-                  <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-bold mb-2">No Vehicles Found</h3>
-                  <p className="text-muted-foreground">
-                    {searchTerm 
-                      ? "No vehicles match your search criteria" 
-                      : "Upload vehicle photos in the Manual Upload tab to get started"
-                    }
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredImages.map(([stockNumber, images]) => {
-                  const vehicle = getVehicleByStockNumber(stockNumber);
-                  return (
-                    <Card
-                      key={stockNumber}
-                      className={`transition-all cursor-pointer ${
-                        selectedVehicle?.stockNumber === stockNumber ? 'ring-2 ring-primary' : ''
-                      }`}
-                      onClick={() => vehicle && handleVehicleSelect(vehicle)}
-                    >
-                      <CardHeader>
-                        <CardTitle className="flex items-center">
-                          <Car className="w-5 h-5 mr-2" />
-                          {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : `Vehicle ${stockNumber}`}
-                        </CardTitle>
-                        <CardDescription>
-                          {images.length} processed image{images.length !== 1 ? 's' : ''} • Stock: {stockNumber}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 gap-2 mb-4">
-                          {images.slice(0, 4).map((image, index) => (
-                            <div key={index} className="aspect-video rounded-lg overflow-hidden border border-border">
-                              <Image
-                                src={image.processedUrl}
-                                alt={`Vehicle ${stockNumber} - Image ${index + 1}`}
-                                width={150}
-                                height={100}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                        
-                        {vehicle && (
-                          <div className="space-y-1 text-sm">
-                            {vehicle.color && (
-                              <p className="text-muted-foreground">Color: {vehicle.color}</p>
-                            )}
-                            {vehicle.price && (
-                              <p className="text-muted-foreground">Price: ${vehicle.price.toLocaleString()}</p>
-                            )}
-                            {vehicle.mileage && (
-                              <p className="text-muted-foreground">Mileage: {vehicle.mileage.toLocaleString()} miles</p>
-                            )}
-                          </div>
-                        )}
-                        
-                        <Button 
-                          className="w-full mt-4"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            vehicle && handleVehicleSelect(vehicle);
-                          }}
-                        >
-                          Create Content
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 {filteredImages.map(([stockNumber, images]) => {
+                   const vehicle = getVehicleByStockNumber(stockNumber);
+                   return (
+                     <Card
+                       key={stockNumber}
+                       className={`transition-all cursor-pointer ${selectedVehicle?.stockNumber === stockNumber ? 'ring-2 ring-primary' : ''}`}
+                       onClick={() => handleVehicleSelect(vehicle || { stockNumber, year: 2025, make: 'Unknown', model: 'Vehicle' } as Vehicle)}
+                     >
+                       <CardHeader>
+                         <CardTitle className="flex items-center">
+                           <Car className="w-5 h-5 mr-2" />
+                           {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : `Stock #${stockNumber}`}
+                         </CardTitle>
+                         <CardDescription>
+                           {images.length} image{images.length !== 1 ? 's' : ''}
+                         </CardDescription>
+                       </CardHeader>
+                       <CardContent>
+                         <div className="aspect-video relative rounded-lg overflow-hidden border border-border bg-muted">
+                           {images[0] && (
+                             <Image
+                               src={images[0].processedUrl}
+                               alt="Vehicle"
+                               fill
+                               className="object-cover"
+                             />
+                           )}
+                         </div>
+                         <Button className="w-full mt-4">Select</Button>
+                       </CardContent>
+                     </Card>
+                   );
+                 })}
+                 {filteredImages.length === 0 && (
+                    <div className="col-span-full text-center py-12 text-muted-foreground">
+                       No vehicles found. Try uploading some!
+                    </div>
+                 )}
+            </div>
           </TabsContent>
 
-          {/* Visual Editor Tab */}
           <TabsContent value="visual-editor" className="space-y-6">
-            {selectedVehicle && processedImages[selectedVehicle.stockNumber] ? (
+            {selectedVehicle ? (
               <UnifiedVisualEditor
                 selectedVehicle={selectedVehicle}
-                vehicleImages={processedImages[selectedVehicle.stockNumber]}
+                vehicleImages={processedImages[selectedVehicle.stockNumber] || []}
                 assets={assets}
                 allVehicles={vehicles}
                 allProcessedImages={processedImages}
+                // Pass batch props if in batch mode
+                batchVehicles={isBatchMode ? batchVehicles : undefined}
+                
                 onContentGenerated={() => {}}
                 onAssetsUploaded={(assets) => {
-                  console.log('Assets uploaded from Visual Editor:', assets);
-                  // Refresh assets list
                   fetchAssets();
-                  // Show success message with marketing asset info
-                  const marketingAssets = assets.filter(asset => asset.isMarketingAsset);
-                  const message = marketingAssets.length > 0 
-                    ? `Successfully uploaded ${assets.length} assets! ${marketingAssets.length} marked for future marketing use.`
-                    : `Successfully uploaded ${assets.length} assets to general library!`;
-                  alert(message);
+                  alert(`Successfully uploaded ${assets.length} assets!`);
                 }}
                 onVehicleSelect={(vehicle) => {
                   setSelectedVehicle(vehicle);
+                  setIsBatchMode(false); // Switching vehicle exits batch mode
                 }}
               />
             ) : (
-              <Card className="bg-card border-border">
-                <CardContent className="text-center py-16">
-                  <Car className="w-16 h-16 mx-auto mb-4 text-primary" />
-                  <h3 className="text-foreground text-xl font-bold mb-2">Select a Vehicle First</h3>
-                  <p className="text-muted-foreground">Go back to the Vehicle Selection tab and choose a vehicle to start creating content</p>
-                  <Button 
-                    onClick={() => setActiveTab('vehicle-selection')}
-                    className="mt-4"
-                  >
-                    Select Vehicle
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="text-center py-12">Please select a vehicle.</div>
             )}
           </TabsContent>
         </Tabs>
@@ -426,8 +397,8 @@ export default function ContentCreationPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-          <p className="text-white/80 text-lg">Loading content creation studio...</p>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+           <Loader2 className="animate-spin w-8 h-8 text-primary" />
         </div>
       }
     >

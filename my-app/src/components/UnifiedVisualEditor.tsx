@@ -87,6 +87,7 @@ interface UnifiedVisualEditorProps {
   assets: Asset[];
   allVehicles?: Vehicle[];
   allProcessedImages?: { [stockNumber: string]: ProcessedImage[] };
+  batchVehicles?: Vehicle[]; // New prop for batch processing
   onContentGenerated?: (content: any) => void;
   onAssetsUploaded?: (assets: { originalUrl: string; processedUrl?: string; name: string; isMarketingAsset?: boolean; category?: string }[]) => void;
   onVehicleSelect?: (vehicle: Vehicle) => void;
@@ -146,6 +147,7 @@ export function UnifiedVisualEditor({
   assets,
   allVehicles = [],
   allProcessedImages = {},
+  batchVehicles = [], // Default to empty
   onContentGenerated,
   onAssetsUploaded,
   onVehicleSelect
@@ -756,50 +758,89 @@ export function UnifiedVisualEditor({
   const exportCanvas = useCallback(async () => {
     if (!canvasRef.current) return;
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-
-    const sortedLayers = [...layers].sort((a, b) => a.zIndex - b.zIndex);
-
-    for (const layer of sortedLayers) {
-      if (!layer.visible) continue;
-
-      ctx.save();
-      ctx.globalAlpha = layer.opacity;
-      
-      ctx.translate(layer.x + layer.width / 2, layer.y + layer.height / 2);
-      ctx.rotate((layer.rotation * Math.PI) / 180);
-      ctx.translate(-layer.width / 2, -layer.height / 2);
-
-      if (layer.type === 'text' && layer.content) {
-        ctx.fillStyle = 'white';
-        ctx.font = `${layer.height}px ${BRAND_FONT}`;
-        ctx.fillText(layer.content, 0, layer.height);
-      } else if (layer.url) {
-        const img = new window.Image();
-        img.crossOrigin = 'anonymous';
-        await new Promise((resolve) => {
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0, layer.width, layer.height);
-            resolve(null);
-          };
-          img.src = layer.url!;
-        });
-      }
-
-      ctx.restore();
+    const isBatch = batchVehicles && batchVehicles.length > 0;
+    
+    // If batch mode, confirm first
+    if (isBatch) {
+      if (!confirm(`Process batch for ${batchVehicles.length} vehicles using the current layout?`)) return;
     }
 
-    const dataUrl = canvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.download = `${selectedVehicle.stockNumber}-${selectedTemplate?.name || 'content'}.png`;
-    link.href = dataUrl;
-    link.click();
-  }, [layers, canvasWidth, canvasHeight, selectedVehicle, selectedTemplate]);
+    const targets = isBatch ? batchVehicles : [selectedVehicle];
+    const originalLayers = [...layers];
+
+    setIsGenerating(true); // Reuse generating state for UI feedback
+
+    try {
+      for (const targetVehicle of targets) {
+         const canvas = document.createElement('canvas');
+         const ctx = canvas.getContext('2d');
+         if (!ctx) continue;
+
+         canvas.width = canvasWidth;
+         canvas.height = canvasHeight;
+
+         // Resolve layers for this vehicle
+         const vehicleImage = allProcessedImages[targetVehicle.stockNumber]?.[0]?.processedUrl || null;
+         
+         const layersToRender = originalLayers.map(l => {
+           if (l.type === 'vehicle' && vehicleImage) {
+             return { ...l, url: vehicleImage, name: `${targetVehicle.year} ${targetVehicle.make} ${targetVehicle.model}` };
+           }
+           if (l.type === 'text') {
+             // Basic replacement for dynamic text if needed
+             let content = l.content || '';
+             content = content.replace('{Year}', targetVehicle.year.toString())
+                              .replace('{Make}', targetVehicle.make)
+                              .replace('{Model}', targetVehicle.model)
+                              .replace('{Price}', targetVehicle.price ? `$${targetVehicle.price.toLocaleString()}` : '');
+             return { ...l, content };
+           }
+           return l;
+         }).sort((a, b) => a.zIndex - b.zIndex);
+
+         for (const layer of layersToRender) {
+            if (!layer.visible) continue;
+            ctx.save();
+            ctx.globalAlpha = layer.opacity;
+            ctx.translate(layer.x + layer.width / 2, layer.y + layer.height / 2);
+            ctx.rotate((layer.rotation * Math.PI) / 180);
+            ctx.translate(-layer.width / 2, -layer.height / 2);
+
+            if (layer.type === 'text' && layer.content) {
+              ctx.fillStyle = 'white';
+              ctx.font = `${layer.height}px ${BRAND_FONT}`;
+              ctx.fillText(layer.content, 0, layer.height);
+            } else if (layer.url) {
+              const img = new window.Image();
+              img.crossOrigin = 'anonymous';
+              try {
+                await new Promise((resolve, reject) => {
+                  img.onload = resolve;
+                  img.onerror = reject;
+                  img.src = layer.url!;
+                });
+                ctx.drawImage(img, 0, 0, layer.width, layer.height);
+              } catch (err) {
+                console.error('Failed to load image for layer', layer.name, err);
+              }
+            }
+            ctx.restore();
+         }
+
+         const dataUrl = canvas.toDataURL('image/png');
+         const link = document.createElement('a');
+         link.download = `${targetVehicle.stockNumber}-${selectedTemplate?.name || 'content'}.png`;
+         link.href = dataUrl;
+         link.click();
+         
+         // Small delay to prevent browser throttling downloads
+         if (isBatch) await new Promise(r => setTimeout(r, 800));
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [batchVehicles, layers, selectedVehicle, allProcessedImages, canvasWidth, canvasHeight, selectedTemplate]);
+
 
   // Mouse handlers for dragging
   const handleMouseDown = useCallback((e: React.MouseEvent, layerId: string) => {
