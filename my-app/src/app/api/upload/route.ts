@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { uploadBufferToS3 } from "@/lib/s3";
 import { redisService } from "@/lib/services/redisService";
 import { MediaType } from "@/types/media";
+import { isAllowedImageType } from "@/lib/security";
 
 // 25MB limit for file uploads
 const MAX_UPLOAD_SIZE = 25 * 1024 * 1024; // 25MB in bytes
@@ -82,7 +83,8 @@ export async function POST(req: NextRequest) {
       return new NextResponse(errorMsg, { status: 413 });
     }
 
-    const isValidType = file.type.startsWith("image/") || file.type === "video/mp4";
+    // Raster images (no svg/other active types) or mp4 video only.
+    const isValidType = isAllowedImageType(file.type) || file.type === "video/mp4";
     console.log('🔵 File type validation:', { type: file.type, isValidType });
 
     if (!isValidType) {

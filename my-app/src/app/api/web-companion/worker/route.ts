@@ -5,6 +5,12 @@ import type { WebCompanionUpload } from '@/types/webCompanion';
 
 export const runtime = 'nodejs';
 
+// Server-side background removal is off by default: processing happens
+// client-side in the browser workspace, which polls the pending set. Only run
+// the (currently stubbed) server pipeline when explicitly enabled, otherwise the
+// worker must leave pending records untouched instead of failing them.
+const SERVER_REMOVAL_ENABLED = process.env.WEB_COMPANION_SERVER_REMOVAL === 'true';
+
 // Stub for missing server-side background removal
 async function getRemoveBackground() {
   return async (buffer: Buffer, options: any): Promise<Buffer> => {
@@ -100,6 +106,18 @@ async function processOneWithRetry(upload: WebCompanionUpload, attempts = 2) {
 }
 
 export async function POST(req: NextRequest) {
+  // When server-side removal is disabled, do NOT touch the pending set — the
+  // browser workspace claims and processes those records. Draining/failing them
+  // here would silently drop every session upload after the client got a
+  // "success" response.
+  if (!SERVER_REMOVAL_ENABLED) {
+    return NextResponse.json({
+      success: true,
+      skipped: true,
+      reason: 'Server-side background removal disabled; processing handled client-side.',
+    });
+  }
+
   const { searchParams } = new URL(req.url);
   const limit = Number(searchParams.get('limit') || '5');
 

@@ -6,6 +6,21 @@ const nativeExternalPackages = ['sharp'];
 const nextConfig: NextConfig = {
   // Keep native modules external so their .node bindings aren't bundled
   serverExternalPackages: nativeExternalPackages,
+  async headers() {
+    return [
+      {
+        // Baseline security headers on every response.
+        source: '/(.*)',
+        headers: [
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-DNS-Prefetch-Control', value: 'off' },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
