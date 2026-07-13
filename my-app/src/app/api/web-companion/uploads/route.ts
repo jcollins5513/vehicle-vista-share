@@ -3,6 +3,7 @@ import { uploadBufferToS3 } from '@/lib/s3';
 import { redisClient } from '@/lib/redis';
 import { v4 as uuidv4 } from 'uuid';
 import type { WebCompanionUpload, WebCompanionUploadStatus } from '@/types/webCompanion';
+import { isAllowedImageType, sanitizeKeySegment } from '@/lib/security';
 
 const MAX_UPLOAD_SIZE = 25 * 1024 * 1024; // 25MB
 
@@ -12,13 +13,9 @@ const stockSequenceKey = (stockNumber: string) => `web-companion:stock:${stockNu
 const globalPendingKey = 'web-companion:pending';
 
 export const runtime = 'nodejs';
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
-};
+// NOTE: the legacy `config.api.bodyParser` block is a Pages-Router construct and
+// has no effect in the App Router — removed. Body-size limits are enforced
+// explicitly below and, ultimately, by the hosting platform.
 
 async function saveUpload(upload: WebCompanionUpload) {
   await redisClient.set(uploadKey(upload.id), upload);
@@ -45,11 +42,11 @@ async function triggerWorker(url: string, limit = 3) {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const stockNumber = searchParams.get('stockNumber');
+  const stockNumber = sanitizeKeySegment(searchParams.get('stockNumber'), { maxLength: 32 });
   const statusFilter = searchParams.get('status') as WebCompanionUploadStatus | null;
 
   if (!stockNumber) {
-    return NextResponse.json({ error: 'stockNumber is required' }, { status: 400 });
+    return NextResponse.json({ error: 'valid stockNumber is required' }, { status: 400 });
   }
 
   try {
@@ -83,18 +80,20 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get('file');
-    const stockNumber = (formData.get('stockNumber') as string | null)?.trim();
+    const stockNumber = sanitizeKeySegment(formData.get('stockNumber') as string | null, { maxLength: 32 });
 
     if (!stockNumber) {
-      return NextResponse.json({ error: 'stockNumber is required' }, { status: 400 });
+      return NextResponse.json({ error: 'valid stockNumber is required' }, { status: 400 });
     }
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json({ error: 'file is required' }, { status: 400 });
     }
 
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'Only image uploads are supported' }, { status: 415 });
+    // Raster images only — reject svg/html so active content can't be stored in
+    // and served from the public bucket.
+    if (!isAllowedImageType(file.type)) {
+      return NextResponse.json({ error: 'Only JPEG, PNG, or WebP images are supported' }, { status: 415 });
     }
 
     if (file.size > MAX_UPLOAD_SIZE) {

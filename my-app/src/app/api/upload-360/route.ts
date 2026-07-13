@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { PrismaClient } from '@/generated/prisma';
 import { withAccelerate } from '@prisma/extension-accelerate';
+import { isAllowedImageType, sanitizeKeySegment } from '@/lib/security';
+
+export const runtime = 'nodejs';
+
+// Raster images only, capped so an anonymous caller can't upload multi-GB blobs
+// or store active content (svg/html) in the public bucket.
+const MAX_360_BYTES = 15 * 1024 * 1024;
+const EXT_BY_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
 
 const prisma = new PrismaClient().$extends(withAccelerate());
 
@@ -36,14 +48,29 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    const stockNumber = formData.get('stockNumber') as string | null;
+    const rawStockNumber = formData.get('stockNumber') as string | null;
 
-    if (!file || !stockNumber) {
+    if (!file || !rawStockNumber) {
       return NextResponse.json({ error: 'Missing file or stock number.' }, { status: 400 });
     }
 
+    // stockNumber becomes both an S3 key and a DB unique key — constrain it so a
+    // caller can't traverse paths or overwrite an unrelated stock's record.
+    const stockNumber = sanitizeKeySegment(rawStockNumber, { maxLength: 32 });
+    if (!stockNumber) {
+      return NextResponse.json({ error: 'Invalid stock number.' }, { status: 400 });
+    }
+
+    if (!isAllowedImageType(file.type)) {
+      return NextResponse.json({ error: 'Only JPEG, PNG, or WebP images are allowed.' }, { status: 400 });
+    }
+    if (file.size > MAX_360_BYTES) {
+      return NextResponse.json({ error: 'Image exceeds the 15MB limit.' }, { status: 400 });
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
-    const imageUrl = await uploadToS3(buffer, `${stockNumber}.jpg`, file.type);
+    const ext = EXT_BY_TYPE[file.type] ?? 'jpg';
+    const imageUrl = await uploadToS3(buffer, `${stockNumber}.${ext}`, file.type);
 
     const result = await prisma.threeSixtyImage.upsert({
         where: { stockNumber: stockNumber },
